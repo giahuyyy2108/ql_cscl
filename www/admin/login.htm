@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title><?=_DEFAULT_TITLE_?></title>
+	<link rel="icon" type="image/png" href="<?=_DEFAULT_LOGO_?>"/>
+    <!-- Bootstrap -->
+    <link href="<?=_DEFAULT_URL_?>css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="<?=_DEFAULT_URL_?>css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="<?=_DEFAULT_URL_?>css/nprogress.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="<?=_DEFAULT_URL_?>css/animate.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="<?=_DEFAULT_URL_?>css/custom.css" rel="stylesheet">
+    <style>
+      :root {
+        --hospital-blue: #087f8c;
+        --hospital-dark: #075e70;
+        --hospital-light: #e8f7f8;
+        --hospital-ink: #17324d;
+      }
+
+      body.login {
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #e8f7f8 0%, #f7fbfc 52%, #dff1f5 100%);
+        font-family: "Helvetica Neue", Arial, sans-serif;
+      }
+
+      body.login:before {
+        content: "";
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 7px;
+        background: var(--hospital-blue);
+      }
+
+      .login_wrapper {
+        width: 420px;
+        max-width: calc(100% - 32px);
+        margin: 0 auto;
+        padding-top: 9vh;
+      }
+
+      .login_form {
+        width: 100%;
+      }
+
+      .login_content {
+        padding: 38px 40px 32px;
+        background: #fff;
+        border: 1px solid #d7e8eb;
+        border-top: 5px solid var(--hospital-blue);
+        border-radius: 10px;
+        box-shadow: 0 14px 35px rgba(7, 94, 112, .14);
+      }
+
+      .login_content:before {
+        content: "";
+        display: block;
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 16px;
+        background: url("<?=_DEFAULT_URL_?>images/logo.png") center / contain no-repeat;
+      }
+
+      .login_content h1 {
+        color: var(--hospital-ink);
+        font-size: 23px;
+        font-weight: 600;
+        margin: 0 0 7px;
+        text-align: center;
+      }
+
+      .login_content h1:after {
+        content: "Bệnh viện Thống Nhất";
+        display: block;
+        margin-top: 7px;
+        color: #6c8793;
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: .4px;
+      }
+
+      .login_content > form > div {
+        margin-bottom: 14px;
+      }
+
+      .login_content .form-control {
+        height: 44px;
+        border: 1px solid #cbdfe4;
+        border-radius: 5px;
+        padding: 10px 13px;
+        color: var(--hospital-ink);
+        box-shadow: none;
+      }
+
+      .login_content .form-control:focus {
+        border-color: var(--hospital-blue);
+        box-shadow: 0 0 0 3px rgba(8, 127, 140, .12);
+      }
+
+      .login_content .submit {
+        width: 100%;
+        height: 44px;
+        border: 0;
+        border-radius: 5px;
+        background: var(--hospital-blue);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        transition: background .2s ease, transform .2s ease;
+      }
+
+      .login_content .submit:hover {
+        background: var(--hospital-dark);
+        transform: translateY(-1px);
+      }
+
+      .login_content .separator {
+        border-top: 1px solid #edf3f4;
+        margin-top: 22px;
+      }
+
+      @media (max-width: 480px) {
+        .login_wrapper {
+          padding-top: 7vh;
+        }
+        .login_content {
+          padding: 30px 24px 24px;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="login">
+    <div>
+      <a class="hiddenanchor" id="signup"></a>
+      <a class="hiddenanchor" id="signin"></a>
+
+      <div class="login_wrapper">
+        <div class="animate form login_form">
+          <section class="login_content">
+            <form name="frmLogin" action="<?=_DEFAULT_URL_?>login/login/" method="post"> 							
+							<h1>Đăng nhập hệ thống</h1>
+							<div style="color:red;padding: 0px 0px 10px 0;"><?=$request->getAttribute("msg")?></div>
+							<div>
+								<input type="text" id="txtUserName" name="txtUserName" value="<?=$request->getAttribute("username")?>" class="form-control" placeholder="Username" required="" <?=$request->getAttribute("login-disabled")?>/>
+							</div>
+							<div>
+								<input type="password" id="<?=$request->getAttribute("pass")?>" name="<?=$request->getAttribute("pass")?>" class="form-control" placeholder="Password" required="" <?=$request->getAttribute("login-disabled")?>/>
+							</div>
+							<div>
+								<input type="submit" name="Submit" class="btn btn-default submit" style="float: none;" value="Đăng nhập"<?=$request->getAttribute("login-disabled")?>>	
+							</div>
+<!--Enter Code <img src="<?=_DEFAULT_URL_?>captcha.php"><input type="text" name="vercode" /> -->
+							<div class="clearfix"></div>
+
+							<div class="separator">
+								<div class="clearfix"></div>
+								<br />                
+							</div>
+							<input type="hidden" name="cmd" value="30">							
+            </form>
+          </section>
+        </div>
+       </div>
+    </div>
+  </body>
+<script language="javascript">
+	document.getElementById("txtUserName").focus();
+</script>
+</html>
+
