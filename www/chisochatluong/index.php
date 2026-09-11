@@ -53,12 +53,12 @@ $listDvt = $request->getAttribute("listDvt");
 					<th data-type="String" validate-type="true">Tên chỉ số<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Mã khía cạnh<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Mã thành tố<span style="color:red"></span></th>
-					<th data-type="String" validate-type="true">Nhóm chỉ số<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Phạm vi<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Đơn vị tính<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">ID chu kỳ<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người gửi<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người duyệt<span style="color:red"></span></th>
+					<th data-type="String" validate-type="true">Tình trạng<span style="color:red"></span></th>
 					<th>Thao tác</th>
 				</tr>
 			</thead>

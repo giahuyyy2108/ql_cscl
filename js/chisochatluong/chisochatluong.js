@@ -77,7 +77,6 @@ table = $('#datatable-chiso').DataTable({
                 return $('#ma_thanh_to option[value="' + data + '"]').text() || data;
             }
         },
-        { data: 'nhom_chi_so' },
         { 
             data: 'pham_vi',
             render: function (data, type, row) {
@@ -98,6 +97,7 @@ table = $('#datatable-chiso').DataTable({
         },
         { data: 'nguoi_gui' },
         { data: 'nguoi_duyet' },
+        { data: 'trang_thai' },
         {
             data: null,
             orderable: true,
