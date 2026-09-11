@@ -96,5 +96,35 @@ class ChiSoChatLuongPeer
         $this->dbsql->query($sql);
         return $this->dbsql->insert_id();
     }
+
+    function Update($_chisochatluong){
+        $value = function ($key) use ($_chisochatluong) {
+            return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
+        };
+        $number = function ($key) use ($_chisochatluong) {
+            return (int) $_chisochatluong->get($key);
+        };
+
+        $sql = "UPDATE `chi_so_chat_luong` SET
+                    `ten_chi_so` = " . $value('ten_chi_so') . ",
+                    `ma_khia_canh` = " . $number('ma_khia_canh') . ",
+                    `ma_thanh_to` = " . $number('ma_thanh_to') . ",
+                    `nhom_chi_so` = " . $value('nhom_chi_so') . ",
+                    `pham_vi` = " . $number('pham_vi') . ",
+                    `muc_tieu` = " . $value('muc_tieu') . ",
+                    `nguong_canh_bao` = " . $value('nguong_canh_bao') . ",
+                    `id_donvitinh` = " . $number('id_donvitinh') . ",
+                    `id_chuky` = " . $number('id_chuky') . ",
+                    `dinh_nghia` = " . $value('dinh_nghia') . ",
+                    `thu_thap` = " . $value('thu_thap') . ",
+                    `ten_tu_so` = " . $value('ten_tu_so') . ",
+                    `ten_mau_so` = " . $value('ten_mau_so') . ",
+                    `nguoi_gui` = " . $value('nguoi_gui') . ",
+                    `updated_at` = NOW()
+                WHERE `ma_chi_so` = " . $number('ma_chi_so');
+
+        $this->dbsql->query($sql);
+        return $_chisochatluong->get("ma_chi_so");
+    }
 }
 ?>

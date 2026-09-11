@@ -222,6 +222,7 @@ $('#formChiTieu').on('submit', function (e) {
         type: 'POST',
         data: {
             data: JSON.stringify([{
+                ma_chi_so: $('#ma_chi_so').val(),
                 ten_chi_so: $('#ten_chi_so').val(),
                 ma_khia_canh: $('#ma_khia_canh').val(),
                 ma_thanh_to: $('#ma_thanh_to').val(),

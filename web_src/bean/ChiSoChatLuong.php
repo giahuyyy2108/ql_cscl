@@ -9,7 +9,7 @@ class ChiSoChatLuong
 	var $pham_vi;
 	var $muc_tieu;
 	var $nguong_canh_bao;
-	var $don_vi_tinh;
+	var $id_donvitinh;
 	var $id_chuky;
 	var $du_lieu_chu_ky;
 	var $loai_cong_thuc;
@@ -37,7 +37,7 @@ class ChiSoChatLuong
 		$this->pham_vi = "";
 		$this->muc_tieu = "";
 		$this->nguong_canh_bao = "";
-		$this->don_vi_tinh = "";
+		$this->id_donvitinh = 0;
 		$this->id_chuky = 0;
 		$this->du_lieu_chu_ky = "";
 		$this->loai_cong_thuc = "";

@@ -11,6 +11,7 @@ class chisochatluongAction
 {
 	var $request;
 	var $ChiSoPeer;
+	var $lastErrorMessage;
 
 	public function __construct()
 	{
@@ -47,28 +48,9 @@ class chisochatluongAction
 
 	function save()
 	{
-		$data = $this->request->getParameter('data', true);
-		$arrayData = json_decode($data, true);
-
-		if (!is_array($arrayData) || empty($arrayData[0])) {
-			$message = new Message();
-			$message->set("flag", false);
-			$message->set("errorMessage", "Chua co du lieu");
-			return $this->request->json_response(json_encode(array("message" => $message)));
-		}
-
-		$chiso = new ChiSoChatLuong;
-		foreach ($arrayData[0] as $key => $value) {
-			if (property_exists($chiso, $key)) {
-				$chiso->set($key, $value);
-			}
-		}
-
-		if (trim($chiso->get("ten_chi_so")) === "") {
-			$message = new Message();
-			$message->set("flag", false);
-			$message->set("errorMessage", "Ten chi so khong duoc de trong");
-			return $this->request->json_response(json_encode(array("message" => $message)));
+		$chiso = $this->getChiSoFromRequest();
+		if ($chiso === false) {
+			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
 		}
 
 		$id = $this->ChiSoPeer->Save($chiso);
@@ -81,6 +63,65 @@ class chisochatluongAction
 			"id" => $id,
 			"message" => $message
 		)));
+	}
+
+	function update()
+	{
+		$chiso = $this->getChiSoFromRequest();
+		if ($chiso === false) {
+			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
+		}
+
+		if ((int) $chiso->get("ma_chi_so") <= 0) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Thieu ma chi so can cap nhat");
+			return $this->request->json_response(json_encode(array("message" => $message)));
+		}
+
+		$id = $this->ChiSoPeer->Update($chiso);
+		$message = new Message();
+		$message->set("flag", true);
+		$message->set("successMessage", "Cap nhat chi tieu thanh cong");
+
+		return $this->request->json_response(json_encode(array(
+			"success" => true,
+			"id" => $id,
+			"message" => $message
+		)));
+	}
+
+	private function getChiSoFromRequest()
+	{
+		$data = $this->request->getParameter('data', true);
+		$arrayData = json_decode($data, true);
+
+		if (!is_array($arrayData) || empty($arrayData[0])) {
+			$this->lastErrorMessage = "Chua co du lieu";
+			return false;
+		}
+
+		$chiso = new ChiSoChatLuong;
+		foreach ($arrayData[0] as $key => $value) {
+			if (property_exists($chiso, $key)) {
+				$chiso->set($key, $value);
+			}
+		}
+
+		if (trim($chiso->get("ten_chi_so")) === "") {
+			$this->lastErrorMessage = "Ten chi so khong duoc de trong";
+			return false;
+		}
+
+		return $chiso;
+	}
+
+	private function getErrorMessage()
+	{
+		$message = new Message();
+		$message->set("flag", false);
+		$message->set("errorMessage", $this->lastErrorMessage);
+		return $message;
 	}
 }
 ?>
