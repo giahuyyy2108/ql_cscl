@@ -6,6 +6,7 @@ require_once ("web_src/bean/DanhMucKCTTPeer.php");
 require_once ("web_src/bean/PhamViPeer.php");
 require_once ("web_src/bean/ChuKyPeer.php");
 require_once ("web_src/bean/DonviTinhPeer.php");
+require_once ("web_src/bean/TinhTrangPeer.php");
 
 class chisochatluongAction
 {
@@ -30,12 +31,14 @@ class chisochatluongAction
 		$PVpeer = new PhamViPeer();
 		$ChuKyPeer = new ChuKyPeer();
 		$donvitinhPeer = new DonViTinhPeer();
+		$tinhtrangPeer = new TinhTrangPeer();
 
 		$this->request->setAttribute("listNQ", $nhomquyenPeer->getListNQ());
 		$this->request->setAttribute("listKCCT", $KCTTpeer->Get_danhmucKCTT());
 		$this->request->setAttribute("listPV", $PVpeer->getPhamVi());
 		$this->request->setAttribute("listCKy", $ChuKyPeer->getChuKy());
 		$this->request->setAttribute("listDvt", $donvitinhPeer->getDonViTinh());
+		$this->request->setAttribute("listTT", $tinhtrangPeer->getTinhTrang());
 		$this->request->setModel("www/chisochatluong/index.php");
 		return true;
 	}

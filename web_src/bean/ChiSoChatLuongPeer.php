@@ -1,6 +1,7 @@
 <?PHP
 
 require_once ("web_src/bean/ChiSoChatLuong.php");
+require_once ("web_src/bean/TinhTrang.php");
 
 class ChiSoChatLuongPeer
 {
@@ -16,6 +17,10 @@ class ChiSoChatLuongPeer
 	function Set_chiso($result)
 	{
 		$chiso = new ChiSoChatLuong;
+		$tinhtrang = new TinhTrang;
+		$tinhtrang->set("maTrangThai", $result["trang_thai"]);
+		$tinhtrang->set("tenTrangThai", isset($result["tenTrangThai"]) ? $result["tenTrangThai"] : "");
+		$tinhtrang->set("tag", isset($result["tag"]) ? $result["tag"] : "");
 
         $chiso->set("ma_chi_so", $result["ma_chi_so"]);
         $chiso->set("ten_chi_so", $result["ten_chi_so"]);
@@ -30,7 +35,7 @@ class ChiSoChatLuongPeer
         // $chiso->set("du_lieu_chu_ky", $result["du_lieu_chu_ky"]);
         $chiso->set("loai_cong_thuc", $result["loai_cong_thuc"]);
         $chiso->set("cong_thuc", $result["cong_thuc"]);
-        $chiso->set("trang_thai", $result["trang_thai"]);
+        $chiso->set("trang_thai", $tinhtrang);
         $chiso->set("nguoi_gui", $result["nguoi_gui"]);
         $chiso->set("thoi_gian_gui", $result["thoi_gian_gui"]);
         $chiso->set("nguoi_duyet", $result["nguoi_duyet"]);
@@ -50,7 +55,10 @@ class ChiSoChatLuongPeer
     function GetLisT(){
         // tao cau truy van		
 
-		$sql_select = "SELECT * FROM chi_so_chat_luong ORDER BY ma_chi_so DESC ";
+		$sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
+                       FROM chi_so_chat_luong cs
+                       LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
+                       ORDER BY cs.ma_chi_so DESC";
 
 		$result= $this->dbsql->query($sql_select);
 

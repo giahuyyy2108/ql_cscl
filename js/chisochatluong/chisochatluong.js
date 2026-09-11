@@ -97,7 +97,23 @@ table = $('#datatable-chiso').DataTable({
         },
         { data: 'nguoi_gui' },
         { data: 'nguoi_duyet' },
-        { data: 'trang_thai' },
+        {
+            data: 'trang_thai',
+            render: function (data, type,row) {
+                var tenTrangThai = data ? (data.tenTrangThai || data.maTrangThai) : '';
+
+                if (type !== 'display') {
+                    return tenTrangThai;
+                }
+
+                return $('<span>')
+                    .addClass('badge')
+                    .addClass('rounded-pill')
+                    .addClass(data ? (data.tag || '') : '')
+                    .text(tenTrangThai)
+                    .prop('outerHTML');
+            }
+        },
         {
             data: null,
             orderable: true,

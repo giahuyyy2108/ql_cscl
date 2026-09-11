@@ -1,4 +1,7 @@
 <?PHP
+
+require_once ("web_src/bean/TinhTrang.php");
+
 class ChiSoChatLuong
 {
 	var $ma_chi_so;
@@ -42,7 +45,7 @@ class ChiSoChatLuong
 		$this->du_lieu_chu_ky = "";
 		$this->loai_cong_thuc = "";
 		$this->cong_thuc = "";
-		$this->trang_thai = "";
+		$this->trang_thai = new TinhTrang();
 		$this->nguoi_gui = "";
 		$this->thoi_gian_gui = "";
 		$this->nguoi_duyet = "";

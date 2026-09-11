@@ -4,6 +4,7 @@ $listKCCT = $request->getAttribute("listKCCT");
 $listPV = $request->getAttribute("listPV");
 $listCky = $request->getAttribute("listCKy");
 $listDvt = $request->getAttribute("listDvt");
+$listTinhTrang = $request->getAttribute("listTT");
 
 
 
@@ -186,6 +187,19 @@ $listDvt = $request->getAttribute("listDvt");
 									<?php foreach ($listPV as $item): ?>
 										<option value="<?= $item->id ?>">
 											<?= $item->ten ?>
+										</option>
+									<?php endforeach; ?>
+
+								</select>
+
+								<select class="form-control"
+										id="tinhtrang"
+										name="tinhtrang"
+										hidden>
+
+									<?php foreach ($listTinhTrang as $item): ?>
+										<option value="<?= $item->maTrangThai ?>" url="<?= $item->tag ?>">
+											<?= $item->tenTrangThai ?>
 										</option>
 									<?php endforeach; ?>
 
