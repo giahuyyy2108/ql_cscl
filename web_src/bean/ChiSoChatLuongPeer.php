@@ -134,5 +134,24 @@ class ChiSoChatLuongPeer
         $this->dbsql->query($sql);
         return $_chisochatluong->get("ma_chi_so");
     }
+
+    function Duyet($_chisochatluong){
+        $value = function ($key) use ($_chisochatluong) {
+            return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
+        };
+        $number = function ($key) use ($_chisochatluong) {
+            return (int) $_chisochatluong->get($key);
+        };
+
+        $sql = "UPDATE `chi_so_chat_luong` SET
+                        `trang_thai` = 2,
+                        `nguoi_duyet` = " . $value('nguoi_duyet') . ",
+                        `thoi_gian_duyet` = NOW(),
+                        `updated_at` = NOW()
+                WHERE `ma_chi_so` = " . $number('ma_chi_so');
+
+        $this->dbsql->query($sql);
+        return $_chisochatluong->get("ma_chi_so");
+    }
 }
 ?>

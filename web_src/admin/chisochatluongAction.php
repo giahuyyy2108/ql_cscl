@@ -126,5 +126,34 @@ class chisochatluongAction
 		$message->set("errorMessage", $this->lastErrorMessage);
 		return $message;
 	}
+
+	public function Duyet(){
+		$chiso = $this->getChiSoFromRequest();
+		if ($chiso === false) {
+			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
+		}
+
+		if ((int) $chiso->get("ma_chi_so") <= 0) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Thieu ma chi so can cap nhat");
+			return $this->request->json_response(json_encode(array("message" => $message)));
+		}
+
+		$nguoiDuyet = !empty($_SESSION["FullName"]) ? $_SESSION["FullName"]
+			: (isset($_SESSION["sUserName"]) ? $_SESSION["sUserName"] : "");
+		$chiso->set("nguoi_duyet", $nguoiDuyet);
+
+		$id = $this->ChiSoPeer->Duyet($chiso);
+		$message = new Message();
+		$message->set("flag", true);
+		$message->set("successMessage", "Duyet chi tieu thanh cong");
+
+		return $this->request->json_response(json_encode(array(
+			"success" => true,
+			"id" => $id,
+			"message" => $message
+		)));
+	}
 }
 ?>
