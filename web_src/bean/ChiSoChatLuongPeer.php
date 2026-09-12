@@ -136,7 +136,6 @@ class ChiSoChatLuongPeer
                     `thu_thap` = " . $value('thu_thap') . ",
                     `ten_tu_so` = " . $value('ten_tu_so') . ",
                     `ten_mau_so` = " . $value('ten_mau_so') . ",
-                    `nguoi_gui` = " . $value('nguoi_gui') . ",
                     `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 
@@ -148,7 +147,7 @@ class ChiSoChatLuongPeer
     // 0 nháp
     // 1 chờ duyệt (gửi) 
     // 2 đã duyệt 
-    // 4 từ chối 
+    // 3 từ chối 
 
     public function Duyet($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
@@ -179,6 +178,39 @@ class ChiSoChatLuongPeer
 
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 1,
+                        `updated_at` = NOW()
+                WHERE `ma_chi_so` = " . $number('ma_chi_so');
+
+        $this->dbsql->query($sql);
+        return $_chisochatluong->get("ma_chi_so");
+    }
+
+    public function Xoa($_chisochatluong){
+        $value = function ($key) use ($_chisochatluong) {
+            return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
+        };
+        $number = function ($key) use ($_chisochatluong) {
+            return (int) $_chisochatluong->get($key);
+        };
+
+        $sql = "DELETE FROM `chi_so_chat_luong` 
+                WHERE `chi_so_chat_luong`.`ma_chi_so` = ". $value('ma_chi_so').";";
+;
+
+        $this->dbsql->query($sql);
+        return $_chisochatluong->get("ma_chi_so");
+    }
+
+    public function TuChoi($_chisochatluong){
+        $value = function ($key) use ($_chisochatluong) {
+            return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
+        };
+        $number = function ($key) use ($_chisochatluong) {
+            return (int) $_chisochatluong->get($key);
+        };
+
+        $sql = "UPDATE `chi_so_chat_luong` SET
+                        `trang_thai` = 3,
                         `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 

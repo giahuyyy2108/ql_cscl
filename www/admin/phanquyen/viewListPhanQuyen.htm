@@ -49,7 +49,7 @@
 				if($tenChucNangCon!=false && $tenChucNangCon!=""){					
 					foreach($tenChucNangCon as $key => $tenchucnang){
 						
-						if($tenchucnang!=""){
+						if($tenchucnang!="" && isset($urlChucNangCon[$key]) && $urlChucNangCon[$key]!=""){
 							$hasQuyen1 = $this->request->checkRoleUser($urlChucNangCon[$key],$quyen)?'checked="checked"':'';
 ?>
 		<tr>       
@@ -79,7 +79,7 @@
 				$urlChucNangCon = explode(",", $chucnang->get("urlChucNangCon"));
 				if($tenChucNangCon!=false && $tenChucNangCon!=""){					
 					foreach($tenChucNangCon as $key => $tenchucnang){
-						if($tenchucnang!=""){
+						if($tenchucnang!="" && isset($urlChucNangCon[$key]) && $urlChucNangCon[$key]!=""){
 							$hasQuyen1 = $this->request->checkRoleUser($urlChucNangCon[$key],$quyen)?'checked="checked"':'';
 ?>
 		<tr>       

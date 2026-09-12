@@ -139,6 +139,7 @@ table = $('#datatable-chiso').DataTable({
                         title="Gửi"
                         data-toggle="tooltip"
                         ${(data.trang_thai.maTrangThai==1 || data.trang_thai.maTrangThai==2 )? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
                         aria-label="Gửi">
                         <i class="fa fa-paper-plane-o"></i>
                     </button>
@@ -157,6 +158,9 @@ table = $('#datatable-chiso').DataTable({
                         title="Duyệt"
                         data-toggle="tooltip"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==0)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
+                        
                         aria-label="Duyệt">
                         <i class="fa fa-check"></i>
                     </button>
@@ -167,6 +171,7 @@ table = $('#datatable-chiso').DataTable({
                         title="Sửa"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==1)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
                         data-toggle="tooltip"
                         aria-label="Sửa">
                         <i class="glyphicon glyphicon-pencil"></i>
@@ -178,6 +183,7 @@ table = $('#datatable-chiso').DataTable({
                         title="Xóa"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==1)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
                         data-toggle="tooltip"
                         aria-label="Xóa">
                         <i class="glyphicon glyphicon-trash"></i>
@@ -187,6 +193,7 @@ table = $('#datatable-chiso').DataTable({
                         data-id="${row.ma_chi_so}"
                         title="Từ chối"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
                         data-toggle="tooltip"
                         aria-label="Từ chối">
                         <i class="fa fa-remove"></i>
@@ -546,7 +553,7 @@ $('#datatable-chiso').on('click', '.btn-gui', function (e) {
 });
 
 //Xóa
-$('#datatable-chiso').on('click', '.btn-gui', function (e) {
+$('#datatable-chiso').on('click', '.btn-xoa', function (e) {
     e.preventDefault();
 
     var button = $(this);
@@ -565,7 +572,7 @@ $('#datatable-chiso').on('click', '.btn-gui', function (e) {
     var originalHtml = button.html();
 
     $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/xoa/',
+        url: $('#ULocal').val() + 'chisochatluong/Xoa/',
         type: 'POST',
         dataType: 'json',
         data: {
@@ -574,10 +581,6 @@ $('#datatable-chiso').on('click', '.btn-gui', function (e) {
                 ten_chi_so: row.ten_chi_so,
                 nguoi_duyet: $('#fullname').val()
             }])
-        },
-        beforeSend: function () {
-            button.prop('disabled', true)
-                .html('<i class="fa fa-spinner fa-spin"></i>');
         },
         success: function (response) {
             var message = response && response.message;
@@ -599,8 +602,58 @@ $('#datatable-chiso').on('click', '.btn-gui', function (e) {
                 (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
                 'error');
         },
-        complete: function () {
-            button.prop('disabled', false).html(originalHtml);
-        }
+    });
+});
+
+//Từ chối
+$('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
+    e.preventDefault();
+
+    var button = $(this);
+    var tr = button.closest('tr');
+
+    if (tr.hasClass('child')) {
+        tr = tr.prev();
+    }
+
+    var row = table.row(tr).data();
+
+    if (!row || !row.ma_chi_so || button.prop('disabled')) {
+        return;
+    }
+
+    var originalHtml = button.html();
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/TuChoi/',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            data: JSON.stringify([{
+                ma_chi_so: row.ma_chi_so,
+                ten_chi_so: row.ten_chi_so,
+                nguoi_duyet: $('#fullname').val()
+            }])
+        },
+        success: function (response) {
+            var message = response && response.message;
+
+            if (response && (response.success || (message && message.flag))) {
+                table.ajax.reload(null, false);
+                Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
+            } else {
+                Swal.fire('Không thể duyệt',
+                    (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
+                    'error');
+            }
+        },
+        error: function (xhr) {
+            var response = xhr.responseJSON;
+            var message = response && response.message;
+
+            Swal.fire('Lỗi',
+                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
+                'error');
+        },
     });
 });

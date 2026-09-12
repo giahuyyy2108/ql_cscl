@@ -1,5 +1,5 @@
 <?PHP
-$attribute;
+// $attribute;
 $title = "";
 $responseJson = "";
 class Request

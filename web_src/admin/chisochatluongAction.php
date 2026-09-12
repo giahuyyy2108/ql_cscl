@@ -184,5 +184,56 @@ class chisochatluongAction
 			"message" => $message
 		)));
 	}
+
+
+	public function Xoa(){
+		$chiso = $this->getChiSoFromRequest();
+		if ($chiso === false) {
+			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
+		}
+
+		if ((int) $chiso->get("ma_chi_so") <= 0) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Thieu ma chi so can cap nhat");
+			return $this->request->json_response(json_encode(array("message" => $message)));
+		}
+
+		$id = $this->ChiSoPeer->Xoa($chiso);
+		$message = new Message();
+		$message->set("flag", true);
+		$message->set("successMessage", "Xoa chi tieu thanh cong");
+
+		return $this->request->json_response(json_encode(array(
+			"success" => true,
+			"id" => $id,
+			"message" => $message
+		)));
+	}
+
+	public function TuChoi(){
+		$chiso = $this->getChiSoFromRequest();
+		if ($chiso === false) {
+			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
+		}
+
+		if ((int) $chiso->get("ma_chi_so") <= 0) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Thieu ma chi so can cap nhat");
+			return $this->request->json_response(json_encode(array("message" => $message)));
+		}
+
+		$id = $this->ChiSoPeer->TuChoi($chiso);
+		$message = new Message();
+		$message->set("flag", true);
+		$message->set("successMessage", "Tu choi chi tieu thanh cong");
+
+		return $this->request->json_response(json_encode(array(
+			"success" => true,
+			"id" => $id,
+			"message" => $message
+		)));
+	}
 }
 ?>
