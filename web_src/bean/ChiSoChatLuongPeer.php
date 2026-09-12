@@ -62,11 +62,23 @@ class ChiSoChatLuongPeer
 
 
     function GetLisT(){
-        // tao cau truy van		
+        // Nguoi co quyen chisochatluong.all duoc xem tat ca chi tieu.
+        // Nguoi khac chi xem chi tieu cua minh va chi tieu pham vi 3.
+        $userId = isset($_SESSION["sUserID"]) ? (int) $_SESSION["sUserID"] : 0;
+        $roles = isset($_SESSION["quyen"]) ? $_SESSION["quyen"] : array();
+        if (!is_array($roles)) {
+            $roles = $roles === "" ? array() : explode(",", $roles);
+        }
+
+        $hasAllPermission = in_array("chisochatluong.all", $roles);
+        $where = $hasAllPermission
+            ? ""
+            : " WHERE (cs.nguoi_gui = " . $userId . " OR cs.pham_vi = 3)";
 
 		$sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
                        FROM chi_so_chat_luong cs
                        LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
+                       " . $where . "
                        ORDER BY cs.ma_chi_so DESC";
 
 		$result= $this->dbsql->query($sql_select);
