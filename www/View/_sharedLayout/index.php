@@ -45,6 +45,7 @@
 
     <!-- Custom Theme Style -->
     <link href="<?=_DEFAULT_LIBS_?>build/css/custom.min.css" rel="stylesheet">
+    <link href="<?=_DEFAULT_URL_?>css/sidebar-menu.css?<?=_DEFAULT_VERSION_JS_CSS_?>" rel="stylesheet">
 
     
 
@@ -358,7 +359,7 @@ input[type=checkbox]{
 
   </head>
 
-  <body class="nav-sm" >
+  <body class="nav-md" >
     <input type="hidden" id="ULocal" value="<?=_DEFAULT_URL_?>">
     <input type="hidden" id="pageLength" value="<?=_ITEMS_PER_PAGE_ADMIN_?>">
     <div class="container body">
@@ -393,7 +394,7 @@ input[type=checkbox]{
   
             <!-- sidebar menu -->
             <?
-                include("www/View/_sharedLayout/menu.htm");
+                include("www/View/_sharedLayout/menu.php");
               ?>
             <!-- sidebar menu -->
   

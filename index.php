@@ -126,6 +126,7 @@ if(property_exists($classHander, 'listRolePrivate')===true){
 if($request->checkMethodPrivate($method,$strRolePrivate)&&$strRolePrivate!=""){	
 	$chucNangPeer = new ChucNangPeer;
 	$listChucNang = $chucNangPeer->getChucNang();
+	$request->setAttribute("listChucNang",$listChucNang);
 	
 	header('Content-Type: text/html; charset=utf-8');
 	$request->setAttribute("NoRight","Không có quyền thực hiện chức năng này, vui lòng liên hệ với quản trị.");
@@ -157,8 +158,9 @@ $method_return = $class_handle->$method();
 if($method_return!= null){	
 	$chucNangPeer = new ChucNangPeer;
 	$listChucNang = $chucNangPeer->getChucNang();	
+	$request->setAttribute('listChucNang',$listChucNang);	
 	header('Content-Type: text/html; charset=utf-8');
-	include("www/View/_sharedLayout/index.htm");
+	include("www/View/_sharedLayout/index.php");
 	// include("www/admin/admin.htm");
 	$request->getHiddenRole($strRole);
 	return true;

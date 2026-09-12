@@ -55,10 +55,10 @@
               <div class="profile_info">
                 <span>Chào mừng,</span>
                 <h2>
-<?
-		if($_SESSION["FullName"]!="") echo($_SESSION["FullName"]);
-		else echo($_SESSION["sUserName"]);
-?>
+                <?
+                    if($_SESSION["FullName"]!="") echo($_SESSION["FullName"]);
+                    else echo($_SESSION["sUserName"]);
+                ?>
 				</h2>
               </div>
             </div>
@@ -67,9 +67,9 @@
             <br />
 
             <!-- sidebar menu -->
-<?
-	include("www/admin/menu.htm");
-?>
+            <?
+              include("www/admin/menu.htm");
+            ?>
 			<!-- /sidebar menu -->
 
             <!-- /menu footer buttons -->

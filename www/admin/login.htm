@@ -1,184 +1,103 @@
+<?php
+$escapeLogin = static function ($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
+$loginMessage = (string) $request->getAttribute('msg');
+$loginUsername = (string) $request->getAttribute('username');
+$loginPasswordName = (string) $request->getAttribute('pass');
+$loginDisabled = (string) $request->getAttribute('login-disabled') !== '';
+?>
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <!-- Meta, title, CSS, favicons, etc. -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#075e70">
+    <title>Đăng nhập | <?= $escapeLogin(_DEFAULT_TITLE_) ?></title>
+    <link rel="icon" type="image/png" href="<?= $escapeLogin(_DEFAULT_LOGO_) ?>">
+    <link rel="stylesheet" href="<?= $escapeLogin(_DEFAULT_URL_) ?>css/font-awesome.min.css">
+    <link rel="stylesheet" href="<?= $escapeLogin(_DEFAULT_URL_) ?>css/login.css?v=<?= $escapeLogin(_DEFAULT_VERSION_JS_CSS_) ?>">
+    <script src="<?= $escapeLogin(_DEFAULT_URL_) ?>js/login.js?v=<?= $escapeLogin(_DEFAULT_VERSION_JS_CSS_) ?>" defer></script>
+</head>
+<body class="login-page">
+    <main class="login-shell">
+        <section class="login-brand" aria-labelledby="hospital-name">
+            <div class="hospital-identity">
+                <img src="<?= $escapeLogin(_DEFAULT_URL_) ?>images/logo.png" alt="Logo Bệnh viện Thống Nhất" width="60" height="60">
+                <div>
+                    <span class="brand-eyebrow">BỆNH VIỆN</span>
+                    <h2 id="hospital-name">THỐNG NHẤT</h2>
+                </div>
+            </div>
 
-    <title><?=_DEFAULT_TITLE_?></title>
-	<link rel="icon" type="image/png" href="<?=_DEFAULT_LOGO_?>"/>
-    <!-- Bootstrap -->
-    <link href="<?=_DEFAULT_URL_?>css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="<?=_DEFAULT_URL_?>css/font-awesome.min.css" rel="stylesheet">
-    <!-- NProgress -->
-    <link href="<?=_DEFAULT_URL_?>css/nprogress.css" rel="stylesheet">
-    <!-- Animate.css -->
-    <link href="<?=_DEFAULT_URL_?>css/animate.min.css" rel="stylesheet">
+            <div class="brand-content">
+                <span class="brand-tag"><span aria-hidden="true"></span> QUẢN LÝ CHẤT LƯỢNG</span>
+                <p class="brand-heading">Cùng nâng cao<br><strong>chất lượng<br>chăm sóc.</strong></p>
+                <p class="brand-description">Theo dõi chỉ số, quản lý dữ liệu và báo cáo chất lượng bệnh viện trên một hệ thống.</p>
+                <ul class="brand-features">
+                    <li><i class="fa fa-line-chart" aria-hidden="true"></i><span>Theo dõi chỉ số chất lượng</span></li>
+                    <li><i class="fa fa-file-text-o" aria-hidden="true"></i><span>Tổng hợp dữ liệu và báo cáo</span></li>
+                </ul>
+            </div>
 
-    <!-- Custom Theme Style -->
-    <link href="<?=_DEFAULT_URL_?>css/custom.css" rel="stylesheet">
-    <style>
-      :root {
-        --hospital-blue: #087f8c;
-        --hospital-dark: #075e70;
-        --hospital-light: #e8f7f8;
-        --hospital-ink: #17324d;
-      }
+            <p class="brand-motto">Thống nhất <span aria-hidden="true">·</span> Trách nhiệm <span aria-hidden="true">·</span> Tình người</p>
+        </section>
 
-      body.login {
-        min-height: 100vh;
-        margin: 0;
-        background: linear-gradient(135deg, #e8f7f8 0%, #f7fbfc 52%, #dff1f5 100%);
-        font-family: "Helvetica Neue", Arial, sans-serif;
-      }
+        <section class="login-panel" aria-labelledby="login-heading">
+            <div class="login-intro">
+                <span class="login-eyebrow">CHÀO MỪNG TRỞ LẠI</span>
+                <h1 id="login-heading">Đăng nhập</h1>
+                <p id="login-description">Sử dụng tài khoản được cấp để truy cập hệ thống quản lý chất lượng.</p>
+            </div>
 
-      body.login:before {
-        content: "";
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 7px;
-        background: var(--hospital-blue);
-      }
+            <?php if ($loginMessage !== ''): ?>
+                <div id="login-message" class="login-alert" role="alert">
+                    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                    <span><?= $escapeLogin($loginMessage) ?></span>
+                </div>
+            <?php endif; ?>
 
-      .login_wrapper {
-        width: 420px;
-        max-width: calc(100% - 32px);
-        margin: 0 auto;
-        padding-top: 9vh;
-      }
+            <form id="login-form" name="frmLogin" action="<?= $escapeLogin(_DEFAULT_URL_) ?>login/login/" method="post"
+                  aria-describedby="login-description<?= $loginMessage !== '' ? ' login-message' : '' ?>">
+                <div class="login-field">
+                    <label for="txtUserName">Tài khoản</label>
+                    <div class="login-input">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+                        <input type="text" id="txtUserName" name="txtUserName" value="<?= $escapeLogin($loginUsername) ?>"
+                               placeholder="Nhập tên đăng nhập" autocomplete="username" autocapitalize="none" spellcheck="false"
+                               required <?= $loginDisabled ? 'disabled' : '' ?>>
+                    </div>
+                </div>
 
-      .login_form {
-        width: 100%;
-      }
+                <div class="login-field">
+                    <label for="login-password">Mật khẩu</label>
+                    <div class="login-input">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                        <input type="password" id="login-password" name="<?= $escapeLogin($loginPasswordName) ?>"
+                               placeholder="Nhập mật khẩu" autocomplete="current-password"
+                               required <?= $loginDisabled ? 'disabled' : '' ?>>
+                        <button id="toggle-password" class="password-toggle" type="button" aria-label="Hiện mật khẩu"
+                                aria-controls="login-password" aria-pressed="false" title="Hiện mật khẩu" hidden <?= $loginDisabled ? 'disabled' : '' ?>>
+                            <i class="fa fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
 
-      .login_content {
-        padding: 38px 40px 32px;
-        background: #fff;
-        border: 1px solid #d7e8eb;
-        border-top: 5px solid var(--hospital-blue);
-        border-radius: 10px;
-        box-shadow: 0 14px 35px rgba(7, 94, 112, .14);
-      }
-
-      .login_content:before {
-        content: "";
-        display: block;
-        width: 82px;
-        height: 82px;
-        margin: 0 auto 16px;
-        background: url("<?=_DEFAULT_URL_?>images/logo.png") center / contain no-repeat;
-      }
-
-      .login_content h1 {
-        color: var(--hospital-ink);
-        font-size: 23px;
-        font-weight: 600;
-        margin: 0 0 7px;
-        text-align: center;
-      }
-
-      .login_content h1:after {
-        content: "Bệnh viện Thống Nhất";
-        display: block;
-        margin-top: 7px;
-        color: #6c8793;
-        font-size: 12px;
-        font-weight: 400;
-        letter-spacing: .4px;
-      }
-
-      .login_content > form > div {
-        margin-bottom: 14px;
-      }
-
-      .login_content .form-control {
-        height: 44px;
-        border: 1px solid #cbdfe4;
-        border-radius: 5px;
-        padding: 10px 13px;
-        color: var(--hospital-ink);
-        box-shadow: none;
-      }
-
-      .login_content .form-control:focus {
-        border-color: var(--hospital-blue);
-        box-shadow: 0 0 0 3px rgba(8, 127, 140, .12);
-      }
-
-      .login_content .submit {
-        width: 100%;
-        height: 44px;
-        border: 0;
-        border-radius: 5px;
-        background: var(--hospital-blue);
-        color: #fff;
-        font-size: 15px;
-        font-weight: 600;
-        transition: background .2s ease, transform .2s ease;
-      }
-
-      .login_content .submit:hover {
-        background: var(--hospital-dark);
-        transform: translateY(-1px);
-      }
-
-      .login_content .separator {
-        border-top: 1px solid #edf3f4;
-        margin-top: 22px;
-      }
-
-      @media (max-width: 480px) {
-        .login_wrapper {
-          padding-top: 7vh;
-        }
-        .login_content {
-          padding: 30px 24px 24px;
-        }
-      }
-    </style>
-  </head>
-
-  <body class="login">
-    <div>
-      <a class="hiddenanchor" id="signup"></a>
-      <a class="hiddenanchor" id="signin"></a>
-
-      <div class="login_wrapper">
-        <div class="animate form login_form">
-          <section class="login_content">
-            <form name="frmLogin" action="<?=_DEFAULT_URL_?>login/login/" method="post"> 							
-							<h1>Đăng nhập hệ thống</h1>
-							<div style="color:red;padding: 0px 0px 10px 0;"><?=$request->getAttribute("msg")?></div>
-							<div>
-								<input type="text" id="txtUserName" name="txtUserName" value="<?=$request->getAttribute("username")?>" class="form-control" placeholder="Username" required="" <?=$request->getAttribute("login-disabled")?>/>
-							</div>
-							<div>
-								<input type="password" id="<?=$request->getAttribute("pass")?>" name="<?=$request->getAttribute("pass")?>" class="form-control" placeholder="Password" required="" <?=$request->getAttribute("login-disabled")?>/>
-							</div>
-							<div>
-								<input type="submit" name="Submit" class="btn btn-default submit" style="float: none;" value="Đăng nhập"<?=$request->getAttribute("login-disabled")?>>	
-							</div>
-<!--Enter Code <img src="<?=_DEFAULT_URL_?>captcha.php"><input type="text" name="vercode" /> -->
-							<div class="clearfix"></div>
-
-							<div class="separator">
-								<div class="clearfix"></div>
-								<br />                
-							</div>
-							<input type="hidden" name="cmd" value="30">							
+                <button type="submit" name="Submit" value="Đăng nhập" class="login-submit" <?= $loginDisabled ? 'disabled' : '' ?>>
+                    <span>Đăng nhập</span>
+                    <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                </button>
+                <input type="hidden" name="cmd" value="30">
             </form>
-          </section>
-        </div>
-       </div>
-    </div>
-  </body>
-<script language="javascript">
-	document.getElementById("txtUserName").focus();
-</script>
+
+            <div class="login-support">
+                <span class="support-icon"><i class="fa fa-life-ring" aria-hidden="true"></i></span>
+                <p><strong>Cần hỗ trợ đăng nhập?</strong><span>Liên hệ quản trị viên để được hỗ trợ tài khoản hoặc cấp lại mật khẩu.</span></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="login-footer">&copy; <?= date('Y') ?> Bệnh viện Thống Nhất <span aria-hidden="true">·</span> Hệ thống quản lý chất lượng</footer>
+</body>
 </html>
 
