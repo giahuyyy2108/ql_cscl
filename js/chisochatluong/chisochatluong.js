@@ -124,6 +124,15 @@ table = $('#datatable-chiso').DataTable({
             render: function(data, type, row) {
                 return `
                     <button type="button"
+                        class="btn btn-primary btn-sm btn-gui"
+                        data-id="${row.ma_chi_so}"
+                        title="Gửi"
+                        data-toggle="tooltip"
+                        ${(data.trang_thai.maTrangThai==1 || data.trang_thai.maTrangThai==2 )? 'hidden' : "" }
+                        aria-label="Gửi">
+                        <i class="fa fa-paper-plane-o"></i>
+                    </button>
+                    <button type="button"
                         class="btn btn-info btn-sm btn-xem"
                         data-id="${row.ma_chi_so}"
                         title="Xem"
@@ -396,7 +405,7 @@ $('#modalChiTieu').on('hidden.bs.modal', function () {
 
 });
 
-
+//Duyệt
 $('#datatable-chiso').on('click', '.btn-duyet', function (e) {
     e.preventDefault();
 
@@ -417,6 +426,67 @@ $('#datatable-chiso').on('click', '.btn-duyet', function (e) {
 
     $.ajax({
         url: $('#ULocal').val() + 'chisochatluong/Duyet/',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            data: JSON.stringify([{
+                ma_chi_so: row.ma_chi_so,
+                ten_chi_so: row.ten_chi_so,
+                nguoi_duyet: $('#fullname').val()
+            }])
+        },
+        beforeSend: function () {
+            button.prop('disabled', true)
+                .html('<i class="fa fa-spinner fa-spin"></i>');
+        },
+        success: function (response) {
+            var message = response && response.message;
+
+            if (response && (response.success || (message && message.flag))) {
+                table.ajax.reload(null, false);
+                Swal.fire('Thành công', 'Duyệt chỉ tiêu thành công.', 'success');
+            } else {
+                Swal.fire('Không thể duyệt',
+                    (message && message.errorMessage) || 'Không thể duyệt chỉ tiêu. Vui lòng thử lại.',
+                    'error');
+            }
+        },
+        error: function (xhr) {
+            var response = xhr.responseJSON;
+            var message = response && response.message;
+
+            Swal.fire('Lỗi',
+                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
+                'error');
+        },
+        complete: function () {
+            button.prop('disabled', false).html(originalHtml);
+        }
+    });
+});
+
+
+//Duyệt
+$('#datatable-chiso').on('click', '.btn-gui', function (e) {
+    e.preventDefault();
+
+    var button = $(this);
+    var tr = button.closest('tr');
+
+    if (tr.hasClass('child')) {
+        tr = tr.prev();
+    }
+
+    var row = table.row(tr).data();
+
+    if (!row || !row.ma_chi_so || button.prop('disabled')) {
+        return;
+    }
+
+    var originalHtml = button.html();
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/gui/',
         type: 'POST',
         dataType: 'json',
         data: {
