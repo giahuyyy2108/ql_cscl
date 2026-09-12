@@ -92,7 +92,6 @@ $listTinhTrang = $request->getAttribute("listTT");
                     <!-- dùng để phân biệt thêm / sửa -->
                     <input type="hidden" id="action" name="action" value="add">
                     <input type="hidden" id="fullname" name="fullname" value="<?= $_SESSION["FullName"]? $_SESSION["FullName"] : '' ?>">
-
                     <div class="row">
 
 						<div class="form-group">

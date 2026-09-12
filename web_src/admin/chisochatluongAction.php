@@ -56,6 +56,10 @@ class chisochatluongAction
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
 		}
 
+		$nguoigui = !empty($_SESSION["sUserID"]) ? $_SESSION["sUserID"]
+			: (isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : "");
+		$chiso->set("nguoi_gui", $nguoigui);
+
 		$id = $this->ChiSoPeer->Save($chiso);
 		$message = new Message();
 		$message->set("flag", true);
@@ -140,8 +144,8 @@ class chisochatluongAction
 			return $this->request->json_response(json_encode(array("message" => $message)));
 		}
 
-		$nguoiDuyet = !empty($_SESSION["FullName"]) ? $_SESSION["FullName"]
-			: (isset($_SESSION["sUserName"]) ? $_SESSION["sUserName"] : "");
+		$nguoiDuyet = !empty($_SESSION["sUserID"]) ? $_SESSION["sUserID"]
+			: (isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : "");
 		$chiso->set("nguoi_duyet", $nguoiDuyet);
 
 		$id = $this->ChiSoPeer->Duyet($chiso);

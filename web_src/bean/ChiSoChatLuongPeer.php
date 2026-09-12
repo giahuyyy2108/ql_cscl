@@ -2,6 +2,8 @@
 
 require_once ("web_src/bean/ChiSoChatLuong.php");
 require_once ("web_src/bean/TinhTrang.php");
+require_once ("web_src/bean/User.php");
+require_once ("web_src/bean/UserPeer.php");
 
 class ChiSoChatLuongPeer
 {
@@ -18,9 +20,16 @@ class ChiSoChatLuongPeer
 	{
 		$chiso = new ChiSoChatLuong;
 		$tinhtrang = new TinhTrang;
+		$nguoigui = new User;
+		$nguoiduyet = new User;
+        $userPeer = new UserPeer();
+
 		$tinhtrang->set("maTrangThai", $result["trang_thai"]);
 		$tinhtrang->set("tenTrangThai", isset($result["tenTrangThai"]) ? $result["tenTrangThai"] : "");
 		$tinhtrang->set("tag", isset($result["tag"]) ? $result["tag"] : "");
+
+        $nguoigui =  $userPeer->getUserID($result['nguoi_gui']);
+        $nguoiduyet =  $userPeer->getUserID($result['nguoi_duyet']);
 
         $chiso->set("ma_chi_so", $result["ma_chi_so"]);
         $chiso->set("ten_chi_so", $result["ten_chi_so"]);
@@ -36,9 +45,9 @@ class ChiSoChatLuongPeer
         $chiso->set("loai_cong_thuc", $result["loai_cong_thuc"]);
         $chiso->set("cong_thuc", $result["cong_thuc"]);
         $chiso->set("trang_thai", $tinhtrang);
-        $chiso->set("nguoi_gui", $result["nguoi_gui"]);
+        $chiso->set("nguoi_gui", $nguoigui);
         $chiso->set("thoi_gian_gui", $result["thoi_gian_gui"]);
-        $chiso->set("nguoi_duyet", $result["nguoi_duyet"]);
+        $chiso->set("nguoi_duyet", $nguoiduyet);
         $chiso->set("thoi_gian_duyet", $result["thoi_gian_duyet"]);
         $chiso->set("ly_do_tu_choi", $result["ly_do_tu_choi"]);
         $chiso->set("dinh_nghia", $result["dinh_nghia"]);
