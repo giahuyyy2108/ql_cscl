@@ -1,5 +1,86 @@
+<style>
+	#frmQuyen {
+		margin: 0;
+		padding: 4px;
+		color: #344054;
+	}
+
+	#frmQuyen #table-quyen {
+		width: 100%;
+		margin: 0;
+		border: 1px solid #e4e7ec;
+		border-radius: 8px;
+		border-collapse: separate;
+		border-spacing: 0;
+		overflow: hidden;
+		background: #fff;
+	}
+
+	#frmQuyen #table-quyen td {
+		border: 0;
+		border-bottom: 1px solid #f0f2f5;
+		padding: 10px 14px;
+		line-height: 1.4;
+		vertical-align: middle;
+	}
+
+	#frmQuyen #table-quyen tr:last-child td {
+		border-bottom: 0;
+	}
+
+	#frmQuyen #table-quyen .level0 {
+		padding: 13px 14px;
+		background: #eef4ff;
+		border-top: 1px solid #d9e5ff;
+		color: #174ea6;
+		font-size: 14px;
+	}
+
+	#frmQuyen #table-quyen tr:first-child .level0 {
+		border-top: 0;
+	}
+
+	#frmQuyen #table-quyen .level1 {
+		padding-left: 34px;
+		background: #fafbfc;
+		font-weight: 600;
+	}
+
+	#frmQuyen #table-quyen .level2 {
+		padding-left: 58px;
+		color: #475467;
+	}
+
+	#frmQuyen #table-quyen .level3 {
+		padding-left: 82px;
+		color: #667085;
+		font-size: 13px;
+	}
+
+	#frmQuyen #table-quyen tr:hover td {
+		background-color: #f8faff;
+	}
+
+	#frmQuyen #table-quyen tr:hover .level0 {
+		background-color: #e5efff;
+	}
+
+	#frmQuyen input[type="checkbox"] {
+		width: 16px;
+		height: 16px;
+		margin: 0 9px 0 0;
+		vertical-align: -3px;
+		accent-color: #2864dc;
+		cursor: pointer;
+	}
+
+	#frmQuyen label {
+		cursor: pointer;
+	}
+</style>
+
 <form name="frmQuyen" id="frmQuyen" action="" method="post">
-	<table id="table-quyen" width="100%" class="table table-hover">
+	<table id="table-quyen" class="table table-hover">
 <?			
 	if($listChucNang!=false){
 		$i = 0;
