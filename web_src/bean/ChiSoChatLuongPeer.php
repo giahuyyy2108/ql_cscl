@@ -134,12 +134,20 @@ class ChiSoChatLuongPeer
             return (int) $_chisochatluong->get($key);
         };
 
+        $roles = isset($_SESSION["quyen"]) && is_array($_SESSION["quyen"])
+            ? $_SESSION["quyen"] : array();
+        $canChoosePhamVi = (isset($_SESSION["AdminType"]) && (int) $_SESSION["AdminType"] === 1)
+            || in_array("chisochatluong.all", $roles, true);
+        $phamViUpdate = $canChoosePhamVi
+            ? "                    `pham_vi` = " . $number('pham_vi') . ",\n"
+            : "";
+
         $sql = "UPDATE `chi_so_chat_luong` SET
                     `ten_chi_so` = " . $value('ten_chi_so') . ",
                     `ma_khia_canh` = " . $number('ma_khia_canh') . ",
                     `ma_thanh_to` = " . $number('ma_thanh_to') . ",
                     `nhom_chi_so` = " . $value('nhom_chi_so') . ",
-                    `pham_vi` = " . $number('pham_vi') . ",
+" . $phamViUpdate . "
                     `muc_tieu` = " . $value('muc_tieu') . ",
                     `nguong_canh_bao` = " . $value('nguong_canh_bao') . ",
                     `id_donvitinh` = " . $number('id_donvitinh') . ",

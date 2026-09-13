@@ -39,6 +39,7 @@ class chisochatluongAction
 		$this->request->setAttribute("listCKy", $ChuKyPeer->getChuKy());
 		$this->request->setAttribute("listDvt", $donvitinhPeer->getDonViTinh());
 		$this->request->setAttribute("listTT", $tinhtrangPeer->getTinhTrang());
+		$this->request->setAttribute("canChoosePhamVi", $this->request->checkRole("chisochatluong.all"));
 		$this->request->setModel("www/chisochatluong/index.php");
 		return true;
 	}
@@ -113,6 +114,12 @@ class chisochatluongAction
 			if (property_exists($chiso, $key)) {
 				$chiso->set($key, $value);
 			}
+		}
+
+		// Nguoi khong co quyen xem/toan quyen chi duoc tao chi tieu o pham vi 3.
+		// Khong tin vao gia tri pham_vi gui tu trinh duyet.
+		if (!$this->request->checkRole("chisochatluong.all")) {
+			$chiso->set("pham_vi", 3);
 		}
 
 		if (trim($chiso->get("ten_chi_so")) === "") {

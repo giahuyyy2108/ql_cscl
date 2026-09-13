@@ -5,6 +5,7 @@ $listPV = $request->getAttribute("listPV");
 $listCky = $request->getAttribute("listCKy");
 $listDvt = $request->getAttribute("listDvt");
 $listTinhTrang = $request->getAttribute("listTT");
+$canChoosePhamVi = (bool) $request->getAttribute("canChoosePhamVi");
 
 
 
@@ -181,7 +182,9 @@ $listTinhTrang = $request->getAttribute("listTT");
 
 								<select class="form-control"
 										id="pham_vi"
-										name="pham_vi">
+										name="pham_vi"
+										data-can-choose="<?= $canChoosePhamVi ? '1' : '0' ?>"
+										<?= $canChoosePhamVi ? '' : 'disabled' ?>>
 
 									<?php foreach ($listPV as $item): ?>
 										<option value="<?= $item->id ?>">

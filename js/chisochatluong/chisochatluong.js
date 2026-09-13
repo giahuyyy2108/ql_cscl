@@ -1,6 +1,17 @@
 /* DATA TABLES */
 var table;
 
+function applyPhamViPermission() {
+    var phamVi = $('#pham_vi');
+    var canChoose = phamVi.attr('data-can-choose') === '1';
+
+    if (!canChoose) {
+        phamVi.val('3').prop('disabled', true);
+    }
+}
+
+applyPhamViPermission();
+
 function getOptionText(selectId, value) {
     var text = $('#' + selectId + ' option').filter(function () {
         return String($(this).val()) === String(value);
@@ -28,6 +39,8 @@ table = $('#datatable-chiso').DataTable({
 
                 // reset form
                 $('#formChiTieu')[0].reset();
+
+                applyPhamViPermission();
 
                 // đánh dấu đang thêm
                 $('#action').val('add');
@@ -226,6 +239,8 @@ $('#datatable-chiso').on('click', '.btn-sua', function () {
         .find('input, textarea, select')
         .prop('disabled', false);
 
+    applyPhamViPermission();
+
     $('#btnLuuChiTieu').show();
 
     $('#action').val('edit');
@@ -417,6 +432,8 @@ function resetModalChiTieu() {
     form.find('input, textarea, select')
         .prop('disabled', false)
         .prop('readonly', false);
+
+    applyPhamViPermission();
 
     // Mã chỉ số luôn không cho nhập
     // $('#ma_chi_so').prop('readonly', true);
