@@ -1,5 +1,6 @@
 /* DATA TABLES */
 var table;
+var canApprove = $('#datatable-chiso').attr('data-can-approve') === '1';
 
 function applyPhamViPermission() {
     var phamVi = $('#pham_vi');
@@ -111,12 +112,6 @@ table = $('#datatable-chiso').DataTable({
         {
             data: 'nguoi_gui',
             render: function (data, type,row) {
-                return data.hoTen;
-            }
-        },
-        {
-            data: 'nguoi_duyet',
-            render: function (data, type,row) {
                 return data.hoTen? data.hoTen : "";
             }
         },
@@ -128,7 +123,6 @@ table = $('#datatable-chiso').DataTable({
                 if (type !== 'display') {
                     return tenTrangThai;
                 }
-
                 return $('<span>')
                     .addClass('badge')
                     .addClass('dt-center')
@@ -173,6 +167,7 @@ table = $('#datatable-chiso').DataTable({
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==0)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
+                        ${!canApprove ? 'hidden' : ''}
                         
                         aria-label="Duyệt">
                         <i class="fa fa-check"></i>
@@ -207,6 +202,8 @@ table = $('#datatable-chiso').DataTable({
                         title="Từ chối"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==0)? 'hidden' : "" }
+                        ${!canApprove ? 'hidden' : ''}
                         data-toggle="tooltip"
                         aria-label="Từ chối">
                         <i class="fa fa-remove"></i>

@@ -84,7 +84,9 @@ class db_mysql
 
     function num_rows($query_id = -1)
     {
-        if ($query_id != -1)
+        // mysqli_result la object tren PHP moi. So sanh long voi -1 se khien
+        // PHP co chuyen object sang int va phat sinh canh bao/TypeError.
+        if ($query_id !== -1)
             $this->query_id = $query_id;
         return mysqli_num_rows($this->query_id);
     }

@@ -72,8 +72,8 @@ class ChiSoChatLuongPeer
 
         $hasAllPermission = in_array("chisochatluong.all", $roles);
         $where = $hasAllPermission
-            ? ""
-            : " WHERE (cs.nguoi_gui = " . $userId . " OR cs.pham_vi = 3)";
+            ? "WHERE cs.trang_thai != 0"
+            : " WHERE (cs.nguoi_gui = " . $userId . " OR cs.pham_vi = 3 )";
 
 		$sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
                        FROM chi_so_chat_luong cs
@@ -81,6 +81,7 @@ class ChiSoChatLuongPeer
                        " . $where . "
                        ORDER BY cs.ma_chi_so DESC";
 
+        // echo($sql_select);
 		$result= $this->dbsql->query($sql_select);
 
 		

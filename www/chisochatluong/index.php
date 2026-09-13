@@ -6,6 +6,7 @@ $listCky = $request->getAttribute("listCKy");
 $listDvt = $request->getAttribute("listDvt");
 $listTinhTrang = $request->getAttribute("listTT");
 $canChoosePhamVi = (bool) $request->getAttribute("canChoosePhamVi");
+$canApprove = (bool) $request->getAttribute("canApprove");
 
 
 
@@ -48,7 +49,9 @@ $canChoosePhamVi = (bool) $request->getAttribute("canChoosePhamVi");
 			// 	echo $item->ten;
 			// }
 		?>
-		<table id="datatable-chiso" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+		<table id="datatable-chiso"
+			data-can-approve="<?= $canApprove ? '1' : '0' ?>"
+			class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
 			<thead>
 				<tr>
 					<th>STT</th>
@@ -57,9 +60,8 @@ $canChoosePhamVi = (bool) $request->getAttribute("canChoosePhamVi");
 					<th data-type="Number" validate-type="true">Mã thành tố<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Phạm vi<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Đơn vị tính<span style="color:red"></span></th>
-					<th data-type="Number" validate-type="true">ID chu kỳ<span style="color:red"></span></th>
-					<th data-type="Number" validate-type="true">Người gửi<span style="color:red"></span></th>
-					<th data-type="Number" validate-type="true">Người duyệt<span style="color:red"></span></th>
+					<th data-type="Number" validate-type="true">Chu kỳ<span style="color:red"></span></th>
+					<th data-type="Number" validate-type="true">Khoa/Phòng<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Tình trạng<span style="color:red"></span></th>
 					<th>Thao tác</th>
 				</tr>

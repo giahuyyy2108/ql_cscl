@@ -40,6 +40,7 @@ class chisochatluongAction
 		$this->request->setAttribute("listDvt", $donvitinhPeer->getDonViTinh());
 		$this->request->setAttribute("listTT", $tinhtrangPeer->getTinhTrang());
 		$this->request->setAttribute("canChoosePhamVi", $this->request->checkRole("chisochatluong.all"));
+		$this->request->setAttribute("canApprove", $this->request->checkRole("chisochatluong.all"));
 		$this->request->setModel("www/chisochatluong/index.php");
 		return true;
 	}
@@ -139,6 +140,17 @@ class chisochatluongAction
 	}
 
 	public function Duyet(){
+		if (!$this->request->checkRole("chisochatluong.all")) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Ban khong co quyen duyet chi tieu");
+
+			return $this->request->json_response(json_encode(array(
+				"success" => false,
+				"message" => $message
+			)));
+		}
+
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));

@@ -37,6 +37,32 @@ class DonViTinhPeer
 
         return $arrList;
     }
+
+    function save($donViTinh)
+    {
+        $id = (int) $donViTinh->get('id');
+        $ten = addslashes((string) $donViTinh->get('ten'));
+        if ($id > 0) {
+            $this->dbsql->query("UPDATE donvitinh SET ten = '" . $ten . "' WHERE id = " . $id);
+            return $id;
+        }
+
+        $this->dbsql->query("INSERT INTO donvitinh (ten) VALUES ('" . $ten . "')");
+        return $this->dbsql->insert_id();
+    }
+
+    function isInUse($id)
+    {
+        $result = $this->dbsql->query(
+            "SELECT ma_chi_so FROM chi_so_chat_luong WHERE id_donvitinh = " . (int) $id . " LIMIT 1"
+        );
+        return $this->dbsql->num_rows($result) > 0;
+    }
+
+    function delete($id)
+    {
+        $this->dbsql->query("DELETE FROM donvitinh WHERE id = " . $id);
+    }
 }
 
 ?>
