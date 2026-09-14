@@ -385,49 +385,28 @@ $('#formChiTieu').on('submit', function (e) {
 });
 
 $('#datatable-chiso').on('click', '.btn-xem', function () {
-
-    var tr = $(this).closest('tr');
-
-    if (tr.hasClass('child')) {
-        tr = tr.prev();
-    }
-
+    var button = $(this);
+    var tr = button.closest('tr');
+    if (tr.hasClass('child')) tr = tr.prev();
     var row = table.row(tr).data();
+    if (!row || !row.ma_chi_so) return;
 
-    if (!row) {
-        return;
-    }
-
-    // Đổ dữ liệu
-    $('#ma_chi_so').val(row.ma_chi_so);
-    $('#ten_chi_so').val(row.ten_chi_so);
-    $('#ma_khia_canh').val(row.ma_khia_canh);
-    $('#ma_thanh_to').val(row.ma_thanh_to);
-    $('#nhom_chi_so').val(row.nhom_chi_so);
-    $('#pham_vi').val(row.pham_vi);
-    $('#muc_tieu').val(row.muc_tieu);
-    $('#nguong_canh_bao').val(row.nguong_canh_bao);
-    $('#don_vi_tinh').val(row.id_donvitinh);
-    $('#id_chuky').val(row.id_chuky);
-    $('#dinh_nghia').val(row.dinh_nghia);
-    $('#thu_thap').val(row.thu_thap);
-    $('#ten_tu_so').val(row.ten_tu_so);
-    $('#ten_mau_so').val(row.ten_mau_so);
-
-    // Khóa toàn bộ input
-    $('#formChiTieu')
-        .find('input, textarea, select')
-        .prop('disabled', true);
-
-    // Ẩn nút Lưu
-    $('#btnLuuChiTieu').hide();
-
-    // Đổi tiêu đề
-    $('#modalChiTieu .modal-title')
-        .text('Xem Chỉ tiêu');
-
-    // Mở cùng popup
-    $('#modalChiTieu').modal('show');
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/XemDL/',
+        type: 'POST',
+        dataType: 'json',
+        data: { ma_chi_so: row.ma_chi_so },
+        beforeSend: function () { button.prop('disabled', true); },
+        success: function (response) {
+            if (response && response.success) {
+                moPopupNhapDuLieu(response.data, true);
+            } else {
+                Swal.fire('Thông báo', (response && response.message) || 'Chưa có dữ liệu.', 'info');
+            }
+        },
+        error: function () { Swal.fire('Lỗi', 'Không thể tải dữ liệu chỉ số.', 'error'); },
+        complete: function () { button.prop('disabled', false); }
+    });
 });
 
 function resetModalChiTieu() {
@@ -697,38 +676,142 @@ $('#datatable-chiso').on('click', '.btn-nhapdl', function (e) {
         return;
     }
 
-    var originalHtml = button.html();
-
     $.ajax({
         url: $('#ULocal').val() + 'chisochatluong/NhapDL/',
         type: 'POST',
         dataType: 'json',
-        data: {
-            data: JSON.stringify([{
-                ma_chi_so: row.ma_chi_so,
-                ten_chi_so: row.ten_chi_so,
-                nguoi_duyet: $('#fullname').val()
-            }])
-        },
+        data: { ma_chi_so: row.ma_chi_so },
+        beforeSend: function () { button.prop('disabled', true); },
         success: function (response) {
-            var message = response && response.message;
-
-            if (response && (response.success || (message && message.flag))) {
-                table.ajax.reload(null, false);
-                Swal.fire('Thành công', 'Nhập chỉ tiêu thành công.', 'success');
-            } else {
-                Swal.fire('Không thể duyệt',
-                    (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
-                    'error');
-            }
+            if (response && response.success) moPopupNhapDuLieu(response.data, false);
+            else Swal.fire('Lỗi', (response && response.message) || 'Không thể tải dữ liệu.', 'error');
         },
-        error: function (xhr) {
-            var response = xhr.responseJSON;
-            var message = response && response.message;
+        error: function () { Swal.fire('Lỗi', 'Không thể tải dữ liệu nhập.', 'error'); },
+        complete: function () { button.prop('disabled', false); }
+    });
+});
 
-            Swal.fire('Lỗi',
-                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
-                'error');
+var nhapDuLieuDaLuu = {};
+var dangXemDuLieu = false;
+
+function soKyTheoChuKy(id) {
+    return ({ 1: 12, 2: 4, 3: 1, 4: 2 })[parseInt(id, 10)] || 1;
+}
+
+function tenKyTheoChuKy(id, ky) {
+    id = parseInt(id, 10);
+    if (id === 1) return 'Tháng ' + ky;
+    if (id === 2) return 'Quý ' + ky;
+    if (id === 4) return ky === 1 ? '6 tháng đầu năm' : '6 tháng cuối năm';
+    return 'Cả năm';
+}
+
+function moPopupNhapDuLieu(data, chiXem) {
+    dangXemDuLieu = chiXem === true;
+    $('#nhap_ma_chi_so').val(data.ma_chi_so);
+    $('#nhap_id_chuky').val(data.id_chuky);
+    $('#nhap_ten_chi_so').val(data.ten_chi_so + ' (' + data.ten_chuky + ')');
+    $('#nhap_label_tuso').text(data.ten_tu_so || 'Tử số');
+    $('#nhap_label_mauso').text(data.ten_mau_so || 'Mẫu số');
+    $('#xem_khia_canh').text(data.ten_khia_canh || '');
+    $('#xem_thanh_to').text(data.ten_thanh_to || '');
+    $('#xem_pham_vi').text(data.ten_pham_vi || '');
+    $('#xem_don_vi_tinh').text(data.ten_don_vi_tinh || '');
+    $('#xem_muc_tieu').text(data.muc_tieu || '');
+    $('#xem_nguong_canh_bao').text(data.nguong_canh_bao || '');
+    $('#xem_dinh_nghia').text(data.dinh_nghia || '');
+    $('#xem_thu_thap').text(data.thu_thap || '');
+    nhapDuLieuDaLuu = data.dulieu || {};
+    var cacNam = Object.keys(nhapDuLieuDaLuu).sort().reverse();
+    $('#nhap_nam')
+        .val(dangXemDuLieu && cacNam.length ? cacNam[0] : new Date().getFullYear())
+        .prop('readonly', dangXemDuLieu);
+    $('#btnLuuNhapDuLieu').toggle(!dangXemDuLieu);
+    $('#modalNhapDuLieu .modal-title').text(dangXemDuLieu ? 'Xem dữ liệu chỉ số' : 'Nhập dữ liệu chỉ số');
+    taoInputTheoChuKy();
+    $('#modalNhapDuLieu').modal('show');
+}
+
+function taoInputTheoChuKy() {
+    var id = $('#nhap_id_chuky').val();
+    var saved = nhapDuLieuDaLuu[String($('#nhap_nam').val())] || {};
+    var rows = saved.du_lieu || [];
+    var html = '';
+    for (var i = 1; i <= soKyTheoChuKy(id); i++) {
+        var item = rows[i - 1] || {};
+        var readonly = dangXemDuLieu ? ' readonly tabindex="-1"' : '';
+        html += '<tr class="nhap-ky-row">' +
+    '<td>' + tenKyTheoChuKy(id, i) + '</td>' +
+
+    '<td>' +
+        '<input type="number" min="0" step="any" ' +
+        'class="form-control nhap-tu-so" value="' + (item.tu_so != null ? item.tu_so : '') + '"' + readonly + '>' +
+    '</td>' +
+
+    '<td>' +
+        '<input type="number" min="0.0000000001" step="any" ' +
+        'class="form-control nhap-mau-so" value="' + (item.mau_so != null ? item.mau_so : '') + '"' + readonly + '>' +
+    '</td>' +
+
+    '<td>' +
+        '<input type="text" class="form-control nhap-value" ' +
+        'readonly tabindex="-1" value="' + (item.value != null ? item.value : '') + '">' +
+    '</td>' +
+'</tr>';
+    }
+    $('#nhap_dulieu_body').html(html);
+}
+
+$('#nhap_nam').on('change', taoInputTheoChuKy);
+$('#nhap_dulieu_body').on(
+    'input',
+    '.nhap-tu-so, .nhap-mau-so',
+    function () {
+        var tr = $(this).closest('tr');
+        var inputMauSo = tr.find('.nhap-mau-so')[0];
+
+        var tuSo = parseFloat(
+            tr.find('.nhap-tu-so').val()
+        );
+
+        var mauSo = parseFloat(
+            tr.find('.nhap-mau-so').val()
+        );
+
+        // Xóa thông báo lỗi cũ
+        inputMauSo.setCustomValidity('');
+
+        if (!isNaN(tuSo) && !isNaN(mauSo) && mauSo < tuSo) {
+            inputMauSo.setCustomValidity(
+                'Mẫu số phải lớn hơn hoặc bằng tử số'
+            );
+
+            inputMauSo.reportValidity();
+        }
+
+        tr.find('.nhap-value').val(
+            !isNaN(tuSo) && mauSo > 0
+                ? ((tuSo / mauSo) * 100).toFixed(2)
+                : ''
+        );
+    }
+);
+
+$('#formNhapDuLieu').on('submit', function (e) {
+    e.preventDefault();
+    var rows = [];
+    $('#nhap_dulieu_body .nhap-ky-row').each(function () {
+        rows.push({ tu_so: $(this).find('.nhap-tu-so').val(), mau_so: $(this).find('.nhap-mau-so').val() });
+    });
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/LuuNhapDL/', type: 'POST', dataType: 'json',
+        data: { ma_chi_so: $('#nhap_ma_chi_so').val(), nam: $('#nhap_nam').val(), du_lieu: JSON.stringify(rows) },
+        beforeSend: function () { $('#btnLuuNhapDuLieu').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang lưu...'); },
+        success: function (response) {
+            if (response && response.success) { $('#modalNhapDuLieu').modal('hide'); Swal.fire('Thành công', response.message, 'success'); }
+            else Swal.fire('Lỗi', (response && response.message) || 'Không thể lưu dữ liệu.', 'error');
         },
+        error: function () { Swal.fire('Lỗi', 'Có lỗi xảy ra khi lưu dữ liệu.', 'error'); },
+        complete: function () { $('#btnLuuNhapDuLieu').prop('disabled', false).html('<i class="fa fa-save"></i> Lưu dữ liệu'); }
     });
 });

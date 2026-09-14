@@ -72,6 +72,51 @@ $canApprove = (bool) $request->getAttribute("canApprove");
 	</div>
 </div>
 
+<!-- Popup nhập dữ liệu chỉ số theo chu kỳ -->
+<div class="modal fade" id="modalNhapDuLieu" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+        <form id="formNhapDuLieu">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">Nhập dữ liệu chỉ số</h4>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="nhap_ma_chi_so"><input type="hidden" id="nhap_id_chuky">
+                <div class="row">
+                    <div class="col-md-8 form-group">
+                        <label>Chỉ số: </label>
+                        <input type="text" class="form-control" id="nhap_ten_chi_so" readonly>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Năm</label>
+                        <input type="number" class="form-control" id="nhap_nam" min="2000" max="2100" required readonly>
+                    </div>
+                </div>
+                <div id="xem_thong_tin_chi_so" class="well well-sm" style="margin-bottom:15px">
+                    <div class="row">
+                        <div class="col-md-6"><strong>Khía cạnh:</strong> <span id="xem_khia_canh"></span></div>
+                        <div class="col-md-6"><strong>Thành tố:</strong> <span id="xem_thanh_to"></span></div>
+                        <div class="col-md-6"><strong>Phạm vi:</strong> <span id="xem_pham_vi"></span></div>
+                        <div class="col-md-6"><strong>Đơn vị tính:</strong> <span id="xem_don_vi_tinh"></span></div>
+                        <div class="col-md-6"><strong>Mục tiêu:</strong> <span id="xem_muc_tieu"></span></div>
+                        <div class="col-md-6"><strong>Ngưỡng cảnh báo:</strong> <span id="xem_nguong_canh_bao"></span></div>
+                        <div class="col-md-12"><strong>Định nghĩa:</strong> <span id="xem_dinh_nghia"></span></div>
+                        <div class="col-md-12"><strong>Phương pháp thu thập:</strong> <span id="xem_thu_thap"></span></div>
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="table table-bordered table-striped">
+                    <thead><tr><th style="width:18%">Kỳ</th><th id="nhap_label_tuso">Tử số</th><th id="nhap_label_mauso">Mẫu số</th><th style="width:18%">Giá trị (%)</th></tr></thead>
+                    <tbody id="nhap_dulieu_body"></tbody>
+                </table></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary" id="btnLuuNhapDuLieu"><i class="fa fa-save"></i> Lưu dữ liệu</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+
 <!-- popup -->
 <div class="modal fade" id="modalChiTieu" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">

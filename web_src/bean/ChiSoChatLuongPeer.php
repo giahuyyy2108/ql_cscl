@@ -239,5 +239,81 @@ class ChiSoChatLuongPeer
         $this->dbsql->query($sql);
         return $_chisochatluong->get("ma_chi_so");
     }
+
+    public function saveNhapLieu($maChiSo, $idUser, $duLieu)
+    {
+        global $connect;
+        $maChiSo = (int) $maChiSo;
+        $idUser = (int) $idUser;
+        $json = mysqli_real_escape_string($connect,
+            json_encode($duLieu, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $result = $this->dbsql->query(
+            "SELECT id FROM ct_chiso WHERE ma_chi_so = " . $maChiSo .
+            " AND id_user = " . $idUser . " ORDER BY id DESC LIMIT 1"
+        );
+        $row = $this->dbsql->fetch_array($result);
+        if ($row) {
+            $this->dbsql->query("UPDATE ct_chiso SET dulieu='" . $json . "' WHERE id=" . (int) $row['id']);
+            return (int) $row['id'];
+        }
+        $this->dbsql->query(
+            "INSERT INTO ct_chiso (ma_chi_so,id_user,dulieu) VALUES (" .
+            $maChiSo . "," . $idUser . ",'" . $json . "')"
+        );
+        return $this->dbsql->insert_id();
+    }
+
+    public function getNhapLieu($maChiSo, $idUser)
+    {
+        $maChiSo = (int) $maChiSo;
+        $idUser = (int) $idUser;
+        $roles = isset($_SESSION['quyen']) && is_array($_SESSION['quyen'])
+            ? $_SESSION['quyen'] : array();
+        $accessSql = in_array('chisochatluong.all', $roles, true)
+            ? ''
+            : " AND (cs.nguoi_gui = " . $idUser . " OR cs.pham_vi = 3)";
+
+        $sql = "
+            SELECT
+                cs.*,
+                ck.ten AS ten_chuky,
+                kc.ten AS ten_khia_canh,
+                tt.ten AS ten_thanh_to,
+                pv.ten AS ten_pham_vi,
+                dvt.ten AS ten_don_vi_tinh,
+                ct.dulieu
+            FROM chi_so_chat_luong cs
+            INNER JOIN chuky ck
+                ON ck.id = cs.id_chuky
+            LEFT JOIN danhmuc_kctt kc
+                ON kc.id = cs.ma_khia_canh
+            LEFT JOIN danhmuc_kctt tt
+                ON tt.id = cs.ma_thanh_to
+            LEFT JOIN phamvi pv
+                ON pv.id = cs.pham_vi
+            LEFT JOIN donvitinh dvt
+                ON dvt.id = cs.id_donvitinh
+            LEFT JOIN ct_chiso ct
+                ON ct.ma_chi_so = cs.ma_chi_so
+                AND ct.id_user = " . $idUser . "
+            WHERE cs.ma_chi_so = " . $maChiSo . "
+                AND cs.trang_thai = 2" . $accessSql . "
+            ORDER BY ct.id DESC
+            LIMIT 1
+        ";
+
+        $result = $this->dbsql->query($sql);
+        $row = $this->dbsql->fetch_array($result);
+
+        if (!$row) {
+            return false;
+        }
+
+        $row['dulieu'] = !empty($row['dulieu'])
+            ? json_decode($row['dulieu'], true)
+            : array();
+
+        return $row;
+    }
 }
 ?>

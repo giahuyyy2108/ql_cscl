@@ -254,5 +254,101 @@ class chisochatluongAction
 			"message" => $message
 		)));
 	}
+
+	public function NhapDL()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		$idUser = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+		$chiSo = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser);
+		if ($maChiSo <= 0 || $idUser <= 0 || !$chiSo) {
+			return $this->jsonNhapLieuError('Không tìm thấy chỉ số đã duyệt');
+		}
+		return $this->request->json_response(json_encode(array('success' => true, 'data' => $chiSo)));
+	}
+
+	public function LuuNhapDL()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		$nam = (int) $this->request->getParameter('nam');
+		$idUser = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+		$rows = json_decode($this->request->getParameter('du_lieu', false), true);
+		$chiSo = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser);
+		if ($maChiSo <= 0 || $idUser <= 0 || !$chiSo) return $this->jsonNhapLieuError('Không tìm thấy chỉ số đã duyệt');
+		if ($nam < 2000 || $nam > 2100 || !is_array($rows)) return $this->jsonNhapLieuError('Dữ liệu gửi lên không hợp lệ');
+
+		$soKy = $this->getSoKy((int) $chiSo['id_chuky']);
+		if (count($rows) !== $soKy) return $this->jsonNhapLieuError('Số kỳ nhập liệu không đúng với chu kỳ');
+		$duLieuKy = array();
+		foreach ($rows as $index => $row) {
+			$tuSoRaw = trim((string) ($row['tu_so'] ?? ''));
+			$mauSoRaw = trim((string) ($row['mau_so'] ?? ''));
+
+			$tuSo = null;
+			$mauSo = null;
+			$value = null;
+
+			if ($tuSoRaw !== '' && $mauSoRaw !== '') {
+				$tuSo = (float) $tuSoRaw;
+				$mauSo = (float) $mauSoRaw;
+
+				if ($mauSo <= $tuSo) {
+					return $this->jsonNhapLieuError(
+						'Mẫu số phải lớn hơn tử số'
+					);
+				}
+
+			$value = round(($tuSo / $mauSo) * 100, 2);
+			}
+			$ky = $index + 1;
+			$duLieuKy[] = array(
+				'ky' => $ky,
+				'ten_ky' => $this->getTenKy((int) $chiSo['id_chuky'], $ky),
+				'tu_so' => $tuSo,
+				'mau_so' => $mauSo,
+				'value' => $value
+			);
+		}
+		$allData = is_array($chiSo['dulieu']) ? $chiSo['dulieu'] : array();
+		$allData[(string) $nam] = array('nam' => $nam, 'id_chuky' => (int) $chiSo['id_chuky'],
+			'ten_chuky' => $chiSo['ten_chuky'], 'du_lieu' => $duLieuKy);
+		$id = $this->ChiSoPeer->saveNhapLieu($maChiSo, $idUser, $allData);
+		return $this->request->json_response(json_encode(array('success' => true, 'id' => $id, 'message' => 'Lưu dữ liệu chỉ số thành công')));
+	}
+
+	private function getSoKy($idChuKy)
+	{
+		$map = array(1 => 12, 2 => 4, 3 => 1, 4 => 2);
+		return isset($map[$idChuKy]) ? $map[$idChuKy] : 1;
+	}
+
+	private function getTenKy($idChuKy, $ky)
+	{
+		if ($idChuKy === 1) return 'Tháng ' . $ky;
+		if ($idChuKy === 2) return 'Quý ' . $ky;
+		if ($idChuKy === 4) return $ky === 1 ? '6 tháng đầu năm' : '6 tháng cuối năm';
+		return 'Cả năm';
+	}
+
+	private function jsonNhapLieuError($text)
+	{
+		return $this->request->json_response(json_encode(array('success' => false, 'message' => $text)));
+	}
+
+	public function XemDL()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		$idUser = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+		if ($maChiSo <= 0 || $idUser <= 0) {
+			return $this->jsonNhapLieuError('Dữ liệu không hợp lệ');
+		}
+
+		$data = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser);
+		$coDuLieu = $data && !empty($data['dulieu']);
+		return $this->request->json_response(json_encode(array(
+			'success' => $coDuLieu,
+			'data' => $coDuLieu ? $data : null,
+			'message' => $coDuLieu ? '' : 'Bạn chưa nhập dữ liệu cho chỉ số này'
+		)));
+	}
 }
 ?>
