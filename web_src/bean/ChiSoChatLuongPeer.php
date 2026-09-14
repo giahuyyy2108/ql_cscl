@@ -70,10 +70,11 @@ class ChiSoChatLuongPeer
             $roles = $roles === "" ? array() : explode(",", $roles);
         }
 
-        $hasAllPermission = in_array("chisochatluong.all", $roles);
+        $hasAllPermission = in_array("chisochatluong.all", $roles, true);
+
         $where = $hasAllPermission
-            ? "WHERE cs.trang_thai != 0"
-            : " WHERE (cs.nguoi_gui = " . $userId . " OR cs.pham_vi = 3 )";
+            ? " WHERE (cs.trang_thai != 0 OR cs.nguoi_gui = " . $userId . ")"
+            : " WHERE (cs.nguoi_gui = " . $userId . " OR cs.pham_vi = 3)";
 
 		$sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
                        FROM chi_so_chat_luong cs

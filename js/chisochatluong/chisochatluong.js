@@ -7,7 +7,7 @@ function applyPhamViPermission() {
     var canChoose = phamVi.attr('data-can-choose') === '1';
 
     if (!canChoose) {
-        phamVi.val('3').prop('disabled', true);
+        phamVi.val('1').prop('disabled', true);
     }
 }
 
@@ -207,6 +207,15 @@ table = $('#datatable-chiso').DataTable({
                         data-toggle="tooltip"
                         aria-label="Từ chối">
                         <i class="fa fa-remove"></i>
+                    </button>
+                    <button type="button"
+                        class="btn btn-primary btn-sm btn-nhapdl"
+                        data-id="${row.ma_chi_so}"
+                        title="Nhập liệu"
+                        ${(data.trang_thai.maTrangThai==2)? '' : "hidden" }
+                        data-toggle="tooltip"
+                        aria-label="nhập liệu">
+                        <i class="fa fa-pencil-square-o"></i>
                     </button>
                 `;
             }
@@ -655,6 +664,58 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
             if (response && (response.success || (message && message.flag))) {
                 table.ajax.reload(null, false);
                 Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
+            } else {
+                Swal.fire('Không thể duyệt',
+                    (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
+                    'error');
+            }
+        },
+        error: function (xhr) {
+            var response = xhr.responseJSON;
+            var message = response && response.message;
+
+            Swal.fire('Lỗi',
+                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
+                'error');
+        },
+    });
+});
+
+$('#datatable-chiso').on('click', '.btn-nhapdl', function (e) {
+    e.preventDefault();
+
+    var button = $(this);
+    var tr = button.closest('tr');
+
+    if (tr.hasClass('child')) {
+        tr = tr.prev();
+    }
+
+    var row = table.row(tr).data();
+
+    if (!row || !row.ma_chi_so || button.prop('disabled')) {
+        return;
+    }
+
+    var originalHtml = button.html();
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/NhapDL/',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            data: JSON.stringify([{
+                ma_chi_so: row.ma_chi_so,
+                ten_chi_so: row.ten_chi_so,
+                nguoi_duyet: $('#fullname').val()
+            }])
+        },
+        success: function (response) {
+            var message = response && response.message;
+
+            if (response && (response.success || (message && message.flag))) {
+                table.ajax.reload(null, false);
+                Swal.fire('Thành công', 'Nhập chỉ tiêu thành công.', 'success');
             } else {
                 Swal.fire('Không thể duyệt',
                     (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
