@@ -117,6 +117,15 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
+    public function isChiSoPhamViUser($maChiSo, $idUser)
+    {
+        $result = $this->dbsql->query(
+            "SELECT ma_chi_so FROM chi_so_chat_luong WHERE ma_chi_so=" . (int) $maChiSo .
+            " AND nguoi_gui=" . (int) $idUser . " AND pham_vi=1 LIMIT 1"
+        );
+        return $this->dbsql->num_rows($result) > 0;
+    }
+
     function Save($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
             return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";

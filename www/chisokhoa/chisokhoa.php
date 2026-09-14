@@ -4,13 +4,29 @@
     <div class="x_content">
         <div class="row" style="margin-bottom:15px">
             <div class="col-md-6 col-sm-8 col-xs-12">
-                <label for="id_user">Người dùng</label>
-                <select id="id_user" class="form-control">
-                    <option value="">-- Chọn người dùng --</option>
-                    <?php foreach ($listUser as $user): ?>
-                        <option value="<?= (int) $user->get('id') ?>"><?= htmlspecialchars($user->get('hoTen')) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <label>Khoa Phòng</label>
+                <input type="hidden" id="id_user" value="">
+                <div class="dropdown" id="dropdownUserKhoa">
+                    <button type="button" class="btn btn-default btn-block dropdown-toggle text-left" data-toggle="dropdown" style="text-align:left">
+                        <span id="tenUserKhoa">-- Chọn người dùng --</span>
+                        <span class="caret pull-right" style="margin-top:8px"></span>
+                    </button>
+                    <ul class="dropdown-menu" style="width:100%;max-height:320px;overflow-y:auto">
+                        <li style="padding:8px" onclick="event.stopPropagation()">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                <input type="text" id="timUserKhoa" class="form-control" placeholder="Tìm người dùng..." autocomplete="off">
+                            </div>
+                        </li>
+                        <li class="divider"></li>
+                        <?php foreach ($listUser as $user): ?>
+                            <li class="user-khoa-option" data-id="<?= (int) $user->get('id') ?>" data-name="<?= htmlspecialchars($user->get('hoTen')) ?>">
+                                <a href="#"><?= htmlspecialchars($user->get('hoTen')) ?></a>
+                            </li>
+                        <?php endforeach; ?>
+                        <li class="user-khoa-empty text-muted" style="display:none;padding:8px 15px">Không tìm thấy người dùng</li>
+                    </ul>
+                </div>
             </div>
             <div class="col-md-2 col-sm-4 col-xs-12" style="padding-top:25px">
                 <button type="button" id="btnTimChiSoKhoa" class="btn btn-primary"><i class="fa fa-search"></i> Tìm</button>
@@ -35,6 +51,16 @@
             <div class="col-md-6 form-group"><label>Ngưỡng cảnh báo</label><input id="xem_ck_nguong" class="form-control" readonly></div>
             <div class="col-md-12 form-group"><label>Định nghĩa</label><textarea id="xem_ck_dinhnghia" class="form-control" rows="3" readonly></textarea></div>
             <div class="col-md-12 form-group"><label>Phương pháp thu thập</label><textarea id="xem_ck_thuthap" class="form-control" rows="3" readonly></textarea></div>
+            <div class="col-md-4 form-group">
+                <label>Năm dữ liệu</label>
+                <select id="xem_ck_nam" class="form-control"></select>
+            </div>
+            <div class="col-md-12">
+                <div class="table-responsive"><table class="table table-bordered table-striped">
+                    <thead><tr><th>Kỳ</th><th id="xem_ck_label_tuso">Tử số</th><th id="xem_ck_label_mauso">Mẫu số</th><th>Giá trị (%)</th></tr></thead>
+                    <tbody id="xem_ck_chuky_body"></tbody>
+                </table></div>
+            </div>
         </div></div>
         <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button></div>
     </div></div>

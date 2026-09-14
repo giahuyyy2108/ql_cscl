@@ -28,8 +28,32 @@ class chisokhoaAction
 
     public function getData()
     {
+        if (!$this->request->checkRole('chisochatluong.all')) {
+            return $this->request->json_response(json_encode(array('data' => array())));
+        }
         $idUser = (int) $this->request->getParameter('id_user');
         $data = $idUser > 0 ? $this->chiSoPeer->getListChiSoUser($idUser) : array();
         return $this->request->json_response(json_encode(array('data' => $data)));
+    }
+
+    public function XemDL()
+    {
+        if (!$this->request->checkRole('chisochatluong.all')) {
+            return $this->request->json_response(json_encode(array('success' => false, 'message' => 'Bạn không có quyền xem dữ liệu Khoa/Phòng')));
+        }
+        $maChiSo = (int) $this->request->getParameter('ma_chi_so');
+        $idUser = (int) $this->request->getParameter('id_user');
+        if ($maChiSo <= 0 || $idUser <= 0) {
+            return $this->request->json_response(json_encode(array('success' => false, 'message' => 'Dữ liệu không hợp lệ')));
+        }
+        if (!$this->chiSoPeer->isChiSoPhamViUser($maChiSo, $idUser)) {
+            return $this->request->json_response(json_encode(array('success' => false, 'message' => 'Chỉ số không thuộc người dùng đã chọn')));
+        }
+        $data = $this->chiSoPeer->getNhapLieu($maChiSo, $idUser, false);
+        return $this->request->json_response(json_encode(array(
+            'success' => (bool) $data,
+            'data' => $data ? $data : null,
+            'message' => $data ? '' : 'Không tìm thấy chỉ số'
+        )));
     }
 }
