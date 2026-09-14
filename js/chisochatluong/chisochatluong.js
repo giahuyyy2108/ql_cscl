@@ -693,6 +693,8 @@ $('#datatable-chiso').on('click', '.btn-nhapdl', function (e) {
 
 var nhapDuLieuDaLuu = {};
 var dangXemDuLieu = false;
+var mucTieuDangXem = '';
+var nguongCanhBaoDangXem = '';
 
 function soKyTheoChuKy(id) {
     return ({ 1: 12, 2: 4, 3: 1, 4: 2 })[parseInt(id, 10)] || 1;
@@ -708,6 +710,8 @@ function tenKyTheoChuKy(id, ky) {
 
 function moPopupNhapDuLieu(data, chiXem) {
     dangXemDuLieu = chiXem === true;
+    mucTieuDangXem = data.muc_tieu || '';
+    nguongCanhBaoDangXem = data.nguong_canh_bao || '';
     $('#nhap_ma_chi_so').val(data.ma_chi_so);
     $('#nhap_id_chuky').val(data.id_chuky);
     $('#nhap_ten_chi_so').val(data.ten_chi_so + ' (' + data.ten_chuky + ')');
@@ -717,8 +721,8 @@ function moPopupNhapDuLieu(data, chiXem) {
     $('#xem_thanh_to').text(data.ten_thanh_to || '');
     $('#xem_pham_vi').text(data.ten_pham_vi || '');
     $('#xem_don_vi_tinh').text(data.ten_don_vi_tinh || '');
-    $('#xem_muc_tieu').text(data.muc_tieu || '');
-    $('#xem_nguong_canh_bao').text(data.nguong_canh_bao || '');
+    $('#xem_muc_tieu').text(data.muc_tieu  + "%" || '');
+    $('#xem_nguong_canh_bao').text(data.nguong_canh_bao  + "%"|| '');
     $('#xem_dinh_nghia').text(data.dinh_nghia || '');
     $('#xem_thu_thap').text(data.thu_thap || '');
     nhapDuLieuDaLuu = data.dulieu || {};
@@ -730,6 +734,39 @@ function moPopupNhapDuLieu(data, chiXem) {
     $('#modalNhapDuLieu .modal-title').text(dangXemDuLieu ? 'Xem dữ liệu chỉ số' : 'Nhập dữ liệu chỉ số');
     taoInputTheoChuKy();
     $('#modalNhapDuLieu').modal('show');
+}
+
+function tachDieuKien(value, toanTuMacDinh) {
+    var text = String(value == null ? '' : value).trim().replace(/%/g, '').replace(',', '.');
+    var match = text.match(/^(>=|<=|>|<|=)?\s*(-?\d+(?:\.\d+)?)$/);
+    if (!match) return null;
+    return { toanTu: match[1] || toanTuMacDinh, moc: Number(match[2]) };
+}
+
+function thoaDieuKien(giaTri, dieuKien) {
+    if (!dieuKien) return false;
+    if (dieuKien.toanTu === '>') return giaTri > dieuKien.moc;
+    if (dieuKien.toanTu === '>=') return giaTri >= dieuKien.moc;
+    if (dieuKien.toanTu === '<') return giaTri < dieuKien.moc;
+    if (dieuKien.toanTu === '<=') return giaTri <= dieuKien.moc;
+    return giaTri === dieuKien.moc;
+}
+
+function toMauGiaTri(input, value) {
+    input.removeClass('nhap-value-xanh nhap-value-do nhap-value-vang');
+    var text = String(value == null ? '' : value).trim().replace(',', '.');
+    if (!dangXemDuLieu || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+
+    var giaTri = Number(text);
+    var mucTieu = tachDieuKien(mucTieuDangXem, '>');
+    var canhBao = tachDieuKien(nguongCanhBaoDangXem, '<');
+    if (!mucTieu && !canhBao) return;
+    if (!mucTieu) mucTieu = { toanTu: '>', moc: canhBao.moc };
+    if (!canhBao) canhBao = { toanTu: '<', moc: mucTieu.moc };
+
+    if (thoaDieuKien(giaTri, mucTieu)) input.addClass('nhap-value-xanh');
+    else if (thoaDieuKien(giaTri, canhBao)) input.addClass('nhap-value-do');
+    else if (mucTieu && canhBao) input.addClass('nhap-value-vang');
 }
 
 function taoInputTheoChuKy() {
@@ -760,6 +797,9 @@ function taoInputTheoChuKy() {
 '</tr>';
     }
     $('#nhap_dulieu_body').html(html);
+    $('#nhap_dulieu_body .nhap-value').each(function () {
+        toMauGiaTri($(this), $(this).val());
+    });
 }
 
 $('#nhap_nam').on('change', taoInputTheoChuKy);

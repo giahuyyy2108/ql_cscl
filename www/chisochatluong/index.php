@@ -73,6 +73,11 @@ $canApprove = (bool) $request->getAttribute("canApprove");
 </div>
 
 <!-- Popup nhập dữ liệu chỉ số theo chu kỳ -->
+<style>
+    #modalNhapDuLieu .nhap-value-xanh { background:#dff0d8; color:#3c763d; border-color:#3c763d; font-weight:600; }
+    #modalNhapDuLieu .nhap-value-do { background:#f2dede; color:#a94442; border-color:#a94442; font-weight:600; }
+    #modalNhapDuLieu .nhap-value-vang { background:#fcf8e3; color:#8a6d3b; border-color:#8a6d3b; font-weight:600; }
+</style>
 <div class="modal fade" id="modalNhapDuLieu" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
         <form id="formNhapDuLieu">

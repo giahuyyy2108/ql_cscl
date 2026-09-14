@@ -291,7 +291,7 @@ class chisochatluongAction
 				$tuSo = (float) $tuSoRaw;
 				$mauSo = (float) $mauSoRaw;
 
-				if ($mauSo <= $tuSo) {
+				if ($mauSo <	 $tuSo) {
 					return $this->jsonNhapLieuError(
 						'Mẫu số phải lớn hơn tử số'
 					);
