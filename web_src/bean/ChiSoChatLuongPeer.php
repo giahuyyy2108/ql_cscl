@@ -95,6 +95,28 @@ class ChiSoChatLuongPeer
 		return $arrList;
     }
 
+    public function getListChiSoUser($idUser)
+    {
+        $idUser = (int) $idUser;
+        $sql = "SELECT cs.*, tt.tenTrangThai, tt.tag,
+                       ck.ten AS ten_chuky, dvt.ten AS ten_don_vi_tinh,
+                       u_tao.hoTen AS ten_khoa_phong
+                FROM chi_so_chat_luong cs
+                INNER JOIN user u_tao ON u_tao.id = cs.nguoi_gui
+                LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
+                LEFT JOIN chuky ck ON ck.id = cs.id_chuky
+                LEFT JOIN donvitinh dvt ON dvt.id = cs.id_donvitinh
+                WHERE cs.pham_vi = 1
+                  AND cs.nguoi_gui = " . $idUser . "
+                ORDER BY cs.ma_chi_so DESC";
+        $result = $this->dbsql->query($sql);
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $items[] = $row;
+        }
+        return $items;
+    }
+
     function Save($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
             return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
@@ -263,13 +285,15 @@ class ChiSoChatLuongPeer
         return $this->dbsql->insert_id();
     }
 
-    public function getNhapLieu($maChiSo, $idUser)
+    public function getNhapLieu($maChiSo, $idUser, $chiLayDaDuyet = true)
     {
         $maChiSo = (int) $maChiSo;
         $idUser = (int) $idUser;
         $roles = isset($_SESSION['quyen']) && is_array($_SESSION['quyen'])
             ? $_SESSION['quyen'] : array();
-        $accessSql = in_array('chisochatluong.all', $roles, true)
+        $hasAllPermission = (isset($_SESSION['AdminType']) && (int) $_SESSION['AdminType'] === 1)
+            || in_array('chisochatluong.all', $roles, true);
+        $accessSql = $hasAllPermission
             ? ''
             : " AND (
                     cs.nguoi_gui = " . $idUser . "
@@ -282,6 +306,7 @@ class ChiSoChatLuongPeer
                            OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(nq_all.quyen, ''), ' ', '')) > 0
                     )
                 )";
+        $approvedSql = $chiLayDaDuyet ? " AND cs.trang_thai = 2" : "";
 
         $sql = "
             SELECT
@@ -306,8 +331,7 @@ class ChiSoChatLuongPeer
             LEFT JOIN ct_chiso ct
                 ON ct.ma_chi_so = cs.ma_chi_so
                 AND ct.id_user = " . $idUser . "
-            WHERE cs.ma_chi_so = " . $maChiSo . "
-                AND cs.trang_thai = 2" . $accessSql . "
+            WHERE cs.ma_chi_so = " . $maChiSo . $approvedSql . $accessSql . "
             ORDER BY ct.id DESC
             LIMIT 1
         ";

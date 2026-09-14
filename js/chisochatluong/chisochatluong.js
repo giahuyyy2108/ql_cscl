@@ -213,6 +213,7 @@ table = $('#datatable-chiso').DataTable({
                         data-id="${row.ma_chi_so}"
                         title="Nhập liệu"
                         ${(data.trang_thai.maTrangThai==2)? '' : "hidden" }
+                        hidden
                         data-toggle="tooltip"
                         aria-label="nhập liệu">
                         <i class="fa fa-pencil-square-o"></i>

@@ -117,10 +117,10 @@ class chisochatluongAction
 			}
 		}
 
-		// Nguoi khong co quyen xem/toan quyen chi duoc tao chi tieu o pham vi 3.
+		// Người không có quyền toàn viện chỉ được tạo chỉ tiêu phạm vi Khoa/Phòng (1).
 		// Khong tin vao gia tri pham_vi gui tu trinh duyet.
 		if (!$this->request->checkRole("chisochatluong.all")) {
-			$chiso->set("pham_vi", 3);
+			$chiso->set("pham_vi", 1);
 		}
 
 		if (trim($chiso->get("ten_chi_so")) === "") {
@@ -342,12 +342,11 @@ class chisochatluongAction
 			return $this->jsonNhapLieuError('Dữ liệu không hợp lệ');
 		}
 
-		$data = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser);
-		$coDuLieu = $data && !empty($data['dulieu']);
+		$data = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser, false);
 		return $this->request->json_response(json_encode(array(
-			'success' => $coDuLieu,
-			'data' => $coDuLieu ? $data : null,
-			'message' => $coDuLieu ? '' : 'Bạn chưa nhập dữ liệu cho chỉ số này'
+			'success' => (bool) $data,
+			'data' => $data ? $data : null,
+			'message' => $data ? '' : 'Không tìm thấy chỉ số hoặc bạn không có quyền xem'
 		)));
 	}
 }
