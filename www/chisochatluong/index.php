@@ -78,6 +78,7 @@ $canApprove = (bool) $request->getAttribute("canApprove");
     #modalNhapDuLieu .nhap-value-do { background:#f2dede; color:#a94442; border-color:#a94442; font-weight:600; }
     #modalNhapDuLieu .nhap-value-vang { background:#fcf8e3; color:#8a6d3b; border-color:#8a6d3b; font-weight:600; }
 </style>
+<!-- popup nhập liệu -->
 <div class="modal fade" id="modalNhapDuLieu" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
         <form id="formNhapDuLieu">
@@ -109,10 +110,13 @@ $canApprove = (bool) $request->getAttribute("canApprove");
                         <div class="col-md-12"><strong>Phương pháp thu thập:</strong> <span id="xem_thu_thap"></span></div>
                     </div>
                 </div>
-                <div class="table-responsive"><table class="table table-bordered table-striped">
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
                     <thead><tr><th style="width:18%">Kỳ</th><th id="nhap_label_tuso">Tử số</th><th id="nhap_label_mauso">Mẫu số</th><th style="width:18%">Giá trị (%)</th></tr></thead>
                     <tbody id="nhap_dulieu_body"></tbody>
-                </table></div>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
@@ -122,7 +126,7 @@ $canApprove = (bool) $request->getAttribute("canApprove");
     </div></div>
 </div>
 
-<!-- popup -->
+<!-- popup thêm chỉ tiêu -->
 <div class="modal fade" id="modalChiTieu" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">

@@ -840,12 +840,20 @@ $('#nhap_dulieu_body').on(
 $('#formNhapDuLieu').on('submit', function (e) {
     e.preventDefault();
     var rows = [];
+    console.log('o day');
     $('#nhap_dulieu_body .nhap-ky-row').each(function () {
-        rows.push({ tu_so: $(this).find('.nhap-tu-so').val(), mau_so: $(this).find('.nhap-mau-so').val() });
+        rows.push(
+            {   tu_so: $(this).find('.nhap-tu-so').val(), 
+                mau_so: $(this).find('.nhap-mau-so').val(), 
+                thoigian: $(this).find('.nhap-mau-so').val(), 
+            });
     });
     $.ajax({
         url: $('#ULocal').val() + 'chisochatluong/LuuNhapDL/', type: 'POST', dataType: 'json',
-        data: { ma_chi_so: $('#nhap_ma_chi_so').val(), nam: $('#nhap_nam').val(), du_lieu: JSON.stringify(rows) },
+        data: 
+            {   ma_chi_so: $('#nhap_ma_chi_so').val(), 
+                nam: $('#nhap_nam').val(), 
+                du_lieu: JSON.stringify(rows) },
         beforeSend: function () { $('#btnLuuNhapDuLieu').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang lưu...'); },
         success: function (response) {
             if (response && response.success) { $('#modalNhapDuLieu').modal('hide'); Swal.fire('Thành công', response.message, 'success'); }

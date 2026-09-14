@@ -271,7 +271,17 @@ class ChiSoChatLuongPeer
             ? $_SESSION['quyen'] : array();
         $accessSql = in_array('chisochatluong.all', $roles, true)
             ? ''
-            : " AND (cs.nguoi_gui = " . $idUser . " OR cs.pham_vi = 3)";
+            : " AND (
+                    cs.nguoi_gui = " . $idUser . "
+                    OR cs.pham_vi = 3
+                    OR cs.nguoi_gui IN (
+                        SELECT u_all.id
+                        FROM user u_all
+                        LEFT JOIN nhomquyen nq_all ON nq_all.maNQ = u_all.maNQ
+                        WHERE FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(u_all.quyen, ''), ' ', '')) > 0
+                           OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(nq_all.quyen, ''), ' ', '')) > 0
+                    )
+                )";
 
         $sql = "
             SELECT
@@ -314,6 +324,105 @@ class ChiSoChatLuongPeer
             : array();
 
         return $row;
+    }
+
+    /** Danh sach chi so theo thang va trang thai nhap cua user trong thang hien tai. */
+    public function getChiTieuThang($idUser, $nam, $thang)
+    {
+        $idUser = (int) $idUser;
+        $nam = (int) $nam;
+        $thang = (int) $thang;
+        $dauThangSau = date('Y-m-01', strtotime(sprintf('%04d-%02d-01 +1 month', $nam, $thang)));
+        $roles = isset($_SESSION['quyen']) && is_array($_SESSION['quyen'])
+            ? $_SESSION['quyen'] : array();
+        $accessSql = in_array('chisochatluong.all', $roles, true)
+            ? ''
+            : " AND (
+                    cs.nguoi_gui = " . $idUser . "
+                    OR cs.pham_vi = 3
+                    OR cs.nguoi_gui IN (
+                        SELECT u_all.id
+                        FROM user u_all
+                        LEFT JOIN nhomquyen nq_all ON nq_all.maNQ = u_all.maNQ
+                        WHERE FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(u_all.quyen, ''), ' ', '')) > 0
+                           OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(nq_all.quyen, ''), ' ', '')) > 0
+                    )
+                )";
+
+        $sql = "SELECT cs.ma_chi_so, cs.ten_chi_so, cs.muc_tieu,
+                       cs.nguong_canh_bao, cs.ten_tu_so, cs.ten_mau_so,
+                       cs.pham_vi, pv.ten AS ten_pham_vi, dvt.ten AS ten_don_vi_tinh,
+                       (SELECT ct.dulieu FROM ct_chiso ct
+                        WHERE ct.ma_chi_so = cs.ma_chi_so AND ct.id_user = " . $idUser . "
+                        ORDER BY ct.id DESC LIMIT 1) AS dulieu
+                FROM chi_so_chat_luong cs
+                LEFT JOIN donvitinh dvt ON dvt.id = cs.id_donvitinh
+                LEFT JOIN phamvi pv ON pv.id = cs.pham_vi
+                WHERE cs.trang_thai = 2
+                  AND cs.id_chuky = 1
+                  AND cs.created_at < '" . $dauThangSau . "'" . $accessSql . "
+                ORDER BY cs.ten_chi_so ASC";
+        $result = $this->dbsql->query($sql);
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $json = !empty($row['dulieu']) ? json_decode($row['dulieu'], true) : array();
+            $duLieuThang = null;
+            if (is_array($json) && isset($json[(string) $nam]['du_lieu'][$thang - 1])) {
+                $duLieuThang = $json[(string) $nam]['du_lieu'][$thang - 1];
+            }
+            $row['du_lieu_thang'] = $duLieuThang;
+            $row['da_nhap'] = is_array($duLieuThang)
+                && array_key_exists('tu_so', $duLieuThang)
+                && array_key_exists('mau_so', $duLieuThang)
+                && $duLieuThang['tu_so'] !== null && $duLieuThang['tu_so'] !== ''
+                && $duLieuThang['mau_so'] !== null && $duLieuThang['mau_so'] !== '';
+            unset($row['dulieu']);
+            $items[] = $row;
+        }
+        usort($items, function ($a, $b) {
+            if ($a['da_nhap'] === $b['da_nhap']) return 0;
+            return $a['da_nhap'] ? 1 : -1;
+        });
+        return $items;
+    }
+
+    /** Cap nhat duy nhat thang hien tai, giu nguyen du lieu cac thang khac. */
+    public function saveChiTieuThang($maChiSo, $idUser, $nam, $thang, $tuSo, $mauSo)
+    {
+        $chiSo = $this->getNhapLieu($maChiSo, $idUser);
+        if (!$chiSo || (int) $chiSo['id_chuky'] !== 1) return false;
+        $thangCanNhap = sprintf('%04d-%02d-01', (int) $nam, (int) $thang);
+        $thangBatDau = date('Y-m-01', strtotime($chiSo['created_at']));
+        if ($thangCanNhap < $thangBatDau) return false;
+
+        $allData = is_array($chiSo['dulieu']) ? $chiSo['dulieu'] : array();
+        if (!isset($allData[(string) $nam]) || !is_array($allData[(string) $nam])) {
+            $allData[(string) $nam] = array(
+                'nam' => (int) $nam,
+                'id_chuky' => 1,
+                'ten_chuky' => $chiSo['ten_chuky'],
+                'du_lieu' => array()
+            );
+        }
+        if (!isset($allData[(string) $nam]['du_lieu']) || !is_array($allData[(string) $nam]['du_lieu'])) {
+            $allData[(string) $nam]['du_lieu'] = array();
+        }
+        for ($i = 0; $i < 12; $i++) {
+            if (!isset($allData[(string) $nam]['du_lieu'][$i])) {
+                $allData[(string) $nam]['du_lieu'][$i] = array(
+                    'ky' => $i + 1, 'ten_ky' => 'Tháng ' . ($i + 1),
+                    'tu_so' => null, 'mau_so' => null, 'value' => null
+                );
+            }
+        }
+        $allData[(string) $nam]['du_lieu'][$thang - 1] = array(
+            'ky' => (int) $thang,
+            'ten_ky' => 'Tháng ' . (int) $thang,
+            'tu_so' => (float) $tuSo,
+            'mau_so' => (float) $mauSo,
+            'value' => round(((float) $tuSo / (float) $mauSo) * 100, 2)
+        );
+        return $this->saveNhapLieu($maChiSo, $idUser, $allData);
     }
 }
 ?>
