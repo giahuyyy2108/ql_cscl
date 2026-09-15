@@ -366,6 +366,14 @@ class ChiSoChatLuongPeer
         $nam = (int) $nam;
         $thang = (int) $thang;
         $dauThangSau = date('Y-m-01', strtotime(sprintf('%04d-%02d-01 +1 month', $nam, $thang)));
+        $quy = (int) ceil($thang / 3);
+        $thangDauQuySau = $quy * 3 + 1;
+        $namDauQuySau = $nam;
+        if ($thangDauQuySau > 12) {
+            $thangDauQuySau = 1;
+            $namDauQuySau++;
+        }
+        $dauQuySau = sprintf('%04d-%02d-01', $namDauQuySau, $thangDauQuySau);
         $roles = isset($_SESSION['quyen']) && is_array($_SESSION['quyen'])
             ? $_SESSION['quyen'] : array();
         $accessSql = in_array('chisochatluong.all', $roles, true)
@@ -395,7 +403,11 @@ class ChiSoChatLuongPeer
                 LEFT JOIN phamvi pv ON pv.id = cs.pham_vi
                 WHERE cs.trang_thai = 2
                   AND cs.id_chuky IN (1, 2)
-                  AND cs.created_at < '" . $dauThangSau . "'" . $accessSql . "
+                  AND (
+                        (cs.id_chuky = 1 AND COALESCE(cs.thoi_gian_duyet, cs.created_at) < '" . $dauThangSau . "')
+                        OR
+                        (cs.id_chuky = 2 AND COALESCE(cs.thoi_gian_duyet, cs.created_at) < '" . $dauQuySau . "')
+                  )" . $accessSql . "
                 ORDER BY cs.ten_chi_so ASC";
         $result = $this->dbsql->query($sql);
         $items = array();
@@ -429,14 +441,16 @@ class ChiSoChatLuongPeer
     {
         $chiSo = $this->getNhapLieu($maChiSo, $idUser);
         if (!$chiSo || !in_array((int) $chiSo['id_chuky'], array(1, 2), true)) return false;
-        $thangCanNhap = sprintf('%04d-%02d-01', (int) $nam, (int) $thang);
-        $thangBatDau = date('Y-m-01', strtotime($chiSo['created_at']));
-        if ($thangCanNhap < $thangBatDau) return false;
-
         $idChuKy = (int) $chiSo['id_chuky'];
         $soKy = $idChuKy === 2 ? 4 : 12;
         $ky = $idChuKy === 2 ? (int) ceil($thang / 3) : (int) $thang;
         $tenKy = $idChuKy === 2 ? 'Quý ' . $ky : 'Tháng ' . $ky;
+        $ngayDuyet = !empty($chiSo['thoi_gian_duyet'])
+            ? $chiSo['thoi_gian_duyet'] : $chiSo['created_at'];
+        $namDuyet = (int) date('Y', strtotime($ngayDuyet));
+        $thangDuyet = (int) date('n', strtotime($ngayDuyet));
+        $kyDuyet = $idChuKy === 2 ? (int) ceil($thangDuyet / 3) : $thangDuyet;
+        if ((int) $nam < $namDuyet || ((int) $nam === $namDuyet && $ky < $kyDuyet)) return false;
 
         $allData = is_array($chiSo['dulieu']) ? $chiSo['dulieu'] : array();
         if (!isset($allData[(string) $nam]) || !is_array($allData[(string) $nam])) {

@@ -76,34 +76,71 @@ table = $('#datatable-chiso').DataTable({
     },
     responsive: true,
     autoWidth: false,
+    columnDefs: [
+        {
+            targets: -1,
+            responsivePriority: 1,
+            className: 'text-nowrap dt-chiso-actions',
+            width: '190px'
+        },
+        {
+            targets: 1,
+            responsivePriority: 2
+        },
+        {
+            targets: 0,
+            responsivePriority: 3
+        }
+    ],
     columns: [
-        { data: 'ma_chi_so' },
-        { data: 'ten_chi_so' },
         { 
+            // data: 'ma_chi_so'
+            "targets": 0,
+            "width": '5%', 
+            "className": "text-center",
+            "sortable": false,
+            "render": function ( data, type, row, meta ) {	
+                return (meta.row + 1);//[row].join('');
+			} 
+        },
+        { 
+            "targets": 1,
+			"width": '100%',
+			"className": "dt-chiso-name",
+            data: 'ten_chi_so' 
+        },
+        { 
+			"width": '15%',
             data: 'ma_khia_canh',
             render: function (data, type, row) {
                 return $('#ma_khia_canh option[value="' + data + '"]').text() || data;
             }
         },
         { 
+
+			"width": '15%',
             data: 'ma_thanh_to',
             render: function (data, type, row) {
                 return $('#ma_thanh_to option[value="' + data + '"]').text() || data;
             }
         },
         { 
+
+			"width": '15%',
             data: 'pham_vi',
             render: function (data, type, row) {
                 return $('#pham_vi option[value="' + data + '"]').text() || data;
             }
         },
         {
+			"width": '5%',
             data: 'id_donvitinh',
             render: function (data) {
                 return getOptionText('don_vi_tinh', data);
             }
         },
         { 
+			"width": '15%',
             data: 'id_chuky',
             render: function (data, type, row) {
                 return $('#id_chuky option[value="' + data + '"]').text() || data;

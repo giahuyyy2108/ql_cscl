@@ -3,6 +3,20 @@ $thangHienTai = (int) $request->getAttribute('thangHienTai');
 $namHienTai = (int) $request->getAttribute('namHienTai');
 ?>
 <div class="x_panel">
+    <style>
+        #datatable-chitieu-thang th:nth-child(2),
+        #datatable-chitieu-thang td.dt-chitieu-name {
+            width: 22%;
+            max-width: 260px;
+            white-space: normal;
+            word-break: break-word;
+        }
+        #datatable-chitieu-thang th:last-child,
+        #datatable-chitieu-thang td.dt-chitieu-actions {
+            min-width: 110px;
+            white-space: nowrap;
+        }
+    </style>
     <div class="x_title">
         <h2>Chỉ tiêu năm <?= $namHienTai ?></h2>
         <div class="clearfix"></div>

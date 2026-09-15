@@ -4,6 +4,24 @@ tableChiTieuThang = $('#datatable-chitieu-thang').DataTable({
     ordering: false,
     responsive: true,
     autoWidth: false,
+    columnDefs: [
+        {
+            targets: -1,
+            responsivePriority: 1,
+            className: 'text-nowrap text-center dt-chitieu-actions',
+            width: '110px'
+        },
+        {
+            targets: 1,
+            responsivePriority: 2,
+            className: 'dt-chitieu-name',
+            width: '22%'
+        },
+        {
+            targets: [0, 3, 6, 7],
+            className: 'text-center'
+        }
+    ],
     ajax: {
         url: $('#ULocal').val() + 'chitieu/getData/',
         type: 'POST',
@@ -20,7 +38,16 @@ tableChiTieuThang = $('#datatable-chitieu-thang').DataTable({
         }
     },
     columns: [
-        { data: 'ma_chi_so' },
+        { 
+            // data: 'ma_chi_so'
+            "targets": 0,
+            "width": '5%', 
+            "className": "text-center",
+            "sortable": false,
+            "render": function ( data, type, row, meta ) {	
+                return (meta.row + 1);//[row].join('');
+			}
+        },
         { data: 'ten_chi_so' },
         {
             data: 'ten_pham_vi',

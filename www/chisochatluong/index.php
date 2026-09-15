@@ -14,6 +14,23 @@ $canApprove = (bool) $request->getAttribute("canApprove");
 
 
 <div class="x_panel">
+	<style>
+		#datatable-chiso th:last-child,
+		#datatable-chiso td.dt-chiso-actions {
+			white-space: nowrap;
+			min-width: 190px;
+		}
+		#datatable-chiso td.dt-chiso-actions .btn {
+			margin: 1px 2px 1px 0;
+		}
+		#datatable-chiso th:nth-child(2),
+		#datatable-chiso td.dt-chiso-name {
+			width: 12%;
+			max-width: 180px;
+			white-space: normal;
+			word-break: break-word;
+		}
+	</style>
 	<div class="x_title table-title">
 		<h2>Danh sách các chỉ tiêu</h2>
 		<div class="clearfix"></div>
@@ -168,6 +185,7 @@ $canApprove = (bool) $request->getAttribute("canApprove");
                                        class="form-control"
                                        id="ten_chi_so"
                                        name="ten_chi_so"
+                                       autofocus
                                        required>
                             </div>
                         </div>
