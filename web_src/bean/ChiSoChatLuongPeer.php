@@ -384,25 +384,30 @@ class ChiSoChatLuongPeer
 
         $sql = "SELECT cs.ma_chi_so, cs.ten_chi_so, cs.muc_tieu,
                        cs.nguong_canh_bao, cs.ten_tu_so, cs.ten_mau_so,
-                       cs.pham_vi, pv.ten AS ten_pham_vi, dvt.ten AS ten_don_vi_tinh,
+                       cs.pham_vi, cs.id_chuky, ck.ten AS ten_chuky,
+                       pv.ten AS ten_pham_vi, dvt.ten AS ten_don_vi_tinh,
                        (SELECT ct.dulieu FROM ct_chiso ct
                         WHERE ct.ma_chi_so = cs.ma_chi_so AND ct.id_user = " . $idUser . "
                         ORDER BY ct.id DESC LIMIT 1) AS dulieu
                 FROM chi_so_chat_luong cs
+                LEFT JOIN chuky ck ON ck.id = cs.id_chuky
                 LEFT JOIN donvitinh dvt ON dvt.id = cs.id_donvitinh
                 LEFT JOIN phamvi pv ON pv.id = cs.pham_vi
                 WHERE cs.trang_thai = 2
-                  AND cs.id_chuky = 1
+                  AND cs.id_chuky IN (1, 2)
                   AND cs.created_at < '" . $dauThangSau . "'" . $accessSql . "
                 ORDER BY cs.ten_chi_so ASC";
         $result = $this->dbsql->query($sql);
         $items = array();
         while ($row = $this->dbsql->fetch_array($result)) {
             $json = !empty($row['dulieu']) ? json_decode($row['dulieu'], true) : array();
+            $ky = (int) $row['id_chuky'] === 2 ? (int) ceil($thang / 3) : $thang;
             $duLieuThang = null;
-            if (is_array($json) && isset($json[(string) $nam]['du_lieu'][$thang - 1])) {
-                $duLieuThang = $json[(string) $nam]['du_lieu'][$thang - 1];
+            if (is_array($json) && isset($json[(string) $nam]['du_lieu'][$ky - 1])) {
+                $duLieuThang = $json[(string) $nam]['du_lieu'][$ky - 1];
             }
+            $row['ten_ky_hien_tai'] = (int) $row['id_chuky'] === 2
+                ? 'Quý ' . $ky : 'Tháng ' . $ky;
             $row['du_lieu_thang'] = $duLieuThang;
             $row['da_nhap'] = is_array($duLieuThang)
                 && array_key_exists('tu_so', $duLieuThang)
@@ -419,20 +424,25 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
-    /** Cap nhat duy nhat thang hien tai, giu nguyen du lieu cac thang khac. */
+    /** Cap nhat ky thang/quy duoc chon, giu nguyen du lieu cac ky khac. */
     public function saveChiTieuThang($maChiSo, $idUser, $nam, $thang, $tuSo, $mauSo)
     {
         $chiSo = $this->getNhapLieu($maChiSo, $idUser);
-        if (!$chiSo || (int) $chiSo['id_chuky'] !== 1) return false;
+        if (!$chiSo || !in_array((int) $chiSo['id_chuky'], array(1, 2), true)) return false;
         $thangCanNhap = sprintf('%04d-%02d-01', (int) $nam, (int) $thang);
         $thangBatDau = date('Y-m-01', strtotime($chiSo['created_at']));
         if ($thangCanNhap < $thangBatDau) return false;
+
+        $idChuKy = (int) $chiSo['id_chuky'];
+        $soKy = $idChuKy === 2 ? 4 : 12;
+        $ky = $idChuKy === 2 ? (int) ceil($thang / 3) : (int) $thang;
+        $tenKy = $idChuKy === 2 ? 'Quý ' . $ky : 'Tháng ' . $ky;
 
         $allData = is_array($chiSo['dulieu']) ? $chiSo['dulieu'] : array();
         if (!isset($allData[(string) $nam]) || !is_array($allData[(string) $nam])) {
             $allData[(string) $nam] = array(
                 'nam' => (int) $nam,
-                'id_chuky' => 1,
+                'id_chuky' => $idChuKy,
                 'ten_chuky' => $chiSo['ten_chuky'],
                 'du_lieu' => array()
             );
@@ -440,17 +450,20 @@ class ChiSoChatLuongPeer
         if (!isset($allData[(string) $nam]['du_lieu']) || !is_array($allData[(string) $nam]['du_lieu'])) {
             $allData[(string) $nam]['du_lieu'] = array();
         }
-        for ($i = 0; $i < 12; $i++) {
+        $allData[(string) $nam]['id_chuky'] = $idChuKy;
+        $allData[(string) $nam]['ten_chuky'] = $chiSo['ten_chuky'];
+        for ($i = 0; $i < $soKy; $i++) {
             if (!isset($allData[(string) $nam]['du_lieu'][$i])) {
                 $allData[(string) $nam]['du_lieu'][$i] = array(
-                    'ky' => $i + 1, 'ten_ky' => 'Tháng ' . ($i + 1),
+                    'ky' => $i + 1,
+                    'ten_ky' => $idChuKy === 2 ? 'Quý ' . ($i + 1) : 'Tháng ' . ($i + 1),
                     'tu_so' => null, 'mau_so' => null, 'value' => null
                 );
             }
         }
-        $allData[(string) $nam]['du_lieu'][$thang - 1] = array(
-            'ky' => (int) $thang,
-            'ten_ky' => 'Tháng ' . (int) $thang,
+        $allData[(string) $nam]['du_lieu'][$ky - 1] = array(
+            'ky' => $ky,
+            'ten_ky' => $tenKy,
             'tu_so' => (float) $tuSo,
             'mau_so' => (float) $mauSo,
             'value' => round(((float) $tuSo / (float) $mauSo) * 100, 2)

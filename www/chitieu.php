@@ -26,8 +26,8 @@ $namHienTai = (int) $request->getAttribute('namHienTai');
         </div>
         <table id="datatable-chitieu-thang" class="table table-striped table-bordered dt-responsive nowrap" width="100%">
             <thead><tr>
-                <th>Mã</th><th>Tên chỉ tiêu</th><th>Phạm vi</th><th>Mục tiêu</th><th>Ngưỡng cảnh báo</th>
-                <th>Giá trị tháng</th><th>Trạng thái</th><th>Thao tác</th>
+                <th>Mã</th><th>Tên chỉ tiêu</th><th>Phạm vi</th><th>Chu kỳ</th><th>Mục tiêu</th><th>Ngưỡng cảnh báo</th>
+                <th>Giá trị kỳ</th><th>Trạng thái</th><th>Thao tác</th>
             </tr></thead>
             <tbody></tbody>
         </table>

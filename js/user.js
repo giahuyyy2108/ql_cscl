@@ -19,7 +19,8 @@ function init_DataTables() {
 				  alert(JSON.stringify(response))
 			},	
 		},	
-		"pageLength": $('#pageLength').val(),	
+		"pageLength": -1,
+		"lengthMenu": [[-1], ["Tất cả"]],
 		"searching": false,
 		"order": [[ 0, "desc" ]],
 		scrollY:        '50vh',
@@ -204,15 +205,24 @@ $(document).ready(function() {
 
 	$(document).on("click", ".polici", function(){
 		var tr = $(this).closest('tr');
-		var row = table.row( tr );
+		if (tr.hasClass('child')) {
+			tr = tr.prev();
+		}
+		var row = table.row(tr);
+		var rowData = row.data();
+		if (!rowData) {
+			alert("Không thể xác định người dùng cần phân quyền.");
+			return;
+		}
 		
 		$("#modal-phanquyen").modal({
 			backdrop: "static"					
 		});
 
-		$("#modal-phanquyen .modal-title").html("Phân quyền người dùng : " + row.data().username);
+		$("#modal-phanquyen .modal-title").text("Phân quyền người dùng: " + rowData.username);
+		$("#modal-phanquyen .modal-body").html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Đang tải...</div>');
 		
-		var maUser = getId($(this)); 
+		var maUser = rowData.id;
 		
 		url = $("#ULocal").val()+'user/phanquyen/';
 			// Save data
@@ -230,7 +240,7 @@ $(document).ready(function() {
 			},
 			success : function(htmlText) {	
 				$("#modal-phanquyen .modal-body").html(htmlText);
-				$("#username").val(row.data().username);
+				$("#username").val(rowData.username);
 			}
 		});
 	});		
@@ -399,5 +409,5 @@ function hiddenButton(){
 	}
 	if($("#role-user-phanquyen").val() == "false"){
 		$(".polici").hide();
-	}	
-}	
+	}
+}

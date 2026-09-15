@@ -60,7 +60,7 @@ class chitieuAction
         if (!$id) return $this->jsonError('Không thể lưu chỉ tiêu hoặc bạn không có quyền nhập');
         return $this->request->json_response(json_encode(array(
             'success' => true, 'id' => $id,
-            'message' => 'Đã lưu dữ liệu tháng ' . $thang . '/' . date('Y')
+            'message' => 'Đã lưu dữ liệu chỉ tiêu thành công'
         )));
     }
 

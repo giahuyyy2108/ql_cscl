@@ -26,6 +26,7 @@ tableChiTieuThang = $('#datatable-chitieu-thang').DataTable({
             data: 'ten_pham_vi',
             render: function (data) { return data || '—'; }
         },
+        { data: 'ten_chuky' },
         { data: 'muc_tieu' },
         { data: 'nguong_canh_bao' },
         {
@@ -61,14 +62,14 @@ $('#datatable-chitieu-thang').on('click', '.btn-nhap-thang', function () {
     if (!row) return;
     var saved = row.du_lieu_thang || {};
     $('#ct_ma_chi_so').val(row.ma_chi_so);
-    $('#ct_ten_chi_so').val(row.ten_chi_so);
+    $('#ct_ten_chi_so').val(row.ten_chi_so + ' (' + (row.ten_chuky || '') + ')');
     $('#ct_label_tu_so').text(row.ten_tu_so || 'Tử số');
     $('#ct_label_mau_so').text(row.ten_mau_so || 'Mẫu số');
     $('#ct_tu_so').val(saved.tu_so != null ? saved.tu_so : '');
     $('#ct_mau_so').val(saved.mau_so != null ? saved.mau_so : '');
     $('#ct_value').val(saved.value != null ? saved.value : '');
     $('#modalNhapChiTieuThang .modal-title').text(
-        'Nhập chỉ tiêu tháng ' + $('#chonThangChiTieu').val()
+        'Nhập chỉ tiêu ' + (row.ten_ky_hien_tai || ('Tháng ' + $('#chonThangChiTieu').val()))
     );
     $('#modalNhapChiTieuThang').modal('show');
 });
