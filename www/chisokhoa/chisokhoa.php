@@ -28,9 +28,6 @@
                     </ul>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-4 col-xs-12" style="padding-top:25px">
-                <button type="button" id="btnTimChiSoKhoa" class="btn btn-primary"><i class="fa fa-search"></i> Tìm</button>
-            </div>
         </div>
         <table id="datatable-chisokhoa" class="table table-striped table-bordered dt-responsive nowrap" width="100%">
             <thead><tr>

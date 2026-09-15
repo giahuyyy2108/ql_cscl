@@ -48,13 +48,6 @@ $('#dropdownUserKhoa').on('click', '.user-khoa-option', function (event) {
     event.preventDefault();
     $('#id_user').val($(this).attr('data-id'));
     $('#tenUserKhoa').text($(this).attr('data-name'));
-});
-
-$('#btnTimChiSoKhoa').on('click', function () {
-    if (!$('#id_user').val()) {
-        Swal.fire('Thông báo', 'Vui lòng chọn người dùng.', 'info');
-        return;
-    }
     tableChiSoKhoa.ajax.reload();
 });
 
