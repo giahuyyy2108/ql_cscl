@@ -25,12 +25,27 @@ function getOptionText(selectId, value) {
 table = $('#datatable-chiso').DataTable({
     destroy: true,
     ordering: false,
+    "pageLength": -1,
+    "lengthMenu": [[-1], ["Tất cả"]],
+    
+    searching: true,
 
+    scrollY:        '50vh',
+    scrollCollapse: true,
     
     dom:
-        "<'row'<'col-sm-6'l><'col-sm-6 text-right'Bf>>" +
+        "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
         "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        "<'row'<'col-sm-5'i><'col-sm-7'>>" ,
+        
+
+    language: {
+        search: "Tìm kiếm:",
+        searchPlaceholder: "Nhập nội dung cần tìm...",
+        info: "Hiển thị _START_ đến _END_ trong _TOTAL_ chỉ tiêu",
+        infoEmpty: "Không có chỉ tiêu"
+    },
+
 
     buttons: [
         {
@@ -95,14 +110,14 @@ table = $('#datatable-chiso').DataTable({
     ],
     columns: [
         { 
-            // data: 'ma_chi_so'
-            "targets": 0,
-            "width": '5%', 
-            "className": "text-center",
-            "sortable": false,
-            "render": function ( data, type, row, meta ) {	
-                return (meta.row + 1);//[row].join('');
-			} 
+            data: 'ma_chi_so'
+            // "targets": 0,
+            // "width": '5%', 
+            // "className": "text-center",
+            // "sortable": false,
+            // "render": function ( data, type, row, meta ) {	
+            //     return (meta.row + 1);//[row].join('');
+			// } 
         },
         { 
             "targets": 1,
@@ -663,40 +678,89 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
         return;
     }
 
-    var originalHtml = button.html();
-
-    $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/TuChoi/',
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            data: JSON.stringify([{
-                ma_chi_so: row.ma_chi_so,
-                ten_chi_so: row.ten_chi_so,
-                nguoi_duyet: $('#fullname').val()
-            }])
-        },
-        success: function (response) {
-            var message = response && response.message;
-
-            if (response && (response.success || (message && message.flag))) {
-                table.ajax.reload(null, false);
-                Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
-            } else {
-                Swal.fire('Không thể duyệt',
-                    (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
+    Swal.fire({
+        title: 'Lý do từ chối',
+        input: 'textarea',
+        inputPlaceholder: 'Nhập lý do từ chối chỉ tiêu...',
+        inputAttributes: { maxlength: 500 },
+        showCancelButton: true,
+        confirmButtonText: 'Từ chối',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#d9534f',
+        inputValidator: function (value) {
+            if (!value || !value.trim()) return 'Vui lòng nhập lý do từ chối.';
+            if (value.trim().length > 500) return 'Lý do không được vượt quá 500 ký tự.';
+        }
+    }).then(function (result) {
+        if (!result.isConfirmed) return;
+        button.prop('disabled', true);
+        $.ajax({
+            url: $('#ULocal').val() + 'chisochatluong/TuChoi/',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                data: JSON.stringify([{
+                    ma_chi_so: row.ma_chi_so,
+                    ten_chi_so: row.ten_chi_so,
+                    nguoi_duyet: $('#fullname').val(),
+                    ly_do_tu_choi: result.value.trim()
+                }])
+            },
+            success: function (response) {
+                var message = response && response.message;
+                if (response && (response.success || (message && message.flag))) {
+                    table.ajax.reload(null, false);
+                    Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
+                } else {
+                    Swal.fire('Không thể từ chối',
+                        (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
+                        'error');
+                }
+            },
+            error: function (xhr) {
+                var response = xhr.responseJSON;
+                var message = response && response.message;
+                Swal.fire('Lỗi',
+                    (message && message.errorMessage) || 'Có lỗi xảy ra khi từ chối chỉ tiêu. Vui lòng thử lại.',
                     'error');
-            }
-        },
-        error: function (xhr) {
-            var response = xhr.responseJSON;
-            var message = response && response.message;
-
-            Swal.fire('Lỗi',
-                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
-                'error');
-        },
+            },
+            complete: function () { button.prop('disabled', false); }
+        });
     });
+});
+
+function moFormTaoLaiChiTieu(row) {
+    if (!row || !row.ma_chi_so) return;
+    $('#formChiTieu')[0].reset();
+    $('#formChiTieu').find('input, textarea, select').prop('disabled', false).prop('readonly', false);
+    $('#action').val('add');
+    $('#ma_chi_so').val('');
+    $('#ten_chi_so').val(row.ten_chi_so);
+    $('#ma_khia_canh').val(row.ma_khia_canh);
+    $('#ma_thanh_to').val(row.ma_thanh_to);
+    $('#nhom_chi_so').val(row.nhom_chi_so || '');
+    $('#pham_vi').val(row.pham_vi);
+    $('#muc_tieu').val(row.muc_tieu);
+    $('#nguong_canh_bao').val(row.nguong_canh_bao);
+    $('#don_vi_tinh').val(row.id_donvitinh);
+    $('#id_chuky').val(row.id_chuky);
+    $('#dinh_nghia').val(row.dinh_nghia);
+    $('#thu_thap').val(row.thu_thap);
+    $('#ten_tu_so').val(row.ten_tu_so);
+    $('#ten_mau_so').val(row.ten_mau_so);
+    applyPhamViPermission();
+    $('#btnLuuChiTieu').show();
+    $('#modalChiTieu .modal-title').text('Tạo lại chỉ tiêu bị từ chối');
+    $('#modalChiTieu').modal('show');
+}
+
+$('#btnTaoLaiTuPopup').on('click', function () {
+    if (!chiSoDangXem || parseInt(chiSoDangXem.trang_thai, 10) !== 3) return;
+    var dataTaoLai = chiSoDangXem;
+    $('#modalNhapDuLieu').one('hidden.bs.modal', function () {
+        moFormTaoLaiChiTieu(dataTaoLai);
+    });
+    $('#modalNhapDuLieu').modal('hide');
 });
 
 $('#datatable-chiso').on('click', '.btn-nhapdl', function (e) {
@@ -737,6 +801,7 @@ var nguongCanhBaoDangXem = '';
 var bieuDoCotChiSo = null;
 var bieuDoTronChiSo = null;
 var duLieuBieuDoChiSo = [];
+var chiSoDangXem = null;
 
 function soKyTheoChuKy(id) {
     return ({ 1: 12, 2: 4, 3: 1, 4: 2 })[parseInt(id, 10)] || 1;
@@ -752,6 +817,7 @@ function tenKyTheoChuKy(id, ky) {
 
 function moPopupNhapDuLieu(data, chiXem) {
     dangXemDuLieu = chiXem === true;
+    chiSoDangXem = data;
     mucTieuDangXem = data.muc_tieu || '';
     nguongCanhBaoDangXem = data.nguong_canh_bao || '';
     $('#nhap_ma_chi_so').val(data.ma_chi_so);
@@ -767,6 +833,8 @@ function moPopupNhapDuLieu(data, chiXem) {
     $('#xem_nguong_canh_bao').text(data.nguong_canh_bao  + "%"|| '');
     $('#xem_dinh_nghia').text(data.dinh_nghia || '');
     $('#xem_thu_thap').text(data.thu_thap || '');
+    $('#xem_ly_do_tu_choi').text(data.ly_do_tu_choi || '');
+    $('#xem_ly_do_tu_choi_wrap').toggle(!!data.ly_do_tu_choi);
     nhapDuLieuDaLuu = data.dulieu || {};
     duLieuBieuDoChiSo = Array.isArray(data.chart_dulieu) ? data.chart_dulieu : [];
     var cacNam = Object.keys(nhapDuLieuDaLuu);
@@ -782,6 +850,7 @@ function moPopupNhapDuLieu(data, chiXem) {
         .val(dangXemDuLieu && cacNam.length ? cacNam[0] : new Date().getFullYear())
         .prop('readonly', dangXemDuLieu);
     $('#btnLuuNhapDuLieu').toggle(!dangXemDuLieu);
+    $('#btnTaoLaiTuPopup').toggle(dangXemDuLieu && parseInt(data.trang_thai, 10) === 3);
     $('#modalNhapDuLieu .modal-title').text(dangXemDuLieu ? 'Xem dữ liệu chỉ số' : 'Nhập dữ liệu chỉ số');
     taoInputTheoChuKy();
     var hienBieuDo = dangXemDuLieu && canViewChiSoChart;
@@ -869,6 +938,7 @@ function taoBieuDoCotChiSo(labels, lineDatasets) {
     if (!coDuLieu) return;
 
     var oldCanvas = document.getElementById('nhap_bieudo_cot');
+    if (!oldCanvas || !oldCanvas.parentNode || typeof Chart === 'undefined') return;
     var newCanvas = oldCanvas.cloneNode(false);
     oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
     var datasets = lineDatasets.map(function (dataset) {
@@ -943,6 +1013,7 @@ function taoBieuDoTronChiSo(nam) {
     if (!coDuLieu) return;
 
     var oldCanvas = document.getElementById('nhap_bieudo_tron');
+    if (!oldCanvas || !oldCanvas.parentNode || typeof Chart === 'undefined') return;
     var newCanvas = oldCanvas.cloneNode(false);
     oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
     bieuDoTronChiSo = new Chart(newCanvas.getContext('2d'), {

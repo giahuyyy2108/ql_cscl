@@ -19,9 +19,13 @@ class chisokhoaAction
         $listUser = array_values(array_filter($userPeer->getListUserActive(), function ($user) {
             return (int) $user->get('adminType') !== 1;
         }));
+        $currentUserId = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+        $currentUser = $currentUserId > 0 ? $userPeer->getUserID($currentUserId) : false;
         $this->request->setTitle("Chỉ số chất lượng Khoa/Phòng");
         $this->request->setAttribute('script', '<script src="' . _DEFAULT_URL_ . 'js/chisokhoa/chisokhoa.js?' . _DEFAULT_VERSION_JS_CSS_ . '"></script>');
         $this->request->setAttribute('listUser', $listUser);
+        $this->request->setAttribute('currentUserId', $currentUserId);
+        $this->request->setAttribute('currentUserName', $currentUser ? $currentUser->get('hoTen') : '');
         $this->request->setModel("www/chisokhoa/chisokhoa.php");
         return true;
     }

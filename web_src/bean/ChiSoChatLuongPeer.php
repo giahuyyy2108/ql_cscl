@@ -98,33 +98,79 @@ class ChiSoChatLuongPeer
     public function getListChiSoUser($idUser)
     {
         $idUser = (int) $idUser;
+        $userCoQuyenTatCa = "EXISTS (
+                    SELECT 1 FROM user u_access
+                    LEFT JOIN nhomquyen nq_access ON nq_access.maNQ = u_access.maNQ
+                    WHERE u_access.id = " . $idUser . "
+                      AND (
+                          u_access.adminType = 1
+                          OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(u_access.quyen, ''), ' ', '')) > 0
+                          OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(nq_access.quyen, ''), ' ', '')) > 0
+                      )
+                )";
+        $chiSoDuocPhanQuyen = "(
+                    cs.nguoi_gui = " . $idUser . "
+                    OR cs.nguoi_gui IN (
+                        SELECT u_all.id FROM user u_all
+                        LEFT JOIN nhomquyen nq_all ON nq_all.maNQ = u_all.maNQ
+                        WHERE u_all.adminType = 1
+                           OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(u_all.quyen, ''), ' ', '')) > 0
+                           OR FIND_IN_SET('chisochatluong.all', REPLACE(COALESCE(nq_all.quyen, ''), ' ', '')) > 0
+                    )
+                )";
         $sql = "SELECT cs.*, tt.tenTrangThai, tt.tag,
                        ck.ten AS ten_chuky, dvt.ten AS ten_don_vi_tinh,
-                       u_tao.hoTen AS ten_khoa_phong
+                       u_xem.hoTen AS ten_khoa_phong,
+                       (SELECT ct.dulieu FROM ct_chiso ct
+                        WHERE ct.ma_chi_so = cs.ma_chi_so
+                          AND ct.id_user = " . $idUser . "
+                        ORDER BY ct.id DESC LIMIT 1) AS dulieu_user
                 FROM chi_so_chat_luong cs
-                INNER JOIN user u_tao ON u_tao.id = cs.nguoi_gui
+                INNER JOIN user u_xem ON u_xem.id = " . $idUser . "
                 LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
                 LEFT JOIN chuky ck ON ck.id = cs.id_chuky
                 LEFT JOIN donvitinh dvt ON dvt.id = cs.id_donvitinh
-                WHERE cs.pham_vi = 1
-                  AND cs.nguoi_gui = " . $idUser . "
-                  AND cs.trang_thai = 2
+                WHERE cs.trang_thai = 2
+                  AND (" . $userCoQuyenTatCa . " OR " . $chiSoDuocPhanQuyen . ")
                 ORDER BY cs.ma_chi_so DESC";
         $result = $this->dbsql->query($sql);
         $items = array();
         while ($row = $this->dbsql->fetch_array($result)) {
+            $dulieu = !empty($row['dulieu_user']) ? json_decode($row['dulieu_user'], true) : array();
+            $daNhap = false;
+            if (is_array($dulieu)) {
+                foreach ($dulieu as $duLieuNam) {
+                    $cacKy = isset($duLieuNam['du_lieu']) && is_array($duLieuNam['du_lieu'])
+                        ? $duLieuNam['du_lieu'] : array();
+                    foreach ($cacKy as $duLieuKy) {
+                        if (is_array($duLieuKy)
+                            && isset($duLieuKy['tu_so'], $duLieuKy['mau_so'])
+                            && $duLieuKy['tu_so'] !== '' && $duLieuKy['tu_so'] !== null
+                            && $duLieuKy['mau_so'] !== '' && $duLieuKy['mau_so'] !== null) {
+                            $daNhap = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            $row['da_nhap'] = $daNhap;
+            unset($row['dulieu_user']);
             $items[] = $row;
         }
+        usort($items, function ($a, $b) {
+            if ($a['da_nhap'] === $b['da_nhap']) return 0;
+            return $a['da_nhap'] ? 1 : -1;
+        });
         return $items;
     }
 
     public function isChiSoPhamViUser($maChiSo, $idUser)
     {
-        $result = $this->dbsql->query(
-            "SELECT ma_chi_so FROM chi_so_chat_luong WHERE ma_chi_so=" . (int) $maChiSo .
-            " AND nguoi_gui=" . (int) $idUser . " AND pham_vi=1 LIMIT 1"
-        );
-        return $this->dbsql->num_rows($result) > 0;
+        $items = $this->getListChiSoUser($idUser);
+        foreach ($items as $item) {
+            if ((int) $item['ma_chi_so'] === (int) $maChiSo) return true;
+        }
+        return false;
     }
 
     function Save($_chisochatluong){
@@ -213,6 +259,7 @@ class ChiSoChatLuongPeer
 
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 2,
+                        `ly_do_tu_choi` = '',
                         `nguoi_duyet` = " . $value('nguoi_duyet') . ",
                         `thoi_gian_duyet` = NOW(),
                         `updated_at` = NOW()
@@ -232,6 +279,7 @@ class ChiSoChatLuongPeer
 
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 1,
+                        `ly_do_tu_choi` = '',
                         `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 
@@ -265,6 +313,7 @@ class ChiSoChatLuongPeer
 
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 3,
+                        `ly_do_tu_choi` = " . $value('ly_do_tu_choi') . ",
                         `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 

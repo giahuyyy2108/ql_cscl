@@ -231,6 +231,12 @@ class chisochatluongAction
 	}
 
 	public function TuChoi(){
+		if (!$this->request->checkRole("chisochatluong.all")) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Ban khong co quyen tu choi chi tieu");
+			return $this->request->json_response(json_encode(array("success" => false, "message" => $message)));
+		}
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
@@ -241,6 +247,14 @@ class chisochatluongAction
 			$message->set("flag", false);
 			$message->set("errorMessage", "Thieu ma chi so can cap nhat");
 			return $this->request->json_response(json_encode(array("message" => $message)));
+		}
+		$lyDoTuChoi = trim((string) $chiso->get("ly_do_tu_choi"));
+		$doDaiLyDo = function_exists('mb_strlen') ? mb_strlen($lyDoTuChoi, 'UTF-8') : strlen($lyDoTuChoi);
+		if ($lyDoTuChoi === '' || $doDaiLyDo > 500) {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Ly do tu choi khong duoc de trong va toi da 500 ky tu");
+			return $this->request->json_response(json_encode(array("success" => false, "message" => $message)));
 		}
 
 		$id = $this->ChiSoPeer->TuChoi($chiso);

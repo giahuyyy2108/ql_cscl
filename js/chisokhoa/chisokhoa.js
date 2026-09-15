@@ -14,12 +14,13 @@ var tableChiSoKhoa = $('#datatable-chisokhoa').DataTable({
         { data: 'ten_khoa_phong' },
         { data: 'muc_tieu' },
         { data: 'nguong_canh_bao' },
-        { data: 'ten_don_vi_tinh' },
         { data: 'ten_chuky' },
         {
-            data: null,
-            render: function (data, type, row) {
-                return $('<span>').addClass('badge dt-center rounded-pill ' + (row.tag || '')).text(row.tenTrangThai || '').prop('outerHTML');
+            data: 'da_nhap',
+            render: function (data,row) {
+                return data
+                    ? '<span class="badge dt-center rounded-pill bg-success">Đã nhập liệu</span>'
+                    : '<span class="badge dt-center rounded-pill bg-danger">Chưa nhập liệu</span>';
             }
         },
         {

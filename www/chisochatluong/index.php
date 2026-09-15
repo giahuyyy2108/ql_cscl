@@ -24,6 +24,26 @@ $canViewChart = $canApprove;
 		#datatable-chiso td.dt-chiso-actions .btn {
 			margin: 1px 2px 1px 0;
 		}
+		#datatable-chiso_filter {
+			display: block !important;
+			visibility: visible !important;
+			text-align: right;
+			margin-bottom: 10px;
+		}
+		#datatable-chiso_filter label {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+		}
+		#datatable-chiso_filter input {
+			display: inline-block !important;
+			width: 240px;
+			margin-left: 0;
+		}
+		@media (max-width:767px) {
+			#datatable-chiso_filter { text-align: left; margin-top: 10px; }
+			#datatable-chiso_filter input { width: 180px; }
+		}
 		#datatable-chiso th:nth-child(2),
 		#datatable-chiso td.dt-chiso-name {
 			width: 12%;
@@ -131,6 +151,9 @@ $canViewChart = $canApprove;
                         <div class="col-md-6"><strong>Ngưỡng cảnh báo:</strong> <span id="xem_nguong_canh_bao"></span></div>
                         <div class="col-md-12"><strong>Định nghĩa:</strong> <span id="xem_dinh_nghia"></span></div>
                         <div class="col-md-12"><strong>Phương pháp thu thập:</strong> <span id="xem_thu_thap"></span></div>
+                        <div id="xem_ly_do_tu_choi_wrap" class="col-md-12 text-danger" style="display:none">
+                            <strong>Lý do từ chối:</strong> <span id="xem_ly_do_tu_choi"></span>
+                        </div>
                     </div>
                 </div>
                 
@@ -160,6 +183,9 @@ $canViewChart = $canApprove;
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-warning pull-left" id="btnTaoLaiTuPopup" style="display:none">
+                    <i class="fa fa-copy"></i> Tạo lại để sửa
+                </button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
                 <button type="submit" class="btn btn-primary" id="btnLuuNhapDuLieu"><i class="fa fa-save"></i> Lưu dữ liệu</button>
             </div>

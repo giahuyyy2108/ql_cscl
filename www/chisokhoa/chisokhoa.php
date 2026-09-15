@@ -1,14 +1,18 @@
-<?PHP $listUser = $request->getAttribute('listUser'); ?>
+<?PHP
+$listUser = $request->getAttribute('listUser');
+$currentUserId = (int) $request->getAttribute('currentUserId');
+$currentUserName = (string) $request->getAttribute('currentUserName');
+?>
 <div class="x_panel">
     <div class="x_title"><h2>Chỉ số chất lượng Khoa/Phòng</h2><div class="clearfix"></div></div>
     <div class="x_content">
         <div class="row" style="margin-bottom:15px">
             <div class="col-md-6 col-sm-8 col-xs-12">
                 <label>Khoa Phòng</label>
-                <input type="hidden" id="id_user" value="">
+                <input type="hidden" id="id_user" value="<?= $currentUserId ?>">
                 <div class="dropdown" id="dropdownUserKhoa">
                     <button type="button" class="btn btn-default btn-block dropdown-toggle text-left" data-toggle="dropdown" style="text-align:left">
-                        <span id="tenUserKhoa">-- Chọn người dùng --</span>
+                        <span id="tenUserKhoa"><?= $currentUserName !== '' ? htmlspecialchars($currentUserName) : '-- Chọn người dùng --' ?></span>
                         <span class="caret pull-right" style="margin-top:8px"></span>
                     </button>
                     <ul class="dropdown-menu" style="width:100%;max-height:320px;overflow-y:auto">
@@ -31,8 +35,15 @@
         </div>
         <table id="datatable-chisokhoa" class="table table-striped table-bordered dt-responsive nowrap" width="100%">
             <thead><tr>
-                <th>Mã</th><th>Tên chỉ số</th><th>Người dùng</th><th>Mục tiêu</th>
-                <th>Ngưỡng cảnh báo</th><th>Đơn vị tính</th><th>Chu kỳ</th><th>Trạng thái</th><th>Thao tác</th>
+                <th>Mã</th>
+                <th>Tên chỉ số</th>
+                <th>Người dùng</th>
+                <th>Mục tiêu</th>
+                <th>Ngưỡng cảnh báo</th>
+                <!-- <th>Đơn vị tính</th> -->
+                <th>Chu kỳ</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr></thead>
             <tbody></tbody>
         </table>
@@ -47,8 +58,8 @@
 <div class="modal fade" id="modalXemChiSoKhoa" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
         <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             <h4 class="modal-title">Xem dữ liệu chỉ số</h4>
+            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
         </div>
         <div class="modal-body">
             <div class="row">

@@ -39,14 +39,14 @@ tableChiTieuThang = $('#datatable-chitieu-thang').DataTable({
     },
     columns: [
         { 
-            // data: 'ma_chi_so'
-            "targets": 0,
-            "width": '5%', 
-            "className": "text-center",
-            "sortable": false,
-            "render": function ( data, type, row, meta ) {	
-                return (meta.row + 1);//[row].join('');
-			}
+            data: 'ma_chi_so'
+            // "targets": 0,
+            // "width": '5%', 
+            // "className": "text-center",
+            // "sortable": false,
+            // "render": function ( data, type, row, meta ) {	
+            //     return (meta.row + 1);//[row].join('');
+			// }
         },
         { data: 'ten_chi_so' },
         {
@@ -58,7 +58,11 @@ tableChiTieuThang = $('#datatable-chitieu-thang').DataTable({
         { data: 'nguong_canh_bao' },
         {
             data: 'du_lieu_thang',
-            render: function (data) { return data && data.value != null ? data.value + '%' : '—'; }
+            render: function (data) 
+            { 
+                debugger;
+                return data && data.value != null ? data.value + '%' : '—'; 
+            }
         },
         {
             data: 'da_nhap',
