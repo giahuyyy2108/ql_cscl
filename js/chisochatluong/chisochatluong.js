@@ -1,6 +1,7 @@
 /* DATA TABLES */
 var table;
 var canApprove = $('#datatable-chiso').attr('data-can-approve') === '1';
+var canViewChiSoChart = $('#datatable-chiso').attr('data-can-view-chart') === '1';
 
 function applyPhamViPermission() {
     var phamVi = $('#pham_vi');
@@ -733,6 +734,9 @@ var nhapDuLieuDaLuu = {};
 var dangXemDuLieu = false;
 var mucTieuDangXem = '';
 var nguongCanhBaoDangXem = '';
+var bieuDoCotChiSo = null;
+var bieuDoTronChiSo = null;
+var duLieuBieuDoChiSo = [];
 
 function soKyTheoChuKy(id) {
     return ({ 1: 12, 2: 4, 3: 1, 4: 2 })[parseInt(id, 10)] || 1;
@@ -764,14 +768,209 @@ function moPopupNhapDuLieu(data, chiXem) {
     $('#xem_dinh_nghia').text(data.dinh_nghia || '');
     $('#xem_thu_thap').text(data.thu_thap || '');
     nhapDuLieuDaLuu = data.dulieu || {};
-    var cacNam = Object.keys(nhapDuLieuDaLuu).sort().reverse();
+    duLieuBieuDoChiSo = Array.isArray(data.chart_dulieu) ? data.chart_dulieu : [];
+    var cacNam = Object.keys(nhapDuLieuDaLuu);
+    if (dangXemDuLieu && canViewChiSoChart) {
+        duLieuBieuDoChiSo.forEach(function (item) {
+            Object.keys(item.dulieu || {}).forEach(function (nam) {
+                if (cacNam.indexOf(nam) === -1) cacNam.push(nam);
+            });
+        });
+    }
+    cacNam.sort().reverse();
     $('#nhap_nam')
         .val(dangXemDuLieu && cacNam.length ? cacNam[0] : new Date().getFullYear())
         .prop('readonly', dangXemDuLieu);
     $('#btnLuuNhapDuLieu').toggle(!dangXemDuLieu);
     $('#modalNhapDuLieu .modal-title').text(dangXemDuLieu ? 'Xem dữ liệu chỉ số' : 'Nhập dữ liệu chỉ số');
     taoInputTheoChuKy();
+    var hienBieuDo = dangXemDuLieu && canViewChiSoChart;
+    $('#nhap_bang_chuky').toggle(!hienBieuDo);
+    $('#nhap_bieudo_wrap').toggle(hienBieuDo);
+    if (hienBieuDo) {
+        $('#modalNhapDuLieu').one('shown.bs.modal', taoBieuDoChuKy);
+    } else {
+        huyBieuDoChuKy();
+    }
     $('#modalNhapDuLieu').modal('show');
+}
+
+function huyBieuDoChuKy() {
+    if (bieuDoTronChiSo) {
+        bieuDoTronChiSo.destroy();
+        bieuDoTronChiSo = null;
+    }
+    if (bieuDoCotChiSo) {
+        bieuDoCotChiSo.destroy();
+        bieuDoCotChiSo = null;
+    }
+}
+
+function mauGiaTriBieuDo(value) {
+    var mucTieu = tachDieuKien(mucTieuDangXem, '>');
+    var canhBao = tachDieuKien(nguongCanhBaoDangXem, '<');
+    if (!mucTieu && !canhBao) return '#337ab7';
+    if (!mucTieu) mucTieu = { toanTu: '>', moc: canhBao.moc };
+    if (!canhBao) canhBao = { toanTu: '<', moc: mucTieu.moc };
+    if (thoaDieuKien(value, mucTieu)) return '#5cb85c';
+    if (thoaDieuKien(value, canhBao)) return '#d9534f';
+    return '#f0ad4e';
+}
+
+function taoBieuDoChuKy() {
+    huyBieuDoChuKy();
+    var labels = [];
+    for (var i = 1; i <= soKyTheoChuKy($('#nhap_id_chuky').val()); i++) {
+        labels.push(tenKyTheoChuKy($('#nhap_id_chuky').val(), i));
+    }
+    var palette = ['#337ab7', '#5cb85c', '#f0ad4e', '#d9534f', '#5bc0de', '#8e44ad', '#16a085', '#e67e22'];
+    var nam = String($('#nhap_nam').val());
+    var datasets = duLieuBieuDoChiSo.map(function (userData, index) {
+        var saved = (userData.dulieu || {})[nam] || {};
+        var rows = saved.du_lieu || [];
+        var color = palette[index % palette.length];
+        var hasValue = false;
+        var values = labels.map(function (_, kyIndex) {
+            var value = rows[kyIndex] ? rows[kyIndex].value : null;
+            if (value !== null && value !== '' && value !== undefined && !isNaN(Number(value))) {
+                hasValue = true;
+                return Number(value);
+            }
+            return NaN;
+        });
+        if (!hasValue) return null;
+        return {
+            label: userData.ten_user || ('Người dùng ' + userData.id_user),
+            data: values,
+            borderColor: color,
+            backgroundColor: color,
+            fill: false,
+            lineTension: 0.15,
+            pointRadius: 4,
+            pointHoverRadius: 6
+        };
+    }).filter(function (dataset) { return dataset !== null; });
+
+    if (!datasets.length) {
+        $('#nhap_bieudo_cot_empty, #nhap_bieudo_tron_empty').show();
+        $('#nhap_bieudo_cot, #nhap_bieudo_tron').parent().hide();
+        return;
+    }
+
+    if (typeof Chart === 'undefined') return;
+    taoBieuDoCotChiSo(labels, datasets);
+    taoBieuDoTronChiSo(nam);
+}
+
+function taoBieuDoCotChiSo(labels, lineDatasets) {
+    var coDuLieu = lineDatasets.length > 0;
+    $('#nhap_bieudo_cot_empty').toggle(!coDuLieu);
+    $('#nhap_bieudo_cot').parent().toggle(coDuLieu);
+    if (!coDuLieu) return;
+
+    var oldCanvas = document.getElementById('nhap_bieudo_cot');
+    var newCanvas = oldCanvas.cloneNode(false);
+    oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+    var datasets = lineDatasets.map(function (dataset) {
+        return {
+            label: dataset.label,
+            data: dataset.data.slice(),
+            backgroundColor: dataset.backgroundColor,
+            borderColor: dataset.borderColor,
+            borderWidth: 1
+        };
+    });
+    bieuDoCotChiSo = new Chart(newCanvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: { beginAtZero: true },
+                    scaleLabel: { display: true, labelString: 'Giá trị (%)' }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: function (tooltipItem, chartData) {
+                        var dataset = chartData.datasets[tooltipItem.datasetIndex] || {};
+                        return (dataset.label || 'Người dùng') + ': ' + tooltipItem.yLabel + '%';
+                    }
+                }
+            }
+        }
+    });
+}
+
+function nhomKetQuaChiSo(value) {
+    var mucTieu = tachDieuKien(mucTieuDangXem, '>');
+    var canhBao = tachDieuKien(nguongCanhBaoDangXem, '<');
+    if (!mucTieu && !canhBao) return 2;
+    if (!mucTieu) mucTieu = { toanTu: '>', moc: canhBao.moc };
+    if (!canhBao) canhBao = { toanTu: '<', moc: mucTieu.moc };
+    if (thoaDieuKien(value, mucTieu)) return 0;
+    if (thoaDieuKien(value, canhBao)) return 1;
+    return 2;
+}
+
+function taoBieuDoTronChiSo(nam) {
+    var labels = ['Đạt mục tiêu', 'Không đạt', 'Đủ'];
+    var counts = [0, 0, 0];
+    var usersTheoNhom = [[], [], []];
+
+    duLieuBieuDoChiSo.forEach(function (userData) {
+        var saved = (userData.dulieu || {})[nam] || {};
+        var rows = saved.du_lieu || [];
+        var giaTriMoiNhat = null;
+        for (var i = rows.length - 1; i >= 0; i--) {
+            var value = rows[i] ? rows[i].value : null;
+            if (value !== null && value !== '' && value !== undefined && !isNaN(Number(value))) {
+                giaTriMoiNhat = Number(value);
+                break;
+            }
+        }
+        if (giaTriMoiNhat === null) return;
+        var nhom = nhomKetQuaChiSo(giaTriMoiNhat);
+        counts[nhom]++;
+        usersTheoNhom[nhom].push(userData.ten_user || ('Người dùng ' + userData.id_user));
+    });
+
+    var coDuLieu = counts.some(function (count) { return count > 0; });
+    $('#nhap_bieudo_tron_empty').toggle(!coDuLieu);
+    $('#nhap_bieudo_tron').parent().toggle(coDuLieu);
+    if (!coDuLieu) return;
+
+    var oldCanvas = document.getElementById('nhap_bieudo_tron');
+    var newCanvas = oldCanvas.cloneNode(false);
+    oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+    bieuDoTronChiSo = new Chart(newCanvas.getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: ['#5cb85c', '#d9534f', '#f0ad4e'],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            tooltips: {
+                callbacks: {
+                    label: function (tooltipItem) {
+                        var index = tooltipItem.index;
+                        var users = usersTheoNhom[index];
+                        return labels[index] + ': ' + counts[index] +
+                            (users.length ? ' - ' + users.join(', ') : '');
+                    }
+                }
+            }
+        }
+    });
 }
 
 function tachDieuKien(value, toanTuMacDinh) {

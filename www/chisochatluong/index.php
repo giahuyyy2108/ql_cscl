@@ -7,6 +7,7 @@ $listDvt = $request->getAttribute("listDvt");
 $listTinhTrang = $request->getAttribute("listTT");
 $canChoosePhamVi = (bool) $request->getAttribute("canChoosePhamVi");
 $canApprove = (bool) $request->getAttribute("canApprove");
+$canViewChart = $canApprove;
 
 
 
@@ -68,6 +69,7 @@ $canApprove = (bool) $request->getAttribute("canApprove");
 		?>
 		<table id="datatable-chiso"
 			data-can-approve="<?= $canApprove ? '1' : '0' ?>"
+			data-can-view-chart="<?= $canViewChart ? '1' : '0' ?>"
 			class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
 			<thead>
 				<tr>
@@ -91,9 +93,13 @@ $canApprove = (bool) $request->getAttribute("canApprove");
 
 <!-- Popup nhập dữ liệu chỉ số theo chu kỳ -->
 <style>
+    #modalNhapDuLieu .modal-dialog { width:95%; max-width:1400px; }
     #modalNhapDuLieu .nhap-value-xanh { background:#dff0d8; color:#3c763d; border-color:#3c763d; font-weight:600; }
     #modalNhapDuLieu .nhap-value-do { background:#f2dede; color:#a94442; border-color:#a94442; font-weight:600; }
     #modalNhapDuLieu .nhap-value-vang { background:#fcf8e3; color:#8a6d3b; border-color:#8a6d3b; font-weight:600; }
+    @media (max-width:767px) {
+        #modalNhapDuLieu .modal-dialog { width:auto; max-width:none; margin:10px; }
+    }
 </style>
 <!-- popup nhập liệu -->
 <div class="modal fade" id="modalNhapDuLieu" tabindex="-1" role="dialog">
@@ -128,11 +134,29 @@ $canApprove = (bool) $request->getAttribute("canApprove");
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div id="nhap_bang_chuky" class="table-responsive">
                     <table class="table table-bordered table-striped">
                     <thead><tr><th style="width:18%">Kỳ</th><th id="nhap_label_tuso">Tử số</th><th id="nhap_label_mauso">Mẫu số</th><th style="width:18%">Giá trị (%)</th></tr></thead>
                     <tbody id="nhap_dulieu_body"></tbody>
                     </table>
+                </div>
+                <div id="nhap_bieudo_wrap" style="display:none">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <h4 class="text-center">So sánh giá trị theo chu kỳ</h4>
+                            <div id="nhap_bieudo_cot_empty" class="alert alert-info text-center" style="display:none">Chưa có dữ liệu để vẽ biểu đồ cột.</div>
+                            <div style="position:relative; height:280px">
+                                <canvas id="nhap_bieudo_cot"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <h4 class="text-center">Tỷ lệ kết quả theo mục tiêu</h4>
+                            <div id="nhap_bieudo_tron_empty" class="alert alert-info text-center" style="display:none">Chưa có dữ liệu để phân loại.</div>
+                            <div style="position:relative; height:280px">
+                                <canvas id="nhap_bieudo_tron"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

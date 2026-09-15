@@ -108,6 +108,7 @@ class ChiSoChatLuongPeer
                 LEFT JOIN donvitinh dvt ON dvt.id = cs.id_donvitinh
                 WHERE cs.pham_vi = 1
                   AND cs.nguoi_gui = " . $idUser . "
+                  AND cs.trang_thai = 2
                 ORDER BY cs.ma_chi_so DESC";
         $result = $this->dbsql->query($sql);
         $items = array();
@@ -357,6 +358,36 @@ class ChiSoChatLuongPeer
             : array();
 
         return $row;
+    }
+
+    /** Du lieu bieu do cua tat ca khoa/phong theo ma chi so. */
+    public function getDuLieuChartChiSo($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        if ($maChiSo <= 0) return array();
+
+        $sql = "SELECT ct.id_user, ct.dulieu, u.hoTen, u.username
+                FROM ct_chiso ct
+                LEFT JOIN user u ON u.id = ct.id_user
+                WHERE ct.ma_chi_so = " . $maChiSo . "
+                  AND ct.id = (
+                      SELECT MAX(ct_moi.id)
+                      FROM ct_chiso ct_moi
+                      WHERE ct_moi.ma_chi_so = ct.ma_chi_so
+                        AND ct_moi.id_user = ct.id_user
+                  )
+                ORDER BY u.hoTen ASC, ct.id ASC";
+        $result = $this->dbsql->query($sql);
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $dulieu = !empty($row['dulieu']) ? json_decode($row['dulieu'], true) : array();
+            $items[] = array(
+                'id_user' => (int) $row['id_user'],
+                'ten_user' => !empty($row['hoTen']) ? $row['hoTen'] : $row['username'],
+                'dulieu' => is_array($dulieu) ? $dulieu : array()
+            );
+        }
+        return $items;
     }
 
     /** Danh sach chi so theo thang va trang thai nhap cua user trong thang hien tai. */

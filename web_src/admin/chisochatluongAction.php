@@ -343,6 +343,9 @@ class chisochatluongAction
 		}
 
 		$data = $this->ChiSoPeer->getNhapLieu($maChiSo, $idUser, false);
+		if ($data && $this->request->checkRole("chisochatluong.all")) {
+			$data['chart_dulieu'] = $this->ChiSoPeer->getDuLieuChartChiSo($maChiSo);
+		}
 		return $this->request->json_response(json_encode(array(
 			'success' => (bool) $data,
 			'data' => $data ? $data : null,
