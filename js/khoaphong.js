@@ -25,11 +25,20 @@ function init_DataTables() {
             },
             {
                 "targets": 1,
-                "width": '80%',
+                "width": '55%',
                 "data": "TenKhoaPhong"
             },
             {
                 "targets": 2,
+                "width": '30%',
+                "data": "MaKhoi",
+                "render": function (data, type, row) {
+                    var valueSelect = $("#khoi option[value='" + data + "']").text();
+                    return '<input type="hidden" id="selectid" value="' + data + '">' + valueSelect;
+                }
+            },
+            {
+                "targets": 3,
                 "width": '15%',
                 "data": "MaKhoaPhong",
                 "render": function (data, type, row) {
@@ -95,7 +104,7 @@ function init_DataTables() {
                     confirmButtonText: "Lưu"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        saveData($('#datatable-khoaphong'), $("#ULocal").val() + 'khoaphong/saveKhoaPhong/', "'Bác sĩ đã được cập nhật thành công.'");
+                        saveData($('#datatable-khoaphong'), $("#ULocal").val() + 'khoaphong/save/', "'Bác sĩ đã được cập nhật thành công.'");
                         setTimeout(() => {
                             $('#datatable-khoaphong').DataTable().ajax.reload(hiddenButton);
                         }, 1000);
@@ -109,6 +118,7 @@ function init_DataTables() {
 
 $(document).ready(function () {
 
+    init_DataTables();
     $('[data-toggle="tooltip"]').tooltip();
     $(document).on("click", ".add", function () {
         Swal.fire({
@@ -122,7 +132,7 @@ $(document).ready(function () {
             confirmButtonText: "Lưu"
         }).then((result) => {
             if (result.isConfirmed) {
-                updateData($(this), $("#ULocal").val() + 'khoaphong/saveKhoaPhong/', 'Khoa Phòng đã được cập nhật thành công.');
+                updateData($(this), $("#ULocal").val() + 'khoaphong/save/', 'Khoa Phòng đã được cập nhật thành công.');
                 setTimeout(() => {
                     $('#datatable-khoaphong').DataTable().ajax.reload(hiddenButton);
                 }, 1000);
@@ -146,7 +156,7 @@ $(document).ready(function () {
             cancelButtonColor: "#d33"
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteData(table, $(this), $("#ULocal").val() + 'khoaphong/deleteKhoaPhong/', 'Khoa Phòng đã được xóa thành công.')
+                deleteData(table, $(this), $("#ULocal").val() + 'khoaphong/delete/', 'Khoa Phòng đã được xóa thành công.')
                 $('#datatable-khoaphong').DataTable().ajax.reload(hiddenButton);
             }
         });
@@ -155,13 +165,13 @@ $(document).ready(function () {
 });
 
 function hiddenButton() {
-    if ($("#role-khoaphong-saveKhoaPhong").val() == "false") {
+    if ($("#role-khoaphong-saveKhoaPhong").val() == "false" && $("#role-khoaphong-save").val() == "false") {
         $(".add-new").hide();
         $(".edit").hide();
         $(".add").hide();
         $(".save").hide();
     }
-    if ($("#role-khoaphong-deleteKhoaPhong").val() == "false") {
+    if ($("#role-khoaphong-deleteKhoaPhong").val() == "false" && $("#role-khoaphong-delete").val() == "false") {
         $(".delete").hide();
     }
 }

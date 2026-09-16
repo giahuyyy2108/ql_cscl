@@ -1,5 +1,6 @@
 <?
 $listNQ = $request->getAttribute("listNQ");
+$listKhoaPhong = $request->getAttribute("listKhoaPhong");
 ?>
 <div class="x_panel">
 	<div class="x_title table-title">
@@ -42,6 +43,17 @@ $listNQ = $request->getAttribute("listNQ");
 			}
 ?>
 			</select>
+			<select id="khoaphong" class="select form-control">
+				<?			
+			if($listKhoaPhong!=false){
+				foreach($listKhoaPhong as $khoaphong){					
+?>
+				<option value="<?=$khoaphong->get("MaKhoaPhong")?>"><?=$khoaphong->get("TenKhoaPhong")?></option>
+				<?
+				}
+			}
+?>
+			</select>
 		</div>
 		<table id="datatable-user" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
 			<thead>
@@ -51,6 +63,7 @@ $listNQ = $request->getAttribute("listNQ");
 					<th data-type="String" validate-type="true" exception="edit">Tên đăng nhập <span style="color:red">*</span></th>
 					<th data-type="Password" validate-type="true">Mật khẩu <span style="color:red">*</span></th>
 					<th data-type="Select" objectid="nhomquyen" validate-type="true">Nhóm quyền </th>
+					<th data-type="Select" objectid="khoaphong" validate-type="true">Khoa/Phòng </th>
 					<th>Thao tác</th>
 				</tr>
 			</thead>

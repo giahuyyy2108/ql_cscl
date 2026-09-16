@@ -88,9 +88,18 @@ function init_DataTables() {
 					return '<input type="hidden" id = "selectid" value="'+data+'">'+valueSelect;
 				}
 			},	
+			{
+				"targets": 5,
+				"width": '15%',
+				"data" : "MaKhoaPhong",
+				"render": function ( data, type, row ) {
+					var valueSelect = $("#khoaphong option[value='"+data+"']").text();
+					return '<input type="hidden" id = "selectid" value="'+data+'">'+valueSelect;
+				}
+			},
 			
 			{                
-				"targets": 5,
+				"targets": 6,
 				"width": '5%',
 				"data" : "id",
 				"sortable": false,
@@ -163,7 +172,7 @@ $(document).ready(function() {
 		save = '<a id="btn-update" class="add" title="Lưu" data-toggle="tooltip"><i class="glyphicon glyphicon-floppy-disk" style="color: green;"></i></a>';
 		addInput($('#datatable-user'),$(this).closest('tr'));					
 		$(this).closest('tr').find(".edit, .polici, .lock, .delete").toggle();			
-		$(this).closest('tr').find("td:eq(5)").append(save);
+		$(this).closest('tr').find("td:eq(6)").append(save);
 	});
 	
 	// Delete row on delete button click

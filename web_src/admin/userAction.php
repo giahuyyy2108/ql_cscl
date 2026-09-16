@@ -2,6 +2,7 @@
 require_once ("web_src/bean/UserPeer.php");
 require_once ("web_src/bean/ChucNangPeer.php");
 require_once ("web_src/bean/NhomQuyenPeer.php");
+require_once ("web_src/bean/KhoaPhongPeer.php");
 
 class userAction
 {
@@ -21,9 +22,11 @@ class userAction
 		$this->request->setAttribute('script', '<script src="' . _DEFAULT_URL_ . 'js/user.js?' . _DEFAULT_VERSION_JS_CSS_ . '"></script>');
 		$this->request->setAttribute('css', '<link href="' . _DEFAULT_URL_ . 'css/style.css?' . _DEFAULT_VERSION_JS_CSS_ . '" rel="stylesheet">');
 		$nhomquyenPeer = new NhomQuyenPeer();
+		$khoaPhongPeer = new KhoaPhongPeer();
 		$arrNQ = $nhomquyenPeer->getListNQ();
 
 		$this->request->setAttribute("listNQ", $arrNQ);
+		$this->request->setAttribute("listKhoaPhong", $khoaPhongPeer->getListKhoaPhong());
 
 		$this->request->setModel("www/admin/nguoidung/nguoiDung.htm");
 		return true;
@@ -55,7 +58,7 @@ class userAction
 			return $this->request->json_response($myJSON);
 		}
 
-		if ($arrayData[0] == "" || $arrayData[1] == "" || $arrayData[2] == "" || $arrayData[3] == "") {
+		if ($arrayData[0] == "" || $arrayData[1] == "" || $arrayData[2] == "" || $arrayData[3] == "" || $arrayData[4] == "") {
 			$message = new Message();
 			$message->set("flag", false);
 			$message->set("errorMessage", "");
@@ -84,7 +87,7 @@ class userAction
 		// 	$myJSON = json_encode($response);
 		// 	return $this->request->json_response($myJSON);
 		// }
-		if (!preg_match('/^[0-9]+$/', $arrayData[3])) {
+		if (!preg_match('/^[0-9]+$/', $arrayData[3]) || !preg_match('/^[0-9]+$/', $arrayData[4])) {
 			$message = new Message();
 			$message->set("flag", false);
 			$message->set("errorMessage", "Nhóm quyền chỉ được nhập số. Vui lòng nhập lại.");
@@ -115,6 +118,7 @@ class userAction
 			$User->set("username", $arrayData[1]);
 			$User->set("password", $arrayData[2]);
 			$User->set("maNQ", $arrayData[3]);
+			$User->set("MaKhoaPhong", $arrayData[4]);
 
 			$nhomquyen = $nhomquyenPeer->getNQID($arrayData[3]);
 			if ($nhomquyen != false)
@@ -130,6 +134,7 @@ class userAction
 				$User->set("password", $arrayData[2]);
 
 			$User->set("maNQ", $arrayData[3]);
+			$User->set("MaKhoaPhong", $arrayData[4]);
 
 			$userOld = $this->userPeer->getUserID($userId);
 			$User->set("quyen", $userOld->get("quyen"));

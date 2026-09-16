@@ -17,8 +17,10 @@ class KhoaPhongPeer
     {
         $khoaphong = new KhoaPhong;
 
-        $khoaphong->set("MaKhoaPhong", $result["MaKhoaPhong"]);
-        $khoaphong->set("TenKhoaPhong", $result["TenKhoaPhong"]);
+        $khoaphong->set("MaKhoaPhong", $result["id"]);
+        $khoaphong->set("TenKhoaPhong", $result["ten"]);
+        $khoaphong->set("MaKhoi", $result["id_khoi"]);
+        $khoaphong->set("TenKhoi", isset($result["TenKhoi"]) ? $result["TenKhoi"] : "");
         return $khoaphong;
     }
     function setLog($_KhoaPhong, $chucnang = "")
@@ -51,7 +53,10 @@ class KhoaPhongPeer
     }
     function getKhoaPhongID($khoaPhongID)
     {
-        $sql_select = "SELECT * FROM khoaphong WHERE MaKhoaPhong='" . $khoaPhongID . "'";
+        $sql_select = "SELECT k.*, kh.ten AS TenKhoi
+            FROM khoa k
+            LEFT JOIN khoi kh ON kh.id = k.id_khoi
+            WHERE k.id='" . (int) $khoaPhongID . "'";
 
         $this->dbsql->query($sql_select);
 
@@ -64,12 +69,15 @@ class KhoaPhongPeer
 
     function getListKhoaPhong($MaKhoaPhong = "")
     {
-        $sSQL = "SELECT * FROM khoaphong ORDER BY MaKhoaPhong DESC";
+        $sSQL = "SELECT k.*, kh.ten AS TenKhoi
+            FROM khoa k
+            LEFT JOIN khoi kh ON kh.id = k.id_khoi";
 
         if (!empty($MaKhoaPhong)) {
-            $sSQL .= " AND MaKhoaPhong = '" . $MaKhoaPhong . "'";
+            $sSQL .= " WHERE k.id = '" . (int) $MaKhoaPhong . "'";
         }
 
+        $sSQL .= " ORDER BY k.id DESC";
 
         $result = $this->dbsql->query($sSQL);
         $arrList = [];
@@ -85,14 +93,19 @@ class KhoaPhongPeer
     function save($_khoaphong, $pass = 0)
     {
         if ($_khoaphong->get("MaKhoaPhong") == 0 || $_khoaphong->get("MaKhoaPhong") == "") {
-            $sql = "INSERT INTO `khoaphong` (`TenKhoaPhong`) 
+            $sql = "INSERT INTO `khoa` (`ten`, `id_khoi`, `UPDATE_AT`, `CREATE_AT`) 
 					VALUES (
-                        '" . $_khoaphong->get("TenKhoaPhong") . "')";
+                        '" . addslashes($_khoaphong->get("TenKhoaPhong")) . "',
+                        '" . (int) $_khoaphong->get("MaKhoi") . "',
+                        CURDATE(),
+                        CURDATE())";
         } else {
-            $sql = "UPDATE `khoaphong` 
+            $sql = "UPDATE `khoa` 
             SET 
-            `TenKhoaPhong` = '" . $_khoaphong->get("TenKhoaPhong") . "'
-			WHERE `MaKhoaPhong` = '" . $_khoaphong->get("MaKhoaPhong") . "'";
+            `ten` = '" . addslashes($_khoaphong->get("TenKhoaPhong")) . "',
+            `id_khoi` = '" . (int) $_khoaphong->get("MaKhoi") . "',
+            `UPDATE_AT` = CURDATE()
+			WHERE `id` = '" . (int) $_khoaphong->get("MaKhoaPhong") . "'";
         }
         $this->setlog($_khoaphong);
         $this->dbsql->query($sql);
@@ -103,13 +116,13 @@ class KhoaPhongPeer
     {
         $this->kp->set("MaKhoaPhong", $MaKhoaPhong);
         $this->setLog($this->kp, "Xóa khoa phòng");
-        $sSQL = "DELETE FROM khoaphong WHERE MaKhoaPhong='" . $MaKhoaPhong . "'";
+        $sSQL = "DELETE FROM khoa WHERE id='" . (int) $MaKhoaPhong . "'";
         $this->dbsql->query($sSQL);
         return true;
     }
     function getListTenPhongKhoa()
     {
-        $sSql = "SELECT TenKhoaPhong FROM khoaphong";
+        $sSql = "SELECT ten AS TenKhoaPhong FROM khoa";
         $result = $this->dbsql->query($sSql);
 
         $tenPhongKhamList = array();

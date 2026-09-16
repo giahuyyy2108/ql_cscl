@@ -2,10 +2,14 @@
 class KhoaPhong{   
     var $MaKhoaPhong;
     var $TenKhoaPhong;
+    var $MaKhoi;
+    var $TenKhoi;
 
     function KhoaPhong(){      
         $this->MaKhoaPhong= 0;
         $this->TenKhoaPhong = "";
+        $this->MaKhoi = 0;
+        $this->TenKhoi = "";
     
     }
     

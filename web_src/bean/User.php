@@ -12,6 +12,7 @@ class User
 	var $adminType;
 	var $quyen;
 	var $maNQ;
+	var $MaKhoaPhong;
 	var $nd_block;
 	var $changeQuyen;
 	var $token;
@@ -28,6 +29,7 @@ class User
 		$this->adminType = 0;
 		$this->quyen = "";
 		$this->maNQ = 0;
+		$this->MaKhoaPhong = 0;
 		$this->nd_block = 0;
 		$this->changeQuyen = 0;
 		$token = "";
