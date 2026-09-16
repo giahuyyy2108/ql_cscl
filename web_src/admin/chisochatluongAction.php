@@ -39,6 +39,11 @@ class chisochatluongAction
 		$this->request->setAttribute("listCKy", $ChuKyPeer->getChuKy());
 		$this->request->setAttribute("listDvt", $donvitinhPeer->getDonViTinh());
 		$this->request->setAttribute("listTT", $tinhtrangPeer->getTinhTrang());
+		$this->request->setAttribute("listKhoaPhong", $this->ChiSoPeer->getListKhoaPhong());
+		$this->request->setAttribute(
+			"currentKhoaPhongId",
+			$this->ChiSoPeer->getKhoaPhongIdByUserId(isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : 0)
+		);
 		$this->request->setModel("www/chisochatluong/index.php");
 		return true;
 	}
@@ -58,7 +63,19 @@ class chisochatluongAction
 
 		$nguoigui = !empty($_SESSION["sUserID"]) ? $_SESSION["sUserID"]
 			: (isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : "");
+		$idKhoaPhong = (int) $chiso->get("id_khoaphong");
+		if (!$this->ChiSoPeer->isKhoaPhongIdValid($idKhoaPhong)) {
+			$idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($nguoigui);
+		}
+		if ($idKhoaPhong <= 0) {
+			$this->lastErrorMessage = "Vui long chon khoa/phong hop le";
+			return $this->request->json_response(json_encode(array(
+				"success" => false,
+				"message" => $this->getErrorMessage()
+			)));
+		}
 		$chiso->set("nguoi_gui", $nguoigui);
+		$chiso->set("id_khoaphong", $idKhoaPhong);
 
 		$id = $this->ChiSoPeer->Save($chiso);
 		$message = new Message();

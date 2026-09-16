@@ -1,12 +1,12 @@
 <form name="frmQuyen" id="frmQuyen" action="" method="post">
-	<table id="table-quyen" width="100%" class="table table-hover">
-<?			
+	<table id="table-quyen" width="100%" class="table table-hover table-condensed" aria-label="Danh sách phân quyền">
+		<tbody>
+<?
+	$i = 0;
 	if($listChucNang!=false){
-		$i = 0;
 		foreach($listChucNang as $chucnang){
 			if($chucnang->get("level") == '0' ){
 				$level0 = $chucnang->get("maChucNang");
-				$hasQuyen = "";
 				$hasQuyen = "";
 				$strQuyen = "";
 				if($chucnang->get("parentQuyen")!=""){
@@ -15,9 +15,11 @@
 				}
 ?>      
 		<tr>
-			<td class="level0" style="border-top: 0px;">
-				<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$strQuyen?>" <?=$hasQuyen?> level="<?=$level0?>">				
-				<strong>&nbsp;&nbsp;<?=$chucnang->get("tenChucNang")?> </strong>
+			<td class="level0" style="padding-left: 12px !important;">
+				<label style="margin: 0;">
+					<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$strQuyen?>" <?=$hasQuyen?> level="<?=$level0?>">
+					<?=$chucnang->get("tenChucNang")?>
+				</label>
 			</td>   
 		</tr>
 <?
@@ -36,10 +38,12 @@
 					$strQuyen = $chucnang->get("parentQuyen");
 				}
 ?>      
-		<tr>      
-			<td class="level1">
-				<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$strQuyen?>" <?=$hasQuyen?> onChange="Check(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
-				<?=$chucnang->get("tenChucNang")?>  
+		<tr>
+			<td class="level1" style="padding-left: 36px !important;">
+				<label style="margin: 0;">
+					<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$strQuyen?>" <?=$hasQuyen?> onChange="Check(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
+					<?=$chucnang->get("tenChucNang")?>
+				</label>
 			</td>	
 		</tr>
 <?				$tenChucNangCon = array();
@@ -52,10 +56,12 @@
 						if($tenchucnang!="" && isset($urlChucNangCon[$key]) && $urlChucNangCon[$key]!=""){
 							$hasQuyen1 = $this->request->checkRoleUser($urlChucNangCon[$key],$quyen)?'checked="checked"':'';
 ?>
-		<tr>       
-			<td class="level2">
-				<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$urlChucNangCon[$key]?>" <?=$hasQuyen1?> onChange="CheckParen(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
-				<?=$tenchucnang?> 
+		<tr>
+			<td class="level2" style="padding-left: 60px !important;">
+				<label style="margin: 0; font-weight: normal;">
+					<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$urlChucNangCon[$key]?>" <?=$hasQuyen1?> onChange="CheckParen(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
+					<?=$tenchucnang?>
+				</label>
 			</td>
 		</tr>
 <?					
@@ -67,10 +73,12 @@
 			if($chucnang->get("level") == '2' ){
 				$hasQuyen = $this->request->checkRoleUser($chucnang->get("url"),$quyen)?'checked="checked"':'';
 ?>      
-		<tr>      
-			<td class="level2">
-				<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$chucnang->get("url")?>" <?=$hasQuyen?> onChange="Check(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
-				<?=$chucnang->get("tenChucNang")?>  
+		<tr>
+			<td class="level2" style="padding-left: 60px !important;">
+				<label style="margin: 0; font-weight: normal;">
+					<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$chucnang->get("url")?>" <?=$hasQuyen?> onChange="Check(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
+					<?=$chucnang->get("tenChucNang")?>
+				</label>
 			</td>	
 		</tr>
 <?				$tenChucNangCon = array();
@@ -82,10 +90,12 @@
 						if($tenchucnang!="" && isset($urlChucNangCon[$key]) && $urlChucNangCon[$key]!=""){
 							$hasQuyen1 = $this->request->checkRoleUser($urlChucNangCon[$key],$quyen)?'checked="checked"':'';
 ?>
-		<tr>       
-			<td class="level3">
-				<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$urlChucNangCon[$key]?>" <?=$hasQuyen1?> onChange="CheckParen(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
-				<?=$tenchucnang?> 
+		<tr>
+			<td class="level3" style="padding-left: 84px !important;">
+				<label style="margin: 0; font-weight: normal;">
+					<input type="checkbox" name="checkbox<?=$i?>[]" id="checkbox<?=$i?>" value="<?=$urlChucNangCon[$key]?>" <?=$hasQuyen1?> onChange="CheckParen(this,document.frmQuyen.checkbox<?=$i?>)" level="<?=$level0?>" data-chucnang="<?=$id?>">
+					<?=$tenchucnang?>
+				</label>
 			</td>
 		</tr>
 <?					
@@ -96,9 +106,19 @@
 			}
 			
 		}
+	} else {
+?>
+		<tr>
+			<td>
+				<i class="fa fa-info-circle" aria-hidden="true"></i>
+				Chưa có chức năng để phân quyền.
+			</td>
+		</tr>
+<?
 	}
 ?>
-    </table>     
+		</tbody>
+	</table>
 		<input type="hidden" name="username" id="username" value="<?=$username?>">
 		<input type="hidden" name="numCheck" id="numCheck" value="<?=$i?>">
 </form>

@@ -5,6 +5,8 @@ $listPV = $request->getAttribute("listPV");
 $listCky = $request->getAttribute("listCKy");
 $listDvt = $request->getAttribute("listDvt");
 $listTinhTrang = $request->getAttribute("listTT");
+$listKhoaPhong = $request->getAttribute("listKhoaPhong");
+$currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 
 
 
@@ -55,7 +57,6 @@ $listTinhTrang = $request->getAttribute("listTT");
 					<th data-type="Number" validate-type="true">Mã khía cạnh<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Mã thành tố<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Phạm vi<span style="color:red"></span></th>
-					<th data-type="String" validate-type="true">Đơn vị tính<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">ID chu kỳ<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người gửi<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người duyệt<span style="color:red"></span></th>
@@ -202,6 +203,21 @@ $listTinhTrang = $request->getAttribute("listTT");
 										</option>
 									<?php endforeach; ?>
 
+								</select>
+							</div>
+						</div>
+
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Khoa/Phòng <span class="text-danger">*</span></label>
+								<select class="form-control" id="id_khoaphong" name="id_khoaphong" required>
+									<option value="">-- Chọn khoa/phòng --</option>
+									<?php foreach ($listKhoaPhong as $khoaPhong): ?>
+										<option value="<?= (int) $khoaPhong['id'] ?>"
+											<?= (int) $khoaPhong['id'] === $currentKhoaPhongId ? 'selected' : '' ?>>
+											<?= htmlspecialchars($khoaPhong['ten'], ENT_QUOTES, 'UTF-8') ?>
+										</option>
+									<?php endforeach; ?>
 								</select>
 							</div>
 						</div>

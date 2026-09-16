@@ -4495,24 +4495,118 @@ table select{
 	padding: 0px!important;
 }
 
-#table-quyen input[type=checkbox] {
-	margin-right: 7px!important;
+.permission-modal .modal-dialog {
+	width: 960px;
+	max-width: calc(100% - 30px);
+	margin: 24px auto;
 }
 
-#table-quyen .level1 {
-	padding-left: 70px!important;
+.permission-modal .modal-content {
+	border: 0;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 18px 55px rgba(29, 48, 62, .28);
 }
 
-#table-quyen .level2 {
-	padding-left: 100px!important;
+.permission-modal .modal-header {
+	padding: 18px 22px;
+	border-bottom: 1px solid #e7ebef;
+	background: linear-gradient(135deg, #f7fbfd 0%, #eef6fa 100%);
 }
 
-#table-quyen .level3 {
-	padding-left: 130px!important;
+.permission-modal .modal-header .close {
+	margin-top: 7px;
+	color: #60727f;
+	font-size: 26px;
+	opacity: .7;
 }
 
-#table-quyen.table>tbody>tr>td, .table>tbody>tr>th, #table-quyen.table>tfoot>tr>td, #table-quyen.table>tfoot>tr>th, #table-quyen.table>thead>tr>td, #table-quyen.table>thead>tr>th {
-    padding: 2px;   
+.permission-modal .modal-header .close:hover,
+.permission-modal .modal-header .close:focus {
+	color: #263b4d;
+	opacity: 1;
+}
+
+.permission-modal .modal-title {
+	color: #263b4d;
+	font-size: 19px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.permission-modal .modal-body {
+	max-height: calc(100vh - 210px);
+	min-height: 220px;
+	padding: 14px 18px 18px;
+	overflow-y: auto;
+	background: #f5f7f9;
+}
+
+.permission-modal__loading {
+	padding: 70px 15px;
+	color: #7a8994;
+	font-size: 15px;
+	text-align: center;
+}
+
+.permission-modal__error {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 190px;
+	padding: 30px 15px;
+	color: #84939d;
+	text-align: center;
+}
+
+.permission-modal__error .fa {
+	margin-bottom: 12px;
+	color: #d9534f;
+	font-size: 34px;
+}
+
+.permission-modal__error strong,
+.permission-modal__error span {
+	display: block;
+}
+
+.permission-modal__error strong {
+	margin-bottom: 4px;
+	color: #7d3b39;
+	font-size: 15px;
+}
+
+.permission-modal .modal-footer {
+	padding: 12px 20px;
+	border-top: 1px solid #e7ebef;
+	background: #fff;
+	text-align: right;
+}
+
+.permission-modal .modal-footer .btn {
+	min-width: 110px;
+	padding: 8px 18px;
+}
+
+@media (max-width: 767px) {
+	.permission-modal .modal-dialog {
+		width: auto;
+		margin: 10px;
+	}
+
+	.permission-modal .modal-body {
+		max-height: calc(100vh - 180px);
+		min-height: 160px;
+		padding: 10px;
+	}
+
+}
+
+@media (max-width: 480px) {
+	.permission-modal .modal-footer .btn {
+		min-width: 95px;
+	}
 }
 
 .clsspanTrichYeu {

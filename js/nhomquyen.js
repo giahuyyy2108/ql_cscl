@@ -124,8 +124,9 @@ $(document).ready(function() {
 		$("#modal-phanquyen").modal({
 			backdrop: "static"					
 		});
+		$("#modal-phanquyen .modal-body").html('<div class="permission-modal__loading"><i class="fa fa-spinner fa-spin"></i> Đang tải danh sách quyền...</div>');
 
-		$("#modal-phanquyen .modal-title").html("Phân quyền nhóm : " + row.data().tenNQ);
+		$("#modal-phanquyen .permission-modal__title-text").text("Phân quyền nhóm: " + row.data().tenNQ);
 		
 		var maNQ = getId($(this)); 
 		
@@ -140,10 +141,10 @@ $(document).ready(function() {
 			dataType : "text",
 			cache: false,
 			//async: false,
-			error: function(htmlText){		
-				alert("loi :"+JSON.stringify(htmlText));
+			error: function(){
+				$("#modal-phanquyen .modal-body").html('<div class="permission-modal__error"><i class="fa fa-exclamation-circle" aria-hidden="true"></i><strong>Không tải được danh sách quyền</strong><span>Vui lòng đóng cửa sổ và thử lại.</span></div>');
 			},
-			success : function(htmlText) {	
+			success : function(htmlText) {
 				$("#modal-phanquyen .modal-body").html(htmlText);
 				$("#username").val(row.data().maNQ);
 			}
@@ -314,5 +315,5 @@ function hiddenButton(){
 	}
 	if($("#role-nhomquyen-phanquyen").val() == "false"){
 		$(".polici").hide();
-	}		
-}	
+	}
+}

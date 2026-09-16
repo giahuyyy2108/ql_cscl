@@ -41,6 +41,7 @@ class ChiSoChatLuongPeer
         $chiso->set("nguong_canh_bao", $result["nguong_canh_bao"]);
         $chiso->set("id_donvitinh", $result["id_donvitinh"]);
         $chiso->set("id_chuky", $result["id_chuky"]);
+        $chiso->set("id_khoaphong", $result["id_khoaphong"]);
         // $chiso->set("du_lieu_chu_ky", $result["du_lieu_chu_ky"]);
         $chiso->set("loai_cong_thuc", $result["loai_cong_thuc"]);
         $chiso->set("cong_thuc", $result["cong_thuc"]);
@@ -81,7 +82,42 @@ class ChiSoChatLuongPeer
 		return $arrList;
     }
 
-    function Save($_chisochatluong){
+    public function getListKhoaPhong()
+    {
+        $result = $this->dbsql->query("SELECT id, ten FROM khoa ORDER BY ten ASC");
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $items[] = array('id' => (int) $row['id'], 'ten' => $row['ten']);
+        }
+        return $items;
+    }
+
+    public function getKhoaPhongIdByUserId($userId)
+    {
+        $userId = (int) $userId;
+        if ($userId <= 0) return 0;
+
+        $result = $this->dbsql->query(
+            "SELECT u.MaKhoaPhong FROM user u
+             INNER JOIN khoa k ON k.id = u.MaKhoaPhong
+             WHERE u.id = " . $userId . " LIMIT 1"
+        );
+        if ($this->dbsql->num_rows($result) === 0) return 0;
+        $row = $this->dbsql->fetch_array($result);
+        return (int) $row['MaKhoaPhong'];
+    }
+
+    public function isKhoaPhongIdValid($idKhoaPhong)
+    {
+        $idKhoaPhong = (int) $idKhoaPhong;
+        if ($idKhoaPhong <= 0) return false;
+        $result = $this->dbsql->query(
+            "SELECT id FROM khoa WHERE id = " . $idKhoaPhong . " LIMIT 1"
+        );
+        return $this->dbsql->num_rows($result) > 0;
+    }
+
+    public function Save($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
             return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
         };
@@ -92,7 +128,7 @@ class ChiSoChatLuongPeer
         $sql = "INSERT INTO `chi_so_chat_luong`
             (`ten_chi_so`, `ma_khia_canh`, `ma_thanh_to`, `nhom_chi_so`,
              `pham_vi`, `muc_tieu`, `nguong_canh_bao`, `id_donvitinh`,
-             `id_chuky`, `loai_cong_thuc`, `cong_thuc`, `trang_thai`,
+             `id_chuky`, `id_khoaphong`, `loai_cong_thuc`, `cong_thuc`, `trang_thai`,
              `nguoi_gui`, `thoi_gian_gui`, `nguoi_duyet`, `thoi_gian_duyet`,
              `ly_do_tu_choi`, `dinh_nghia`, `thu_thap`, `ten_tu_so`, `ten_mau_so`)
             VALUES (" . $value('ten_chi_so') . ",
@@ -104,6 +140,7 @@ class ChiSoChatLuongPeer
                     " . $value('nguong_canh_bao') . ",
                     " . $number('id_donvitinh') . ",
                     " . $number('id_chuky') . ",
+                    " . $number('id_khoaphong') . ",
                     " . $value('loai_cong_thuc') . ",
                     " . $value('cong_thuc') . ",
                     0, " . $value('nguoi_gui') . ", NULL, NULL, NULL, '',

@@ -83,12 +83,6 @@ table = $('#datatable-chiso').DataTable({
                 return $('#pham_vi option[value="' + data + '"]').text() || data;
             }
         },
-        {
-            data: 'id_donvitinh',
-            render: function (data) {
-                return getOptionText('don_vi_tinh', data);
-            }
-        },
         { 
             data: 'id_chuky',
             render: function (data, type, row) {
@@ -240,6 +234,7 @@ $('#datatable-chiso').on('click', '.btn-sua', function () {
     $('#nguong_canh_bao').val(row.nguong_canh_bao);
     $('#don_vi_tinh').val(row.id_donvitinh);
     $('#id_chuky').val(row.id_chuky);
+    $('#id_khoaphong').val(row.id_khoaphong);
     $('#dinh_nghia').val(row.dinh_nghia);
     $('#thu_thap').val(row.thu_thap);
     $('#ten_tu_so').val(row.ten_tu_so);
@@ -290,6 +285,7 @@ $('#formChiTieu').on('submit', function (e) {
                 nguong_canh_bao: $('#nguong_canh_bao').val(),
                 id_donvitinh: $('#don_vi_tinh').val(),
                 id_chuky: $('#id_chuky').val() || $('#chuky').val(),
+                id_khoaphong: $('#id_khoaphong').val(),
                 dinh_nghia: $('#dinh_nghia').val(),
                 thu_thap: $('#thu_thap').val(),
                 ten_tu_so: $('#ten_tu_so').val(),

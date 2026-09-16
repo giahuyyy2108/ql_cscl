@@ -19,28 +19,22 @@
 	</div>
 
 <!--  Modal phan quyen -->
-<div class="modal fade" id="modal-phanquyen" role="dialog">
-    <div class="modal-dialog">    
+<div class="modal fade permission-modal" id="modal-phanquyen" tabindex="-1" role="dialog" aria-labelledby="permission-modal-title">
+    <div class="modal-dialog modal-lg">
       <!-- Modal content-->
       <div class="modal-content">        
-		<div class="modal-header text-center">
-			<button type="button" class="close" data-dismiss="modal">&times;</button>
-			<h4 class="modal-title">Modal Header</h4>
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="permission-modal-title"><span class="permission-modal__title-text">Phân quyền</span></h4>
         </div>
-        <div class="modal-body" style="height: 600px;overflow-y: scroll;"> 
-			
-		</div>
+        <div class="modal-body">
+			<div class="permission-modal__loading"><i class="fa fa-spinner fa-spin"></i> Đang tải danh sách quyền...</div>
+        </div>
         <div class="modal-footer">
-			<div class="col-xs-6 col-sm-6 col-md-6" style="text-align: left;">
-				<button type="button" class="btn btn-info save-hang-modal"><i class="fa fa-floppy-o"></i> Lưu phân quyền</button>
-			</div>
-			<div class="col-xs-6 col-sm-6 col-md-6" style=" display: flex; justify-content: flex-end;">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-			<div>
+			<button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+			<button type="button" class="btn btn-info save-hang-modal"><i class="fa fa-floppy-o"></i> Lưu phân quyền</button>
         </div>
       </div>
-		</div>
-    </div>
 	</div>
 </div>
 <!-- End Modal add sp vao kho -->
