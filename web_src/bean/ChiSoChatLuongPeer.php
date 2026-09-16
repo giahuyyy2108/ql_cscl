@@ -92,6 +92,65 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
+    public function getListKhoi()
+    {
+        $result = $this->dbsql->query("SELECT id, ten FROM khoi ORDER BY ten ASC");
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $items[] = array('id' => (int) $row['id'], 'ten' => $row['ten']);
+        }
+        return $items;
+    }
+
+    public function getListKhoaPhongByKhoi($idKhoi = 0)
+    {
+        $idKhoi = (int) $idKhoi;
+        $sql = "SELECT id, ten, id_khoi FROM khoa";
+        if ($idKhoi > 0) {
+            $sql .= " WHERE id_khoi = " . $idKhoi;
+        }
+        $sql .= " ORDER BY ten ASC";
+
+        $result = $this->dbsql->query($sql);
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $items[] = array(
+                'id' => (int) $row['id'],
+                'ten' => $row['ten'],
+                'id_khoi' => (int) $row['id_khoi']
+            );
+        }
+        return $items;
+    }
+
+    public function getListDaDuyetByKhoa($idKhoi = 0, $idKhoaPhong = 0)
+    {
+        $idKhoi = (int) $idKhoi;
+        $idKhoaPhong = (int) $idKhoaPhong;
+
+        $sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
+                       FROM chi_so_chat_luong cs
+                       LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
+                       INNER JOIN khoa k ON k.id = cs.id_khoaphong
+                       WHERE cs.trang_thai = 2";
+
+        if ($idKhoi > 0) {
+            $sql_select .= " AND k.id_khoi = " . $idKhoi;
+        }
+        if ($idKhoaPhong > 0) {
+            $sql_select .= " AND cs.id_khoaphong = " . $idKhoaPhong;
+        }
+
+        $sql_select .= " ORDER BY cs.ma_chi_so DESC";
+
+        $result = $this->dbsql->query($sql_select);
+        $arrList = array();
+        while ($row = $this->dbsql->fetch_Array($result)) {
+            $arrList[] = $this->Set_chiso($row);
+        }
+        return $arrList;
+    }
+
     public function getKhoaPhongIdByUserId($userId)
     {
         $userId = (int) $userId;
