@@ -37,6 +37,9 @@ class PhamViPeer
 
         return $arrList;
     }
+
+    function save($item) { $id=(int)$item->get('id'); $ten=addslashes($item->get('ten')); if ($id===0) { $this->dbsql->query("INSERT INTO phamvi (`ten`) VALUES ('$ten')"); return $this->dbsql->insert_id(); } $this->dbsql->query("UPDATE phamvi SET `ten`='$ten' WHERE `id`='$id'"); return $id; }
+    function deletePhamVi($id) { $this->dbsql->query("DELETE FROM phamvi WHERE id='".(int)$id."'"); return true; }
 }
 
 ?>

@@ -37,6 +37,9 @@ class ChuKyPeer
 
         return $arrList;
     }
+
+    function save($item) { $id=(int)$item->get('id'); $ten=addslashes($item->get('ten')); if ($id===0) { $this->dbsql->query("INSERT INTO chuky (`ten`) VALUES ('$ten')"); return $this->dbsql->insert_id(); } $this->dbsql->query("UPDATE chuky SET `ten`='$ten' WHERE `id`='$id'"); return $id; }
+    function deleteChuKy($id) { $this->dbsql->query("DELETE FROM chuky WHERE id='".(int)$id."'"); return true; }
 }
 
 ?>

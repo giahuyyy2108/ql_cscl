@@ -37,6 +37,24 @@ class DonViTinhPeer
 
         return $arrList;
     }
+
+    function save($donViTinh)
+    {
+        $id = (int) $donViTinh->get('id');
+        $ten = addslashes($donViTinh->get('ten'));
+        if ($id === 0) {
+            $this->dbsql->query("INSERT INTO donvitinh (`ten`) VALUES ('" . $ten . "')");
+            return $this->dbsql->insert_id();
+        }
+        $this->dbsql->query("UPDATE donvitinh SET `ten` = '" . $ten . "' WHERE `id` = '" . $id . "'");
+        return $id;
+    }
+
+    function deleteDonViTinh($id)
+    {
+        $this->dbsql->query("DELETE FROM donvitinh WHERE id='" . (int) $id . "'");
+        return true;
+    }
 }
 
 ?>

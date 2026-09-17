@@ -38,6 +38,14 @@ class TinhTrangPeer
 
         return $arrList;
     }
+
+    function save($item, $oldId)
+    {
+        $ma=addslashes($item->get('maTrangThai')); $ten=addslashes($item->get('tenTrangThai')); $tag=addslashes($item->get('tag')); $oldId=addslashes($oldId);
+        if ($oldId === '') { $this->dbsql->query("INSERT INTO trangthai (`maTrangThai`,`tenTrangThai`,`tag`) VALUES ('$ma','$ten','$tag')"); return $ma; }
+        $this->dbsql->query("UPDATE trangthai SET `maTrangThai`='$ma',`tenTrangThai`='$ten',`tag`='$tag' WHERE `maTrangThai`='$oldId'"); return $ma;
+    }
+    function deleteTinhTrang($id) { $this->dbsql->query("DELETE FROM trangthai WHERE maTrangThai='".addslashes($id)."'"); return true; }
 }
 
 ?>

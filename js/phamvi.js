@@ -1,0 +1,1 @@
+$(function () { initDanhMucCrud({ tableId: 'datatable-phamvi', route: 'phamvi', idField: 'id', fields: [{ data: 'ten' }], success: 'Phạm vi đã được cập nhật thành công.', deleted: 'Phạm vi đã được xóa thành công.' }); });

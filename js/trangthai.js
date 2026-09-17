@@ -1,0 +1,1 @@
+$(function () { initDanhMucCrud({ tableId: 'datatable-trangthai', route: 'trangthai', idField: 'maTrangThai', fields: [{ data: 'maTrangThai' }, { data: 'tenTrangThai' }, { data: 'tag' }], success: 'Trạng thái đã được cập nhật thành công.', deleted: 'Trạng thái đã được xóa thành công.' }); });

@@ -38,6 +38,9 @@ class DanhMucKCTTPeer
 
         return $arrList;
     }
+
+    function save($item) { $id=(int)$item->get('id'); $loai=addslashes($item->get('loai')); $ten=addslashes($item->get('ten')); if ($id===0) { $this->dbsql->query("INSERT INTO danhmuc_kctt (`loai`,`ten`) VALUES ('$loai','$ten')"); return $this->dbsql->insert_id(); } $this->dbsql->query("UPDATE danhmuc_kctt SET `loai`='$loai',`ten`='$ten' WHERE `id`='$id'"); return $id; }
+    function deleteDanhMucKCTT($id) { $this->dbsql->query("DELETE FROM danhmuc_kctt WHERE id='".(int)$id."'"); return true; }
 }
 
 ?>

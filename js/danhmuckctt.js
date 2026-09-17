@@ -1,0 +1,1 @@
+$(function () { initDanhMucCrud({ tableId: 'datatable-danhmuckctt', route: 'danhmuckctt', idField: 'id', fields: [{ data: 'loai', selectId: 'loai-kctt' }, { data: 'ten' }], success: 'Danh mục đã được cập nhật thành công.', deleted: 'Danh mục đã được xóa thành công.' }); });
