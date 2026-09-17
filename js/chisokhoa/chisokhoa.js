@@ -77,18 +77,6 @@ table = $('#datatable-chisokhoa').DataTable({
         },
         { data: 'ten_chi_so' },
         {
-            data: 'ma_khia_canh',
-            render: function (data) {
-                return getOptionText('ma_khia_canh', data);
-            }
-        },
-        {
-            data: 'ma_thanh_to',
-            render: function (data) {
-                return getOptionText('ma_thanh_to', data);
-            }
-        },
-        {
             data: 'pham_vi',
             render: function (data) {
                 return getOptionText('pham_vi', data);

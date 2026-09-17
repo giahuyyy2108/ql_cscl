@@ -43,8 +43,6 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 				<tr>
 					<th>Mã chỉ số</th>
 					<th>Tên chỉ số</th>
-					<th>Khía cạnh</th>
-					<th>Thành tố</th>
 					<th>Phạm vi</th>
 					<th>Chu kỳ</th>
 					<th>Người gửi</th>
