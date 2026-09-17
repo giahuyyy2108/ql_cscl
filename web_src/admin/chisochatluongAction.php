@@ -49,10 +49,27 @@ class chisochatluongAction
 		return true;
 	}
 
-	function getData()
+	public function getData()
 	{
-		$data['data'] = $this->ChiSoPeer->getList();
-		return $this->request->json_response(json_encode($data));
+		$userId = isset($_SESSION["sUserID"])
+			? (int) $_SESSION["sUserID"]
+			: 0;
+
+		$coQuyenDuyet = $this->request->checkRole(
+			"chisochatluong.duyet"
+		);
+
+		$idKhoaPhong = $this->ChiSoPeer
+			->getKhoaPhongIdByUserId($userId);
+
+		$data['data'] = $this->ChiSoPeer->getList(
+			$coQuyenDuyet,
+			$idKhoaPhong
+		);
+
+		return $this->request->json_response(
+			json_encode($data)
+		);
 	}
 
 	function save()

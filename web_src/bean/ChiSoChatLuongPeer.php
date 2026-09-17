@@ -77,24 +77,50 @@ class ChiSoChatLuongPeer
 	}
 
 
-    function GetLisT(){
-        // tao cau truy van		
+    public function getList($coQuyenDuyet = false,$idKhoaPhong = 0) 
+    {
+        $idKhoaPhong = (int) $idKhoaPhong;
 
-		$sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
-                       FROM chi_so_chat_luong cs
-                       LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
-                       ORDER BY cs.ma_chi_so DESC";
+        $sqlSelect = "
+            SELECT cs.*, tt.tenTrangThai, tt.tag
+            FROM chi_so_chat_luong cs
+            LEFT JOIN trangthai tt
+                ON tt.maTrangThai = cs.trang_thai
+        ";
 
-		$result= $this->dbsql->query($sql_select);
+        /*
+        * Người không có quyền duyệt chỉ được xem những chỉ tiêu
+        * áp dụng cho Khoa/Phòng của mình.
+        */
+        if (!$coQuyenDuyet) {
+            if ($idKhoaPhong <= 0) {
+                // User chưa được gán Khoa/Phòng: không trả dữ liệu.
+                $sqlSelect .= " WHERE 1 = 0";
+            } else {
+                $sqlSelect .= "
+                    WHERE CASE
+                        WHEN JSON_VALID(cs.phong) = 1
+                        THEN JSON_CONTAINS(
+                            cs.phong,
+                            '" . $idKhoaPhong . "',
+                            '$'
+                        )
+                        ELSE cs.id_khoaphong = " . $idKhoaPhong . "
+                    END = 1
+                ";
+            }
+        }
 
-		
-        $arrList = [];
-		$i = 0;
-		while ($row = $this->dbsql->fetch_Array($result)) {
-			$arrList[$i] = $this->Set_chiso($row);
-			$i++;
-		}
-		return $arrList;
+        $sqlSelect .= " ORDER BY cs.ma_chi_so DESC";
+
+        $result = $this->dbsql->query($sqlSelect);
+        $items = array();
+
+        while ($row = $this->dbsql->fetch_Array($result)) {
+            $items[] = $this->Set_chiso($row);
+        }
+
+        return $items;
     }
 
     public function getListKhoaPhong()
@@ -138,41 +164,71 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
-    public function getListDaDuyetByKhoa($idKhoi = 0, $idKhoaPhong = 0)
+    public function getListDaDuyetByKhoa($idKhoi = 0,$idKhoaPhong = 0) 
     {
         $idKhoi = (int) $idKhoi;
         $idKhoaPhong = (int) $idKhoaPhong;
 
-        $sql_select = "SELECT DISTINCT cs.*, tt.tenTrangThai, tt.tag
-                       FROM chi_so_chat_luong cs
-                       LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
-                       INNER JOIN khoa k ON (
-                           (JSON_VALID(cs.phong) = 1 AND JSON_CONTAINS(cs.phong, CAST(k.id AS CHAR), '$'))
-                           OR ((COALESCE(JSON_VALID(cs.phong), 0) = 0 OR JSON_LENGTH(cs.phong) = 0)
-                               AND k.id = cs.id_khoaphong)
-                       )
-                       WHERE cs.trang_thai = 2";
+        $sqlSelect = "
+            SELECT cs.*, tt.tenTrangThai, tt.tag
+            FROM chi_so_chat_luong cs
+            LEFT JOIN trangthai tt
+                ON tt.maTrangThai = cs.trang_thai
+            WHERE cs.trang_thai = 2
+        ";
 
+        /*
+        * Lọc theo Khối:
+        * Chỉ tiêu phải có ít nhất một Khoa/Phòng thuộc Khối
+        * nằm trong JSON cột phong.
+        */
         if ($idKhoi > 0) {
-            $sql_select .= " AND k.id_khoi = " . $idKhoi;
-        }
-        if ($idKhoaPhong > 0) {
-            $sql_select .= " AND (
-                (JSON_VALID(cs.phong) = 1 AND JSON_CONTAINS(cs.phong, '" . $idKhoaPhong . "', '$'))
-                OR ((COALESCE(JSON_VALID(cs.phong), 0) = 0 OR JSON_LENGTH(cs.phong) = 0)
-                    AND cs.id_khoaphong = " . $idKhoaPhong . ")
+            $sqlSelect .= "
+                AND EXISTS (
+                    SELECT 1
+                    FROM khoa k
+                    WHERE k.id_khoi = " . $idKhoi . "
+                    AND CASE
+                        WHEN JSON_VALID(cs.phong) = 1
+                        THEN JSON_CONTAINS(
+                            cs.phong,
+                            CAST(k.id AS CHAR),
+                            '$'
+                        )
+                        ELSE cs.id_khoaphong = k.id
+                    END = 1
                 )
             ";
         }
 
-        $sql_select .= " ORDER BY cs.ma_chi_so DESC";
-
-        $result = $this->dbsql->query($sql_select);
-        $arrList = array();
-        while ($row = $this->dbsql->fetch_Array($result)) {
-            $arrList[] = $this->Set_chiso($row);
+        /*
+        * Lọc theo một Khoa/Phòng cụ thể.
+        */
+        if ($idKhoaPhong > 0) {
+            $sqlSelect .= "
+                AND CASE
+                    WHEN JSON_VALID(cs.phong) = 1
+                    THEN JSON_CONTAINS(
+                        cs.phong,
+                        '" . $idKhoaPhong . "',
+                        '$'
+                    )
+                    ELSE cs.id_khoaphong = " . $idKhoaPhong . "
+                END = 1
+            ";
         }
-        return $arrList;
+
+        $sqlSelect .= " ORDER BY cs.ma_chi_so DESC";
+
+
+        $result = $this->dbsql->query($sqlSelect);
+        $items = array();
+
+        while ($row = $this->dbsql->fetch_Array($result)) {
+            $items[] = $this->Set_chiso($row);
+        }
+
+        return $items;
     }
 
     public function getKhoaPhongIdByUserId($userId)
