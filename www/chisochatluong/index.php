@@ -385,7 +385,7 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                <h4 class="modal-title"><i class="fa fa-eye"></i> Chi tiết chỉ tiêu</h4>
+                <h4 class="modal-title"></i> Chi tiết chỉ tiêu</h4>
             </div>
             <div class="modal-body">
                 <table class="table table-bordered table-striped" style="margin-bottom: 0;">

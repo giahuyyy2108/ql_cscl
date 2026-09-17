@@ -564,6 +564,9 @@ input[type=checkbox]{
     <script src="<?=_DEFAULT_LIBS_?>dropzone/dist/min/dropzone.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     
+    <!-- Quyền thao tác của trang, phải có trước script riêng của trang -->
+    <?=$request->getAttribute("hiddenRole")?>
+
     <!-- script to page -->
     <?=$request->getAttribute("script")?>
     

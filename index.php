@@ -159,10 +159,12 @@ if($method_return!= null){
 	$chucNangPeer = new ChucNangPeer;
 	$listChucNang = $chucNangPeer->getChucNang();	
 	$request->setAttribute('listChucNang',$listChucNang);	
+	ob_start();
+	$request->getHiddenRole($strRole);
+	$request->setAttribute('hiddenRole', ob_get_clean());
 	header('Content-Type: text/html; charset=utf-8');
 	include("www/View/_sharedLayout/index.php");
 	// include("www/admin/admin.htm");
-	$request->getHiddenRole($strRole);
 	return true;
 }
 ob_end_flush();

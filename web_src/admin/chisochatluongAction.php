@@ -13,7 +13,7 @@ class chisochatluongAction
 	var $request;
 	var $ChiSoPeer;
 	var $lastErrorMessage;
-
+	public static $listRole ="chisochatluong,save,update,gui,duyet,xoa,tuchoi";
 	public function __construct()
 	{
 		$this->request = new Request;
@@ -169,7 +169,7 @@ class chisochatluongAction
 		return $message;
 	}
 
-	public function Duyet(){
+	public function duyet(){
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
@@ -198,7 +198,7 @@ class chisochatluongAction
 		)));
 	}
 
-	public function Gui(){
+	public function gui(){
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
@@ -224,7 +224,7 @@ class chisochatluongAction
 	}
 
 
-	public function Xoa(){
+	public function xoa(){
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));
@@ -249,7 +249,7 @@ class chisochatluongAction
 		)));
 	}
 
-	public function TuChoi(){
+	public function tuchoi(){
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
 			return $this->request->json_response(json_encode(array("message" => $this->getErrorMessage())));

@@ -22,7 +22,7 @@ table = $('#datatable-chiso').DataTable({
     buttons: [
         {
             text: '<i class="fa fa-plus"></i> Thêm Chỉ tiêu',
-            className: 'btn btn-primary',
+            className: 'btn btn-primary btn-them-chitieu',
 
             action: function () {
 
@@ -187,8 +187,39 @@ table = $('#datatable-chiso').DataTable({
     ],
     drawCallback: function() {
         $('[data-toggle="tooltip"]').tooltip();
+        hiddenChiSoChatLuongButtons();
     }
 });
+
+function coQuyenChiSo(tenQuyen) {
+    return $('#role-chisochatluong-' + tenQuyen).val() === 'true';
+}
+
+function hiddenChiSoChatLuongButtons() {
+    if (!coQuyenChiSo('save')) {
+        $('.btn-them-chitieu').hide();
+    }
+
+    if (!coQuyenChiSo('update')) {
+        $('#datatable-chiso .btn-sua').hide();
+    }
+
+    if (!coQuyenChiSo('gui')) {
+        $('#datatable-chiso .btn-gui').hide();
+    }
+
+    if (!coQuyenChiSo('duyet')) {
+        $('#datatable-chiso .btn-duyet').hide();
+    }
+
+    if (!coQuyenChiSo('xoa')) {
+        $('#datatable-chiso .btn-xoa').hide();
+    }
+
+    if (!coQuyenChiSo('tuchoi')) {
+        $('#datatable-chiso .btn-tuchoi').hide();
+    }
+}
 
 $('#datatable-chiso').on('click', '.btn-sua', function () {
 
@@ -464,7 +495,7 @@ $('#datatable-chiso').on('click', '.btn-duyet', function (e) {
     var originalHtml = button.html();
 
     $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/Duyet/',
+        url: $('#ULocal').val() + 'chisochatluong/duyet/',
         type: 'POST',
         dataType: 'json',
         data: {
@@ -585,7 +616,7 @@ $('#datatable-chiso').on('click', '.btn-xoa', function (e) {
     var originalHtml = button.html();
 
     $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/Xoa/',
+        url: $('#ULocal').val() + 'chisochatluong/xoa/',
         type: 'POST',
         dataType: 'json',
         data: {
@@ -638,7 +669,7 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
     var originalHtml = button.html();
 
     $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/TuChoi/',
+        url: $('#ULocal').val() + 'chisochatluong/tuchoi/',
         type: 'POST',
         dataType: 'json',
         data: {
