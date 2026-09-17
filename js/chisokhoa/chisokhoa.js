@@ -168,38 +168,63 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
         return;
     }
 
-    $('#ma_chi_so').val(row.ma_chi_so);
-    $('#ten_chi_so').val(row.ten_chi_so);
-    $('#ma_khia_canh').val(row.ma_khia_canh);
-    $('#ma_thanh_to').val(row.ma_thanh_to);
-    $('#nhom_chi_so').val(row.nhom_chi_so);
-    $('#pham_vi').val(row.pham_vi);
-    $('#muc_tieu').val(row.muc_tieu);
-    $('#nguong_canh_bao').val(row.nguong_canh_bao);
-    $('#don_vi_tinh').val(row.id_donvitinh);
-    $('#id_chuky').val(row.id_chuky);
-    $('#id_khoaphong').val(row.id_khoaphong);
-    $('#dinh_nghia').val(row.dinh_nghia);
-    $('#thu_thap').val(row.thu_thap);
-    $('#ten_tu_so').val(row.ten_tu_so);
-    $('#ten_mau_so').val(row.ten_mau_so);
+    function hienThi(value) {
+        return value === null || value === undefined || value === '' ? '-' : value;
+    }
 
-    $('#formChiTieu')
-        .find('input, textarea, select')
-        .prop('disabled', true);
+    var maPhong = (row.phong || [String(row.id_khoaphong)]).map(String);
+    var cayKhoaPhong = $('#xem_khoa_phong').empty();
 
-    $('#btnLuuChiTieu').hide();
+    $('#filter_khoi option[value!=""]').each(function () {
+        var idKhoi = String($(this).val());
+        var tenKhoi = $(this).text().trim();
+        var khoaPhong = allKhoaOptions.filter(function (item) {
+            return String(item.idKhoi) === idKhoi &&
+                maPhong.indexOf(String(item.value)) !== -1;
+        });
 
-    $('#modalChiTieu .modal-title')
-        .text('Xem Chi tieu');
+        if (!khoaPhong.length) {
+            return;
+        }
+
+        var nhomKhoi = $('<div>').css('margin-bottom', '8px');
+        $('<div>')
+            .css('font-weight', 'bold')
+            .append($('<i>').addClass('fa fa-folder-open-o').css('margin-right', '6px'))
+            .append(document.createTextNode(tenKhoi))
+            .appendTo(nhomKhoi);
+
+        var danhSach = $('<ul>').css({ margin: '4px 0 0 24px', paddingLeft: '16px' });
+        khoaPhong.forEach(function (item) {
+            $('<li>').text(item.text.trim()).appendTo(danhSach);
+        });
+
+        nhomKhoi.append(danhSach).appendTo(cayKhoaPhong);
+    });
+
+    if (!cayKhoaPhong.children().length || row.pham_vi == 3) {
+        cayKhoaPhong.text('-');
+    }
+
+    $('#xem_ma_chi_so').text(hienThi(row.ma_chi_so));
+    $('#xem_ten_chi_so').text(hienThi(row.ten_chi_so));
+    $('#xem_khia_canh').text(hienThi(getOptionText('ma_khia_canh', row.ma_khia_canh)));
+    $('#xem_thanh_to').text(hienThi(getOptionText('ma_thanh_to', row.ma_thanh_to)));
+    $('#xem_pham_vi').text(hienThi(getOptionText('pham_vi', row.pham_vi)));
+    $('#xem_chu_ky').text(hienThi(getOptionText('id_chuky', row.id_chuky)));
+    $('#xem_muc_tieu').text(hienThi(row.muc_tieu +" " + row.donvitinh.ten));
+    $('#xem_nguong_canh_bao').text(hienThi(row.nguong_canh_bao +" " + row.donvitinh.ten));
+    $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
+    $('#xem_nguoi_duyet').text(hienThi(row.nguoi_duyet && row.nguoi_duyet.hoTen));
+    $('#xem_trang_thai').text(hienThi(row.trang_thai && row.trang_thai.tenTrangThai));
+    var khoaChinh = allKhoaOptions.filter(function (item) {
+        return String(item.value) === String(row.id_khoaphong);
+    })[0];
+    $('#xem_khoa').text(hienThi(khoaChinh ? khoaChinh.text.trim() : row.id_khoaphong));
+    $('#xem_dinh_nghia').text(hienThi(row.dinh_nghia));
+    $('#xem_thu_thap').text(hienThi(row.thu_thap));
+    $('#xem_tu_so').text(hienThi(row.ten_tu_so));
+    $('#xem_mau_so').text(hienThi(row.ten_mau_so));
 
     $('#modalChiTieu').modal('show');
-});
-
-$('#modalChiTieu').on('hidden.bs.modal', function () {
-    $('#formChiTieu')
-        .find('input, textarea, select')
-        .prop('disabled', false);
-
-    $('#btnLuuChiTieu').hide();
 });

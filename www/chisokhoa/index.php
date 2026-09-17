@@ -8,6 +8,34 @@ $listKhoi = $request->getAttribute("listKhoi");
 $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 ?>
 
+<!-- Danh mục ẩn dùng để đổi mã sang tên khi hiển thị bảng và popup chi tiết -->
+<div hidden aria-hidden="true">
+	<select id="ma_khia_canh">
+		<?php foreach ($listKCCT as $item): ?>
+			<?php if ($item->loai == 'khia_canh'): ?>
+				<option value="<?= $item->id ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</select>
+	<select id="ma_thanh_to">
+		<?php foreach ($listKCCT as $item): ?>
+			<?php if ($item->loai == 'thanh_to'): ?>
+				<option value="<?= $item->id ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</select>
+	<select id="pham_vi">
+		<?php foreach ($listPV as $item): ?>
+			<option value="<?= $item->id ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
+		<?php endforeach; ?>
+	</select>
+	<select id="id_chuky">
+		<?php foreach ($listCky as $item): ?>
+			<option value="<?= $item->id ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
+		<?php endforeach; ?>
+	</select>
+</div>
+
 <div class="x_panel">
 	<div class="x_title table-title">
 		<h2>Danh sach chi so da duyet theo khoa/phong</h2>
@@ -60,155 +88,78 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 <div class="modal fade" id="modalChiTieu" tabindex="-1" role="dialog">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content">
-			<form id="formChiTieu">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal">
-						<span>&times;</span>
-					</button>
-					<h4 class="modal-title">Xem Chi tieu</h4>
-				</div>
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">
+					<span>&times;</span>
+				</button>
+				<h4 class="modal-title">Xem Chi tieu</h4>
+			</div>
 
-				<div class="modal-body">
-					<input type="hidden" id="ma_chi_so" name="ma_chi_so">
-
-					<div class="row">
-						<div class="col-md-12">
-							<div class="form-group">
-								<label>Ten chi so</label>
-								<input type="text" class="form-control" id="ten_chi_so" name="ten_chi_so">
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Khia canh</label>
-								<select class="form-control" id="ma_khia_canh" name="ma_khia_canh">
-									<?php foreach ($listKCCT as $item): ?>
-										<?php if ($item->loai == 'khia_canh'): ?>
-											<option value="<?= $item->id ?>"><?= $item->ten ?></option>
-										<?php endif; ?>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Thanh to</label>
-								<select class="form-control" id="ma_thanh_to" name="ma_thanh_to">
-									<?php foreach ($listKCCT as $item): ?>
-										<?php if ($item->loai == 'thanh_to'): ?>
-											<option value="<?= $item->id ?>"><?= $item->ten ?></option>
-										<?php endif; ?>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Pham vi</label>
-								<select class="form-control" id="pham_vi" name="pham_vi">
-									<?php foreach ($listPV as $item): ?>
-										<option value="<?= $item->id ?>"><?= $item->ten ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Khoa/Phong</label>
-								<select class="form-control" id="id_khoaphong" name="id_khoaphong">
-									<?php foreach ($listKhoaPhong as $khoaPhong): ?>
-										<option value="<?= (int) $khoaPhong['id'] ?>">
-											<?= htmlspecialchars($khoaPhong['ten'], ENT_QUOTES, 'UTF-8') ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Muc tieu</label>
-								<input type="text" class="form-control" id="muc_tieu" name="muc_tieu">
-							</div>
-						</div>
-
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Nguong canh bao</label>
-								<input type="text" class="form-control" id="nguong_canh_bao" name="nguong_canh_bao">
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Don vi tinh</label>
-								<select class="form-control" id="don_vi_tinh" name="don_vi_tinh">
-									<?php foreach ($listDvt as $item): ?>
-										<option value="<?= $item->id ?>"><?= $item->ten ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Chu ky</label>
-								<select class="form-control" id="id_chuky" name="id_chuky">
-									<?php foreach ($listCky as $item): ?>
-										<option value="<?= $item->id ?>"><?= $item->ten ?></option>
-									<?php endforeach; ?>
-								</select>
-							</div>
-						</div>
-					</div>
-
-					<div class="form-group">
-						<label>Dinh nghia</label>
-						<textarea class="form-control" id="dinh_nghia" name="dinh_nghia" rows="3"></textarea>
-					</div>
-
-					<div class="form-group">
-						<label>Phuong phap thu thap</label>
-						<textarea class="form-control" id="thu_thap" name="thu_thap" rows="3"></textarea>
-					</div>
-
-					<div class="row">
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Ten tu so</label>
-								<input type="text" class="form-control" id="ten_tu_so" name="ten_tu_so">
-							</div>
-						</div>
-
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Ten mau so</label>
-								<input type="text" class="form-control" id="ten_mau_so" name="ten_mau_so">
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Dong</button>
-					<button type="submit" class="btn btn-primary" id="btnLuuChiTieu" style="display:none">
-						<i class="fa fa-save"></i>
-						Luu
-					</button>
-				</div>
-			</form>
+			<div class="modal-body">
+				<table class="table table-bordered table-striped" style="margin-bottom: 0;">
+					<tbody>
+						<tr>
+							<th style="width: 20%;">Mã chỉ số</th>
+							<td id="xem_ma_chi_so"></td>
+							<th style="width: 20%;">Trạng thái</th>
+							<td id="xem_trang_thai"></td>
+						</tr>
+						<tr>
+							<th>Tên chỉ số</th>
+							<td id="xem_ten_chi_so" colspan="3"></td>
+						</tr>
+						<tr>
+							<th>Khía cạnh</th>
+							<td id="xem_khia_canh"></td>
+							<th>Thành tố</th>
+							<td id="xem_thanh_to"></td>
+						</tr>
+						<tr>
+							<th>Phạm vi</th>
+							<td id="xem_pham_vi"></td>
+							<th>Chu kỳ</th>
+							<td id="xem_chu_ky"></td>
+						</tr>
+						<tr>
+							<th>Khoa/Phòng áp dụng</th>
+							<td id="xem_khoa_phong" colspan="3" style="white-space: pre-wrap;"></td>
+						</tr>
+						<tr>
+							<th>Mục tiêu</th>
+							<td id="xem_muc_tieu"></td>
+							<th>Ngưỡng cảnh báo</th>
+							<td id="xem_nguong_canh_bao"></td>
+						</tr>
+						<tr>
+							<th>Người gửi</th>
+							<td id="xem_nguoi_gui"></td>
+							<th>Khoa</th>
+							<td id="xem_khoa"></td>
+						</tr>
+						<tr>
+							<th>Người duyệt</th>
+							<td id="xem_nguoi_duyet" colspan="3"></td>
+						</tr>
+						<tr>
+							<th>Định nghĩa</th>
+							<td id="xem_dinh_nghia" colspan="3" style="white-space: pre-wrap;"></td>
+						</tr>
+						<tr>
+							<th>Phương pháp thu thập</th>
+							<td id="xem_thu_thap" colspan="3" style="white-space: pre-wrap;"></td>
+						</tr>
+						<tr>
+							<th>Tên tử số</th>
+							<td id="xem_tu_so"></td>
+							<th>Tên mẫu số</th>
+							<td id="xem_mau_so"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>
+			</div>
 		</div>
 	</div>
 </div>
