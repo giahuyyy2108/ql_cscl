@@ -357,6 +357,7 @@ class ChiSoChatLuongPeer
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 1,
                         `updated_at` = NOW()
+                        `thoi_gian_gui` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 
         $this->dbsql->query($sql);
