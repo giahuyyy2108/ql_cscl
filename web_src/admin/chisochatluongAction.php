@@ -39,7 +39,8 @@ class chisochatluongAction
 		$this->request->setAttribute("listCKy", $ChuKyPeer->getChuKy());
 		$this->request->setAttribute("listDvt", $donvitinhPeer->getDonViTinh());
 		$this->request->setAttribute("listTT", $tinhtrangPeer->getTinhTrang());
-		$this->request->setAttribute("listKhoaPhong", $this->ChiSoPeer->getListKhoaPhong());
+		$this->request->setAttribute("listKhoi", $this->ChiSoPeer->getListKhoi());
+		$this->request->setAttribute("listKhoaPhong", $this->ChiSoPeer->getListKhoaPhongByKhoi());
 		$this->request->setAttribute(
 			"currentKhoaPhongId",
 			$this->ChiSoPeer->getKhoaPhongIdByUserId(isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : 0)
@@ -63,12 +64,11 @@ class chisochatluongAction
 
 		$nguoigui = !empty($_SESSION["sUserID"]) ? $_SESSION["sUserID"]
 			: (isset($_SESSION["sUserID"]) ? $_SESSION["sUserID"] : "");
-		$idKhoaPhong = (int) $chiso->get("id_khoaphong");
-		if (!$this->ChiSoPeer->isKhoaPhongIdValid($idKhoaPhong)) {
-			$idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($nguoigui);
-		}
+		// Khoa/phong chinh luon la khoa/phong mac dinh cua nguoi tao.
+		// Danh sach cac phong duoc chon duoc luu rieng trong cot `phong` dang JSON.
+		$idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($nguoigui);
 		if ($idKhoaPhong <= 0) {
-			$this->lastErrorMessage = "Vui long chon khoa/phong hop le";
+			$this->lastErrorMessage = "Nguoi dung chua duoc gan khoa/phong mac dinh";
 			return $this->request->json_response(json_encode(array(
 				"success" => false,
 				"message" => $this->getErrorMessage()
@@ -76,7 +76,7 @@ class chisochatluongAction
 		}
 		$chiso->set("nguoi_gui", $nguoigui);
 		$chiso->set("id_khoaphong", $idKhoaPhong);
-
+		// print_r($chiso);
 		$id = $this->ChiSoPeer->Save($chiso);
 		$message = new Message();
 		$message->set("flag", true);
@@ -89,7 +89,7 @@ class chisochatluongAction
 		)));
 	}
 
-	function update()
+	public function update()
 	{
 		$chiso = $this->getChiSoFromRequest();
 		if ($chiso === false) {
@@ -131,6 +131,27 @@ class chisochatluongAction
 				$chiso->set($key, $value);
 			}
 		}
+
+		$maPhong = $chiso->get("phong");
+		if (is_string($maPhong)) {
+			$phongDaGiaiMa = json_decode($maPhong, true);
+			$maPhong = is_array($phongDaGiaiMa) ? $phongDaGiaiMa : array();
+		}
+
+		if (!is_array($maPhong) || empty($maPhong)) {
+			$maPhong = array($chiso->get("id_khoaphong"));
+		}
+
+		if ((int) $chiso->get("pham_vi") === 3) {
+			$maPhong = array();
+			foreach ($this->ChiSoPeer->getListKhoaPhong() as $khoaPhong) {
+				$maPhong[] = (int) $khoaPhong['id'];
+			}
+		}
+
+		$maPhong = array_values(array_unique(array_filter(array_map('intval', $maPhong))));
+		$chiso->set("phong", json_encode($maPhong));
+		$chiso->set("id_khoaphong", !empty($maPhong) ? $maPhong[0] : 0);
 
 		if (trim($chiso->get("ten_chi_so")) === "") {
 			$this->lastErrorMessage = "Ten chi so khong duoc de trong";

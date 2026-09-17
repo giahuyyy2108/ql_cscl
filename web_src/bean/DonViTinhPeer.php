@@ -38,6 +38,21 @@ class DonViTinhPeer
         return $arrList;
     }
 
+    function getDonViTinhbyID($id)
+    {
+        $sSQL = "SELECT * FROM donvitinh where $id";
+
+
+        $this->dbsql->query($sSQL);
+
+        if ($this->dbsql->num_rows() > 0) {
+            $result = $this->dbsql->fetch_array();
+            return $this->setDonViTinh($result);
+        }
+        return false;
+
+    }
+
     function save($donViTinh)
     {
         $id = (int) $donViTinh->get('id');

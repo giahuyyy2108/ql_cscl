@@ -4,6 +4,8 @@ require_once ("web_src/bean/ChiSoChatLuong.php");
 require_once ("web_src/bean/TinhTrang.php");
 require_once ("web_src/bean/User.php");
 require_once ("web_src/bean/UserPeer.php");
+require_once ("web_src/bean/KhoaPhongPeer.php");
+require_once ("web_src/bean/DonViTinhPeer.php");
 
 class ChiSoChatLuongPeer
 {
@@ -23,6 +25,9 @@ class ChiSoChatLuongPeer
 		$nguoigui = new User;
 		$nguoiduyet = new User;
         $userPeer = new UserPeer();
+        $khoaphongpeer = new KhoaPhongPeer();
+        $donvitinhPeer = new DonViTinhPeer();
+
 
 		$tinhtrang->set("maTrangThai", $result["trang_thai"]);
 		$tinhtrang->set("tenTrangThai", isset($result["tenTrangThai"]) ? $result["tenTrangThai"] : "");
@@ -30,6 +35,10 @@ class ChiSoChatLuongPeer
 
         $nguoigui =  $userPeer->getUserID($result['nguoi_gui']);
         $nguoiduyet =  $userPeer->getUserID($result['nguoi_duyet']);
+        $khoaphong = $khoaphongpeer->getKhoaPhongID($result['id_khoaphong']);
+
+        $donvitinh = $donvitinhPeer->getDonViTinhbyID($result['id_donvitinh']);
+
 
         $chiso->set("ma_chi_so", $result["ma_chi_so"]);
         $chiso->set("ten_chi_so", $result["ten_chi_so"]);
@@ -40,8 +49,14 @@ class ChiSoChatLuongPeer
         $chiso->set("muc_tieu", $result["muc_tieu"]);
         $chiso->set("nguong_canh_bao", $result["nguong_canh_bao"]);
         $chiso->set("id_donvitinh", $result["id_donvitinh"]);
+        $chiso->set("donvitinh",$donvitinh);
         $chiso->set("id_chuky", $result["id_chuky"]);
         $chiso->set("id_khoaphong", $result["id_khoaphong"]);
+        $chiso->set("khoaphong", $khoaphong);
+        $phong = isset($result["phong"]) ? json_decode($result["phong"], true) : null;
+        $chiso->set("phong", is_array($phong) && !empty($phong)
+            ? array_map('strval', $phong)
+            : array((string) $result["id_khoaphong"]));
         // $chiso->set("du_lieu_chu_ky", $result["du_lieu_chu_ky"]);
         $chiso->set("loai_cong_thuc", $result["loai_cong_thuc"]);
         $chiso->set("cong_thuc", $result["cong_thuc"]);
@@ -128,17 +143,26 @@ class ChiSoChatLuongPeer
         $idKhoi = (int) $idKhoi;
         $idKhoaPhong = (int) $idKhoaPhong;
 
-        $sql_select = "SELECT cs.*, tt.tenTrangThai, tt.tag
+        $sql_select = "SELECT DISTINCT cs.*, tt.tenTrangThai, tt.tag
                        FROM chi_so_chat_luong cs
                        LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
-                       INNER JOIN khoa k ON k.id = cs.id_khoaphong
+                       INNER JOIN khoa k ON (
+                           (JSON_VALID(cs.phong) = 1 AND JSON_CONTAINS(cs.phong, CAST(k.id AS CHAR), '$'))
+                           OR ((COALESCE(JSON_VALID(cs.phong), 0) = 0 OR JSON_LENGTH(cs.phong) = 0)
+                               AND k.id = cs.id_khoaphong)
+                       )
                        WHERE cs.trang_thai = 2";
 
         if ($idKhoi > 0) {
             $sql_select .= " AND k.id_khoi = " . $idKhoi;
         }
         if ($idKhoaPhong > 0) {
-            $sql_select .= " AND cs.id_khoaphong = " . $idKhoaPhong;
+            $sql_select .= " AND (
+                (JSON_VALID(cs.phong) = 1 AND JSON_CONTAINS(cs.phong, '" . $idKhoaPhong . "', '$'))
+                OR ((COALESCE(JSON_VALID(cs.phong), 0) = 0 OR JSON_LENGTH(cs.phong) = 0)
+                    AND cs.id_khoaphong = " . $idKhoaPhong . ")
+                )
+            ";
         }
 
         $sql_select .= " ORDER BY cs.ma_chi_so DESC";
@@ -187,7 +211,7 @@ class ChiSoChatLuongPeer
         $sql = "INSERT INTO `chi_so_chat_luong`
             (`ten_chi_so`, `ma_khia_canh`, `ma_thanh_to`, `nhom_chi_so`,
              `pham_vi`, `muc_tieu`, `nguong_canh_bao`, `id_donvitinh`,
-             `id_chuky`, `id_khoaphong`, `loai_cong_thuc`, `cong_thuc`, `trang_thai`,
+             `id_chuky`, `id_khoaphong`, `phong`, `loai_cong_thuc`, `cong_thuc`, `trang_thai`,
              `nguoi_gui`, `thoi_gian_gui`, `nguoi_duyet`, `thoi_gian_duyet`,
              `ly_do_tu_choi`, `dinh_nghia`, `thu_thap`, `ten_tu_so`, `ten_mau_so`)
             VALUES (" . $value('ten_chi_so') . ",
@@ -200,6 +224,7 @@ class ChiSoChatLuongPeer
                     " . $number('id_donvitinh') . ",
                     " . $number('id_chuky') . ",
                     " . $number('id_khoaphong') . ",
+                    " . $value('phong') . ",
                     " . $value('loai_cong_thuc') . ",
                     " . $value('cong_thuc') . ",
                     0, " . $value('nguoi_gui') . ", NULL, NULL, NULL, '',
@@ -228,6 +253,7 @@ class ChiSoChatLuongPeer
                     `nguong_canh_bao` = " . $value('nguong_canh_bao') . ",
                     `id_donvitinh` = " . $number('id_donvitinh') . ",
                     `id_chuky` = " . $number('id_chuky') . ",
+                    `phong` = " . $value('phong') . ",
                     `dinh_nghia` = " . $value('dinh_nghia') . ",
                     `thu_thap` = " . $value('thu_thap') . ",
                     `ten_tu_so` = " . $value('ten_tu_so') . ",

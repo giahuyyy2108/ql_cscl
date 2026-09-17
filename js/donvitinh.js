@@ -16,7 +16,6 @@ function initDataTableDonViTinh() {
                 } },
             { targets: 2, width: '15%', data: 'id', sortable: false,
                 render: function (data) {
-                    console.log(data);
                     var id = '<input type="hidden" name="id" id="id" value="' + data + '">';
                     var save = '<button type="button" class="add btn btn-primary btn-sm" title="Lưu" data-toggle="tooltip"><i class="fa fa-hdd-o"></i></button>';
                     var edit = '<button type="button" class="edit btn btn-warning btn-sm" title="Sửa" data-toggle="tooltip"><i class="glyphicon glyphicon-cog"></i></button>';

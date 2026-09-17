@@ -15,9 +15,9 @@ table = $('#datatable-chiso').DataTable({
 
     
     dom:
-        "<'row'<'col-sm-6'l><'col-sm-6 text-right'Bf>>" +
+        "<'row'<'col-sm-6'><'col-sm-6 text-right'Bf>>" +
         "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        "<'row'<'col-sm-5'><'col-sm-7'>>",
 
     buttons: [
         {
@@ -28,6 +28,7 @@ table = $('#datatable-chiso').DataTable({
 
                 // reset form
                 $('#formChiTieu')[0].reset();
+                capNhatKhoaPhongTheoPhamVi();
 
                 // đánh dấu đang thêm
                 $('#action').val('add');
@@ -65,18 +66,6 @@ table = $('#datatable-chiso').DataTable({
     columns: [
         { data: 'ma_chi_so' },
         { data: 'ten_chi_so' },
-        { 
-            data: 'ma_khia_canh',
-            render: function (data, type, row) {
-                return $('#ma_khia_canh option[value="' + data + '"]').text() || data;
-            }
-        },
-        { 
-            data: 'ma_thanh_to',
-            render: function (data, type, row) {
-                return $('#ma_thanh_to option[value="' + data + '"]').text() || data;
-            }
-        },
         { 
             data: 'pham_vi',
             render: function (data, type, row) {
@@ -234,7 +223,8 @@ $('#datatable-chiso').on('click', '.btn-sua', function () {
     $('#nguong_canh_bao').val(row.nguong_canh_bao);
     $('#don_vi_tinh').val(row.id_donvitinh);
     $('#id_chuky').val(row.id_chuky);
-    $('#id_khoaphong').val(row.id_khoaphong);
+    $('#id_khoaphong').val(row.phong || [String(row.id_khoaphong)]);
+    capNhatKhoaPhongTheoPhamVi();
     $('#dinh_nghia').val(row.dinh_nghia);
     $('#thu_thap').val(row.thu_thap);
     $('#ten_tu_so').val(row.ten_tu_so);
@@ -285,7 +275,8 @@ $('#formChiTieu').on('submit', function (e) {
                 nguong_canh_bao: $('#nguong_canh_bao').val(),
                 id_donvitinh: $('#don_vi_tinh').val(),
                 id_chuky: $('#id_chuky').val() || $('#chuky').val(),
-                id_khoaphong: $('#id_khoaphong').val(),
+                id_khoaphong: ($('#id_khoaphong').val() || [])[0] || 0,
+                phong: $('#id_khoaphong').val() || [],
                 dinh_nghia: $('#dinh_nghia').val(),
                 thu_thap: $('#thu_thap').val(),
                 ten_tu_so: $('#ten_tu_so').val(),
@@ -360,49 +351,75 @@ $('#formChiTieu').on('submit', function (e) {
 });
 
 $('#datatable-chiso').on('click', '.btn-xem', function () {
-
     var tr = $(this).closest('tr');
-
     if (tr.hasClass('child')) {
         tr = tr.prev();
     }
-
     var row = table.row(tr).data();
-
     if (!row) {
         return;
     }
 
-    // Đổ dữ liệu
-    $('#ma_chi_so').val(row.ma_chi_so);
-    $('#ten_chi_so').val(row.ten_chi_so);
-    $('#ma_khia_canh').val(row.ma_khia_canh);
-    $('#ma_thanh_to').val(row.ma_thanh_to);
-    $('#nhom_chi_so').val(row.nhom_chi_so);
-    $('#pham_vi').val(row.pham_vi);
-    $('#muc_tieu').val(row.muc_tieu);
-    $('#nguong_canh_bao').val(row.nguong_canh_bao);
-    $('#don_vi_tinh').val(row.id_donvitinh);
-    $('#id_chuky').val(row.id_chuky);
-    $('#dinh_nghia').val(row.dinh_nghia);
-    $('#thu_thap').val(row.thu_thap);
-    $('#ten_tu_so').val(row.ten_tu_so);
-    $('#ten_mau_so').val(row.ten_mau_so);
+    var maPhong = row.phong || [String(row.id_khoaphong)];
+    function hienThi(value,text="") {
+        return value === null || value === undefined || value === '' ? '-' : value+text;
+    }
 
-    // Khóa toàn bộ input
-    $('#formChiTieu')
-        .find('input, textarea, select')
-        .prop('disabled', true);
+    var maPhongDaChon = maPhong.map(String);
+    var danhSachKhoaPhong = $('#xem_khoa_phong').empty();
 
-    // Ẩn nút Lưu
-    $('#btnLuuChiTieu').hide();
+    $('.check-khoi').each(function () {
+        var idKhoi = String($(this).data('khoi'));
+        var tenKhoi = $(this).closest('label').text().trim();
+        var khoaPhongTrongKhoi = $('.check-khoa-phong[data-khoi="' + idKhoi + '"]').filter(function () {
+            return maPhongDaChon.indexOf(String(this.value)) !== -1;
+        });
 
-    // Đổi tiêu đề
-    $('#modalChiTieu .modal-title')
-        .text('Xem Chỉ tiêu');
+        if (!khoaPhongTrongKhoi.length) {
+            return;
+        }
 
-    // Mở cùng popup
-    $('#modalChiTieu').modal('show');
+        var nhomKhoi = $('<div>').addClass('khoa-phong-tree').css('margin-bottom', '8px');
+        $('<div>')
+            .css('font-weight', 'bold')
+            .append($('<i>').addClass('fa fa-folder-open-o').css('margin-right', '6px'))
+            .append(document.createTextNode(tenKhoi))
+            .appendTo(nhomKhoi);
+
+        var danhSachPhong = $('<ul>').css({ margin: '4px 0 0 24px', paddingLeft: '16px' });
+        khoaPhongTrongKhoi.each(function () {
+            $('<li>')
+                .text($(this).closest('label').text().trim())
+                .appendTo(danhSachPhong);
+        });
+
+        nhomKhoi.append(danhSachPhong).appendTo(danhSachKhoaPhong);
+
+
+    });
+
+    if (!danhSachKhoaPhong.children().length || row.pham_vi == 3) {
+        danhSachKhoaPhong.text('-');
+    }
+
+    $('#xem_ma_chi_so').text(hienThi(row.ma_chi_so));
+    $('#xem_ten_chi_so').text(hienThi(row.ten_chi_so));
+    $('#xem_khia_canh').text(hienThi(getOptionText('ma_khia_canh', row.ma_khia_canh)));
+    $('#xem_thanh_to').text(hienThi(getOptionText('ma_thanh_to', row.ma_thanh_to)));
+    $('#xem_pham_vi').text(hienThi(getOptionText('pham_vi', row.pham_vi)));
+    $('#xem_muc_tieu').text(hienThi(row.muc_tieu," " + row.donvitinh.ten));
+    $('#xem_nguong_canh_bao').text(hienThi(row.nguong_canh_bao," " + row.donvitinh.ten));
+    $('#xem_khoa').text(hienThi(row.khoaphong.TenKhoaPhong));
+    $('#xem_chu_ky').text(hienThi(getOptionText('id_chuky', row.id_chuky)));
+    $('#xem_dinh_nghia').text(hienThi(row.dinh_nghia));
+    $('#xem_thu_thap').text(hienThi(row.thu_thap));
+    $('#xem_tu_so').text(hienThi(row.ten_tu_so));
+    $('#xem_mau_so').text(hienThi(row.ten_mau_so));
+    $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
+    $('#xem_nguoi_duyet').text(hienThi(row.nguoi_duyet.hoTen));
+    $('#xem_trang_thai').text(hienThi(row.trang_thai && row.trang_thai.tenTrangThai));
+
+    $('#modalXemChiTieu').modal('show');
 });
 
 function resetModalChiTieu() {
@@ -653,3 +670,79 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
         },
     });
 });
+
+function capNhatKhoaPhongTheoPhamVi() {
+    var laPhamViToanBo = String($('#pham_vi').val()) === '3';
+
+    if (laPhamViToanBo) {
+        $('#id_khoaphong option').prop('selected', true);
+        $('.check-khoa-phong').prop('checked', true);
+        $('#btnMoPopupCon').hide();
+        capNhatCheckboxKhoa();
+        return;
+    }
+
+    $('#btnMoPopupCon').show();
+}
+
+$('#pham_vi').on('change', capNhatKhoaPhongTheoPhamVi);
+
+// Mở popup con
+$('#btnMoPopupCon').on('click', function () {
+    var idKhoaPhong = $('#id_khoaphong').val() || [];
+
+    $('.check-khoa-phong').each(function () {
+        $(this).prop('checked', idKhoaPhong.indexOf($(this).val()) !== -1);
+    });
+    capNhatCheckboxKhoa();
+
+    $('#modalChiTieu').modal('hide');
+
+    $('#modalChiTieu').one('hidden.bs.modal', function () {
+        $('#modalCon').modal('show');
+    });
+});
+
+// Đóng popup con thì mở lại popup cha
+$('#modalCon').on('hidden.bs.modal', function () {
+    $('#modalChiTieu').modal('show');
+});
+
+function capNhatCheckboxKhoa() {
+    $('.check-khoi').each(function () {
+        var checkboxKhoi = $(this);
+        var idKhoi = checkboxKhoi.data('khoi');
+        var checkboxKhoaPhong = $('.check-khoa-phong[data-khoi="' + idKhoi + '"]');
+        var daChon = checkboxKhoaPhong.filter(':checked').length;
+
+        checkboxKhoi
+            .prop('checked', checkboxKhoaPhong.length > 0 && daChon === checkboxKhoaPhong.length)
+            .prop('indeterminate', daChon > 0 && daChon < checkboxKhoaPhong.length);
+    });
+}
+
+$('#tableKhoaPhong').on('change', '.check-khoi', function () {
+    var idKhoi = $(this).data('khoi');
+
+    $('.check-khoa-phong[data-khoi="' + idKhoi + '"]').prop('checked', this.checked);
+    capNhatCheckboxKhoa();
+});
+
+$('#tableKhoaPhong').on('change', '.check-khoa-phong', capNhatCheckboxKhoa);
+
+// Đưa Khoa/Phòng đã chọn về popup cha
+$('#btnChonPopupCon').on('click', function () {
+    var idKhoaPhong = $('.check-khoa-phong:checked').map(function () {
+        return this.value;
+    }).get();
+
+    if (!idKhoaPhong.length) {
+        Swal.fire('Thông báo', 'Vui lòng chọn Khoa/Phòng.', 'warning');
+        return;
+    }
+
+    $('#id_khoaphong').val(idKhoaPhong).trigger('change');
+    $('#modalCon').modal('hide');
+});
+
+capNhatKhoaPhongTheoPhamVi();

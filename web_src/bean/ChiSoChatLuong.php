@@ -15,6 +15,7 @@ class ChiSoChatLuong
 	var $id_donvitinh;
 	var $id_chuky;
 	var $id_khoaphong;
+	var $phong;
 	var $du_lieu_chu_ky;
 	var $loai_cong_thuc;
 	var $cong_thuc;
@@ -44,6 +45,7 @@ class ChiSoChatLuong
 		$this->id_donvitinh = 0;
 		$this->id_chuky = 0;
 		$this->id_khoaphong = 0;
+		$this->phong = array();
 		$this->du_lieu_chu_ky = "";
 		$this->loai_cong_thuc = "";
 		$this->cong_thuc = "";
