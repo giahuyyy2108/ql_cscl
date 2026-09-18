@@ -44,10 +44,9 @@ class chisokhoaAction
 
 	function getData()
 	{
-		$idKhoi = $this->request->getParameter("id_khoi") != "" ? $this->request->getParameter("id_khoi") : 0;
 		$idKhoaPhong = $this->request->getParameter("id_khoaphong") != "" ? $this->request->getParameter("id_khoaphong") : 0;
 
-		$data['data'] = $this->ChiSoPeer->getListDaDuyetByKhoa($idKhoi, $idKhoaPhong);
+		$data['data'] = $this->ChiSoPeer->getListByKhoa($idKhoaPhong);
 		return $this->request->json_response(json_encode($data));
 	}
 }

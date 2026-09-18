@@ -66,7 +66,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 			</div>
 		</div>
 
-		<table id="datatable-chisokhoa" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+		<table id="datatable-chisokhoa" class="table table-striped table-bordered" cellspacing="0" width="100%">
 			<thead>
 				<tr>
 					<th>Mã chỉ số</th>

@@ -164,9 +164,8 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
-    public function getListDaDuyetByKhoa($idKhoi = 0,$idKhoaPhong = 0) 
+    public function getListByKhoa($idKhoaPhong = 0)
     {
-        $idKhoi = (int) $idKhoi;
         $idKhoaPhong = (int) $idKhoaPhong;
 
         $sqlSelect = "
@@ -174,32 +173,8 @@ class ChiSoChatLuongPeer
             FROM chi_so_chat_luong cs
             LEFT JOIN trangthai tt
                 ON tt.maTrangThai = cs.trang_thai
-            WHERE cs.trang_thai = 2
+            WHERE 1 = 1
         ";
-
-        /*
-        * Lọc theo Khối:
-        * Chỉ tiêu phải có ít nhất một Khoa/Phòng thuộc Khối
-        * nằm trong JSON cột phong.
-        */
-        if ($idKhoi > 0) {
-            $sqlSelect .= "
-                AND EXISTS (
-                    SELECT 1
-                    FROM khoa k
-                    WHERE k.id_khoi = " . $idKhoi . "
-                    AND CASE
-                        WHEN JSON_VALID(cs.phong) = 1
-                        THEN JSON_CONTAINS(
-                            cs.phong,
-                            CAST(k.id AS CHAR),
-                            '$'
-                        )
-                        ELSE cs.id_khoaphong = k.id
-                    END = 1
-                )
-            ";
-        }
 
         /*
         * Lọc theo một Khoa/Phòng cụ thể.
@@ -291,6 +266,10 @@ class ChiSoChatLuongPeer
         return $this->dbsql->insert_id();
     }
 
+    /**
+     * Update Chỉ só chất lượng
+     * @param mixed $_chisochatluong
+     */
     function Update($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
             return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
@@ -327,6 +306,10 @@ class ChiSoChatLuongPeer
     // 2 đã duyệt 
     // 3 từ chối 
 
+    /**
+     * Hàm Duyệt chỉ tiêu
+     * @param mixed $_chisochatluong
+     */
     public function Duyet($_chisochatluong){
         $value = function ($key) use ($_chisochatluong) {
             return "'" . addslashes((string) $_chisochatluong->get($key)) . "'";
@@ -397,6 +380,7 @@ class ChiSoChatLuongPeer
 
         $sql = "UPDATE `chi_so_chat_luong` SET
                         `trang_thai` = 3,
+                        `ly_do_tu_choi` = " . $value('ly_do_tu_choi') . ",
                         `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 

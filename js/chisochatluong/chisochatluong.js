@@ -65,8 +65,18 @@ table = $('#datatable-chiso').DataTable({
     autoWidth: false,
     columnDefs: [
         {
-            targets: 2,
+            targets: 1,
             width: '300px',
+            className: 'column-wrap'
+        },
+        {
+            targets: 2,
+            width: '100px',
+            className: 'column-wrap'
+        },
+        {
+            targets: 3,
+            width: '100px',
             className: 'column-wrap'
         }
     ],
@@ -673,39 +683,67 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
         return;
     }
 
-    var originalHtml = button.html();
-
-    $.ajax({
-        url: $('#ULocal').val() + 'chisochatluong/tuchoi/',
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            data: JSON.stringify([{
-                ma_chi_so: row.ma_chi_so,
-                ten_chi_so: row.ten_chi_so,
-                nguoi_duyet: $('#fullname').val()
-            }])
+    Swal.fire({
+        title: 'Từ chối chỉ tiêu',
+        input: 'textarea',
+        inputLabel: 'Lý do từ chối',
+        inputPlaceholder: 'Nhập lý do từ chối...',
+        inputAttributes: {
+            'aria-label': 'Lý do từ chối',
+            maxlength: 1000
         },
-        success: function (response) {
-            var message = response && response.message;
-
-            if (response && (response.success || (message && message.flag))) {
-                table.ajax.reload(null, false);
-                Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
-            } else {
-                Swal.fire('Không thể duyệt',
-                    (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
-                    'error');
+        showCancelButton: true,
+        confirmButtonText: 'Từ chối',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#d9534f',
+        inputValidator: function (value) {
+            if (!value || !value.trim()) {
+                return 'Vui lòng nhập lý do từ chối.';
             }
-        },
-        error: function (xhr) {
-            var response = xhr.responseJSON;
-            var message = response && response.message;
+        }
+    }).then(function (result) {
+        if (!result.isConfirmed) {
+            return;
+        }
 
-            Swal.fire('Lỗi',
-                (message && message.errorMessage) || 'Có lỗi xảy ra khi duyệt chỉ tiêu. Vui lòng thử lại.',
-                'error');
-        },
+        button.prop('disabled', true);
+
+        $.ajax({
+            url: $('#ULocal').val() + 'chisochatluong/tuchoi/',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                data: JSON.stringify([{
+                    ma_chi_so: row.ma_chi_so,
+                    ten_chi_so: row.ten_chi_so,
+                    nguoi_duyet: $('#fullname').val(),
+                    ly_do_tu_choi: result.value.trim()
+                }])
+            },
+            success: function (response) {
+                var message = response && response.message;
+
+                if (response && (response.success || (message && message.flag))) {
+                    table.ajax.reload(null, false);
+                    Swal.fire('Thành công', 'Từ chối chỉ tiêu thành công.', 'success');
+                } else {
+                    Swal.fire('Không thể từ chối',
+                        (message && message.errorMessage) || 'Không thể từ chối chỉ tiêu. Vui lòng thử lại.',
+                        'error');
+                }
+            },
+            error: function (xhr) {
+                var response = xhr.responseJSON;
+                var message = response && response.message;
+
+                Swal.fire('Lỗi',
+                    (message && message.errorMessage) || 'Có lỗi xảy ra khi từ chối chỉ tiêu. Vui lòng thử lại.',
+                    'error');
+            },
+            complete: function () {
+                button.prop('disabled', false);
+            }
+        });
     });
 });
 

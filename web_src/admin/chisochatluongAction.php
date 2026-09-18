@@ -279,6 +279,16 @@ class chisochatluongAction
 			return $this->request->json_response(json_encode(array("message" => $message)));
 		}
 
+		if (trim((string) $chiso->get("ly_do_tu_choi")) === "") {
+			$message = new Message();
+			$message->set("flag", false);
+			$message->set("errorMessage", "Vui long nhap ly do tu choi");
+			return $this->request->json_response(json_encode(array(
+				"success" => false,
+				"message" => $message
+			)));
+		}
+
 		$id = $this->ChiSoPeer->TuChoi($chiso);
 		$message = new Message();
 		$message->set("flag", true);

@@ -53,7 +53,6 @@ table = $('#datatable-chisokhoa').DataTable({
         url: $("#ULocal").val() + 'chisokhoa/getData/',
         type: 'POST',
         data: function (data) {
-            data.id_khoi = $('#filter_khoi').val();
             data.id_khoaphong = $('#filter_khoaphong').val();
         },
         error: function(response) {
@@ -68,6 +67,23 @@ table = $('#datatable-chisokhoa').DataTable({
     },
     responsive: true,
     autoWidth: false,
+    columnDefs: [
+        {
+            targets: 1,
+            width: '300px',
+            className: 'column-wrap'
+        },
+        {
+            targets: 2,
+            width: '100px',
+            className: 'column-wrap'
+        },
+        {
+            targets: 3,
+            width: '100px',
+            className: 'column-wrap'
+        }
+    ],
     columns: [
         {
             data: 'ma_chi_so',
@@ -104,10 +120,9 @@ table = $('#datatable-chisokhoa').DataTable({
             data: 'trang_thai',
             render: function (data, type) {
                 var tenTrangThai = data ? (data.tenTrangThai || data.maTrangThai) : '';
-
-                if (type !== 'display') {
-                    return tenTrangThai;
-                }
+                // if (type !== 'display') {
+                //     return tenTrangThai;
+                // }
 
                 return $('<span>')
                     .addClass('badge')
