@@ -38,7 +38,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 
 <div class="x_panel">
 	<div class="x_title table-title">
-		<h2>Danh sach chi so da duyet theo khoa/phong</h2>
+		<h2>Danh sách chỉ số đã được phê duyệt theo khoa phòng</h2>
 		<div class="clearfix"></div>
 	</div>
 

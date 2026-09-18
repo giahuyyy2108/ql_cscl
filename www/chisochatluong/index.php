@@ -50,13 +50,13 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 			// 	echo $item->ten;
 			// }
 		?>
-		<table id="datatable-chiso" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+		<table id="datatable-chiso" class="table table-striped table-bordered dt-responsive " cellspacing="0" width="100%">
 			<thead>
 				<tr>
 					<th>STT</th>
 					<th data-type="String" validate-type="true">Tên chỉ số<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Phạm vi<span style="color:red"></span></th>
-					<th data-type="Number" validate-type="true">ID chu kỳ<span style="color:red"></span></th>
+					<th data-type="Number" validate-type="true">Chu kỳ<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người gửi<span style="color:red"></span></th>
 					<th data-type="Number" validate-type="true">Người duyệt<span style="color:red"></span></th>
 					<th data-type="String" validate-type="true">Tình trạng<span style="color:red"></span></th>

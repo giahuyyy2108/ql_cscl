@@ -63,6 +63,13 @@ table = $('#datatable-chiso').DataTable({
     },
     responsive: true,
     autoWidth: false,
+    columnDefs: [
+        {
+            targets: 2,
+            width: '300px',
+            className: 'column-wrap'
+        }
+    ],
     columns: [
         { data: 'ma_chi_so' },
         { data: 'ten_chi_so' },
