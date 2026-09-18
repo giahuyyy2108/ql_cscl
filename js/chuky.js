@@ -1,1 +1,10 @@
-$(function () { initDanhMucCrud({ tableId: 'datatable-chuky', route: 'chuky', idField: 'id', fields: [{ data: 'ten' }], success: 'Chu kỳ đã được cập nhật thành công.', deleted: 'Chu kỳ đã được xóa thành công.' }); });
+$(function () {
+    initDanhMucCrud({
+        tableId: 'datatable-chuky',
+        route: 'chuky',
+        idField: 'id',
+        fields: [{ data: 'ten' }, { data: 'chuky' }],
+        success: 'Chu kỳ đã được cập nhật thành công.',
+        deleted: 'Chu kỳ đã được xóa thành công.'
+    });
+});

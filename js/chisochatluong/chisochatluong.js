@@ -777,3 +777,10 @@ $('#btnChonPopupCon').on('click', function () {
 });
 
 capNhatKhoaPhongTheoPhamVi();
+
+
+
+//test
+$("#xem_ma_chi_so").on("click", function(e) {
+    alert($("#xem_ma_chi_so").text()); 
+});
