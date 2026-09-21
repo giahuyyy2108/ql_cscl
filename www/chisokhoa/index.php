@@ -31,7 +31,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 	</select>
 	<select id="id_chuky">
 		<?php foreach ($listCky as $item): ?>
-			<option value="<?= $item->id ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
+			<option value="<?= $item->id ?>" data-so-ky="<?= (int) $item->chuky ?>"><?= htmlspecialchars($item->ten, ENT_QUOTES, 'UTF-8') ?></option>
 		<?php endforeach; ?>
 	</select>
 </div>
@@ -156,6 +156,15 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 						</tr>
 					</tbody>
 				</table>
+
+				<div class="indicator-cycle-chart">
+					<h4>Trung bình theo chu kỳ</h4>
+					<div id="bieu_do_chu_ky_loading" class="text-muted">Đang tải dữ liệu...</div>
+					<div id="bieu_do_chu_ky_empty" class="alert alert-info" style="display: none;">Chưa có dữ liệu nhập liệu để hiển thị.</div>
+					<div class="indicator-cycle-chart__canvas">
+						<canvas id="bieu_do_chu_ky"></canvas>
+					</div>
+				</div>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>

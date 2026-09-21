@@ -857,6 +857,23 @@ div#datatable-user_length {
 	}
 }
 
+.indicator-cycle-chart {
+	margin-top: 20px;
+	padding-top: 18px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.indicator-cycle-chart h4 {
+	margin: 0 0 14px;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.indicator-cycle-chart__canvas {
+	position: relative;
+	height: 320px;
+}
+
 .survey-entry-modal {
 	overflow: hidden;
 	border: 0;

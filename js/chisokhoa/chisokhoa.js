@@ -1,6 +1,82 @@
 /* DATA TABLES */
 var table;
 var allKhoaOptions = [];
+var bieuDoChuKy = null;
+
+function taiBieuDoChuKy(maChiSo, soChuKy) {
+    var loading = $('#bieu_do_chu_ky_loading').show();
+    var empty = $('#bieu_do_chu_ky_empty').hide();
+    var canvas = $('#bieu_do_chu_ky').show();
+
+    if (bieuDoChuKy) {
+        bieuDoChuKy.destroy();
+        bieuDoChuKy = null;
+    }
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisokhoa/getBieuDoChuKy/',
+        type: 'POST',
+        dataType: 'json',
+        data: { ma_chi_so: maChiSo },
+        success: function (response) {
+            var data = response && response.success && Array.isArray(response.data) ? response.data : [];
+            loading.hide();
+            if (!data.length) {
+                canvas.hide();
+                empty.text(response && response.message ? response.message : 'Chưa có dữ liệu nhập liệu để hiển thị.').show();
+                return;
+            }
+
+            var labels = data.map(function (item) {
+                var tenKy = 'Kỳ ' + item.ky;
+                if (soChuKy === 12) tenKy = 'Tháng ' + item.ky;
+                if (soChuKy === 4) tenKy = 'Quý ' + item.ky;
+                if (soChuKy === 2) tenKy = '6 tháng ' + item.ky;
+                if (soChuKy === 1) tenKy = 'Năm';
+                return tenKy + '/' + item.nam;
+            });
+            bieuDoChuKy = new Chart(canvas[0].getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Trung bình (%)',
+                        data: data.map(function (item) { return item.trung_binh; }),
+                        borderColor: '#337ab7',
+                        backgroundColor: 'rgba(51, 122, 183, 0.12)',
+                        pointBackgroundColor: '#337ab7',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        lineTension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        callbacks: {
+                            afterLabel: function (tooltipItem) {
+                                return 'Số phiếu: ' + data[tooltipItem.index].so_phieu;
+                            }
+                        }
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: { beginAtZero: true, max: 100 },
+                            scaleLabel: { display: true, labelString: 'Tỷ lệ trung bình (%)' }
+                        }]
+                    }
+                }
+            });
+        },
+        error: function () {
+            loading.hide();
+            canvas.hide();
+            empty.text('Không tải được dữ liệu biểu đồ.').show();
+        }
+    });
+}
 
 function getOptionText(selectId, value) {
     var text = $('#' + selectId + ' option').filter(function () {
@@ -241,5 +317,10 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
     $('#xem_tu_so').text(hienThi(row.ten_tu_so));
     $('#xem_mau_so').text(hienThi(row.ten_mau_so));
 
-    $('#modalChiTieu').modal('show');
+    var soChuKy = parseInt($('#id_chuky option[value="' + row.id_chuky + '"]').data('so-ky'), 10) || 0;
+    $('#modalChiTieu')
+        .one('shown.bs.modal', function () {
+            taiBieuDoChuKy(row.ma_chi_so, soChuKy);
+        })
+        .modal('show');
 });

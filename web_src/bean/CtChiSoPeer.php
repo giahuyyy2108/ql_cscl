@@ -77,6 +77,42 @@ class CtChiSoPeer
         return isset($duLieu[(string) $nam][(string) $ky]);
     }
 
+    public function getTrungBinhTheoKy($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        $result = $this->dbsql->query("SELECT du_lieu FROM ct_chiso WHERE ma_chi_so = $maChiSo");
+        $tongTheoKy = array();
+
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $duLieu = json_decode($row['du_lieu'], true);
+            if (!is_array($duLieu)) continue;
+
+            foreach ($duLieu as $nam => $cacKy) {
+                if (!is_array($cacKy)) continue;
+                foreach ($cacKy as $ky => $giaTri) {
+                    if (!is_array($giaTri) || !isset($giaTri['ty_le_phan_tram']) || !is_numeric($giaTri['ty_le_phan_tram'])) continue;
+                    $khoa = (int) $nam . '-' . (int) $ky;
+                    if (!isset($tongTheoKy[$khoa])) {
+                        $tongTheoKy[$khoa] = array('nam' => (int) $nam, 'ky' => (int) $ky, 'tong' => 0, 'so_phieu' => 0);
+                    }
+                    $tongTheoKy[$khoa]['tong'] += (float) $giaTri['ty_le_phan_tram'];
+                    $tongTheoKy[$khoa]['so_phieu']++;
+                }
+            }
+        }
+
+        $ketQua = array_values($tongTheoKy);
+        usort($ketQua, function ($a, $b) {
+            return $a['nam'] === $b['nam'] ? $a['ky'] - $b['ky'] : $a['nam'] - $b['nam'];
+        });
+        foreach ($ketQua as &$item) {
+            $item['trung_binh'] = round($item['tong'] / $item['so_phieu'], 2);
+            unset($item['tong']);
+        }
+        unset($item);
+        return $ketQua;
+    }
+
     public function save($item)
     {
         $maChiSo = (int) $item->get('ma_chi_so');
