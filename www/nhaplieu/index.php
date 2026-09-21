@@ -117,12 +117,11 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
+                <h4 class="modal-title">Chi tiết chỉ tiêu</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title">Chi tiết chỉ tiêu</h4>
             </div>
-
             <div class="modal-body">
                 <table class="table table-bordered table-striped" style="margin-bottom: 0;">
                     <tbody>
@@ -202,11 +201,14 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
 
 <!-- Modal nhập liệu chỉ tiêu. -->
 <div class="modal fade" id="modalNhapLieu" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg survey-entry-dialog" role="document">
+        <div class="modal-content survey-entry-modal">
             <form id="formNhapLieu">
-                <div class="modal-header">
-                    <h4 class="modal-title">Nhập liệu chỉ tiêu</h4>
+                <div class="modal-header survey-entry-modal__header">
+                    <div>
+                        <h4 class="modal-title"><i class="fa fa-list-alt"></i> Nhập biểu mẫu theo chu kỳ</h4>
+                        <p>Chọn chu kỳ, hoàn thành các câu hỏi và kiểm tra kết quả trước khi lưu.</p>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -217,7 +219,7 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                     <input type="hidden" id="nhap_so_chu_ky">
                     <input type="hidden" id="nhap_nam" value="<?= (int) date('Y') ?>">
 
-                    <table class="table table-bordered table-condensed">
+                    <table class="table table-condensed survey-entry-meta">
                         <tbody>
                             <tr>
                                 <th style="width: 25%;">Mã chỉ số</th>
@@ -242,54 +244,36 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                         </tbody>
                     </table>
 
-                    <p id="nhap_ky_hien_tai" class="text-muted"></p>
-
-                    <div class="form-group">
-                        <label for="nhap_ky">Chọn chu kỳ nhập</label>
-                        <select id="nhap_ky" class="form-control" required></select>
-                    </div>
-
-                    <div id="tong_quan_chu_ky" class="alert alert-info"></div>
-                    <div id="trang_thai_ky" class="alert" style="display: none;"></div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="nhap_tu_so">Tử số</label>
-                                <input
-                                    type="number"
-                                    id="nhap_tu_so"
-                                    class="form-control"
-                                    min="0"
-                                    step="any"
-                                    required>
+                    <div class="survey-cycle-panel">
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <div class="form-group survey-cycle-select">
+                                    <label for="nhap_ky"><i class="fa fa-calendar"></i> Chu kỳ cần nhập</label>
+                                    <select id="nhap_ky" class="form-control" required></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-7">
+                                <p id="nhap_ky_hien_tai" class="survey-cycle-current"></p>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="nhap_mau_so">Mẫu số</label>
-                                <input
-                                    type="number"
-                                    id="nhap_mau_so"
-                                    class="form-control"
-                                    min="0"
-                                    step="any"
-                                    required>
-                            </div>
-                        </div>
+                        <div id="tong_quan_chu_ky" class="survey-cycle-overview"></div>
+                        <div id="trang_thai_ky" class="alert survey-cycle-status" style="display: none;"></div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="nhap_value">Kết quả (%)</label>
-                        <input type="text" id="nhap_value" class="form-control" readonly>
-                        <p class="help-block">Công thức: mẫu số / tử số × 100</p>
+                    <div class="survey-entry">
+                        <div class="survey-entry__title">
+                            <h4><i class="fa fa-pencil-square-o"></i> Nội dung biểu mẫu</h4>
+                            <span><span class="text-danger">*</span> Câu hỏi bắt buộc</span>
+                        </div>
+                        <div id="nhap_bieu_mau"></div>
+                        <div id="nhap_ket_qua_diem" class="alert alert-success" style="display: none;"></div>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>
+                <div class="modal-footer survey-entry-modal__footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
                     <button type="submit" id="btnLuuNhapLieu" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Lưu
+                        <i class="fa fa-save"></i> Lưu biểu mẫu
                     </button>
                 </div>
             </form>

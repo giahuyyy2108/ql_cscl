@@ -70,6 +70,7 @@ class ChiSoChatLuongPeer
         $chiso->set("thu_thap", $result["thu_thap"]);
         $chiso->set("ten_tu_so", $result["ten_tu_so"]);
         $chiso->set("ten_mau_so", $result["ten_mau_so"]);
+        $chiso->set("bieumau", isset($result["bieumau"]) ? $result["bieumau"] : "");
         $chiso->set("created_at", $result["created_at"]);
         $chiso->set("updated_at", $result["updated_at"]);
 
@@ -268,7 +269,7 @@ class ChiSoChatLuongPeer
              `pham_vi`, `muc_tieu`, `nguong_canh_bao`, `id_donvitinh`,
              `id_chuky`, `id_khoaphong`, `phong`, `loai_cong_thuc`, `cong_thuc`, `trang_thai`,
              `nguoi_gui`, `thoi_gian_gui`, `nguoi_duyet`, `thoi_gian_duyet`,
-             `ly_do_tu_choi`, `dinh_nghia`, `thu_thap`, `ten_tu_so`, `ten_mau_so`)
+             `ly_do_tu_choi`, `dinh_nghia`, `thu_thap`, `ten_tu_so`, `ten_mau_so`, `bieumau`)
             VALUES (" . $value('ten_chi_so') . ",
                     " . $number('ma_khia_canh') . ",
                     " . $number('ma_thanh_to') . ",
@@ -284,7 +285,8 @@ class ChiSoChatLuongPeer
                     " . $value('cong_thuc') . ",
                     0, " . $value('nguoi_gui') . ", NULL, NULL, NULL, '',
                     " . $value('dinh_nghia') . ", " . $value('thu_thap') . ",
-                    " . $value('ten_tu_so') . ", " . $value('ten_mau_so') . ")";
+                    " . $value('ten_tu_so') . ", " . $value('ten_mau_so') . ",
+                    " . $value('bieumau') . ")";
 
         $this->dbsql->query($sql);
         return $this->dbsql->insert_id();
@@ -317,6 +319,7 @@ class ChiSoChatLuongPeer
                     `thu_thap` = " . $value('thu_thap') . ",
                     `ten_tu_so` = " . $value('ten_tu_so') . ",
                     `ten_mau_so` = " . $value('ten_mau_so') . ",
+                    `bieumau` = " . $value('bieumau') . ",
                     `updated_at` = NOW()
                 WHERE `ma_chi_so` = " . $number('ma_chi_so');
 

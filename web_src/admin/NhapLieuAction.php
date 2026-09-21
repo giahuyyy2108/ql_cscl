@@ -12,6 +12,7 @@ class NhapLieuAction
 	var $request;
 	var $ChiSoPeer;
 	var $CtChiSoPeer;
+	var $lastErrorMessage;
 	public static $listRole = "chisokhoa";
 
 	public function __construct()
@@ -95,6 +96,7 @@ class NhapLieuAction
             'ky' => $kyHienTai['ky'],
             'thang_bat_dau' => $kyHienTai['thang_bat_dau'],
             'nam_bat_dau' => $kyHienTai['nam_bat_dau'],
+            'bieumau' => $this->docBieuMau($cauHinh['bieumau']),
             'da_nhap' => $this->CtChiSoPeer->getTheoNam($maChiSo, $idKhoaPhong, $kyHienTai['nam'])
         )));
     }
@@ -104,8 +106,8 @@ class NhapLieuAction
         $maChiSo = (int) $this->request->getParameter('ma_chi_so');
         $nam = (int) $this->request->getParameter('nam');
         $ky = (int) $this->request->getParameter('ky');
-        $tuSo = (float) $this->request->getParameter('tu_so', false);
-        $mauSo = (float) $this->request->getParameter('mau_so', false);
+        $duLieuGui = $this->request->getParameter('du_lieu', true);
+        $duLieuGui = is_string($duLieuGui) ? json_decode($duLieuGui, true) : $duLieuGui;
         $userId = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
         $idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($userId);
         $cauHinh = $this->CtChiSoPeer->getCauHinhNhap($maChiSo, $idKhoaPhong);
@@ -117,15 +119,12 @@ class NhapLieuAction
         if ($nam !== $kyHienTai['nam'] || $ky < 1 || $ky > $kyHienTai['ky']) {
             return $this->jsonError('Không được nhập dữ liệu cho chu kỳ tương lai');
         }
-        if ($tuSo == 0) {
-            return $this->jsonError('Tử số phải khác 0');
-        }
-        if ($tuSo < 0 || $mauSo < 0) {
-            return $this->jsonError('Tử số và mẫu số không được âm');
+        $bieuMau = $this->docBieuMau($cauHinh['bieumau']);
+        $duLieuKy = $this->kiemTraCauTraLoi($bieuMau, $duLieuGui);
+        if ($duLieuKy === false) {
+            return $this->jsonError($this->lastErrorMessage);
         }
 
-        // Công thức theo yêu cầu nghiệp vụ: mẫu số / tử số * 100.
-        $value = round(($mauSo / $tuSo) * 100, 2);
         $item = new CtChiSo();
         $item->set('ma_chi_so', $maChiSo);
         $item->set('id_user', $userId);
@@ -133,19 +132,123 @@ class NhapLieuAction
         $item->set('nam', $nam);
         $item->set('ky', $ky);
         $item->set('du_lieu', array(
-            (string) $ky => array(
-                'tu_so' => $tuSo,
-                'mau_so' => $mauSo,
-                'value' => $value
-            )
+            (string) $ky => $duLieuKy
         ));
         $this->CtChiSoPeer->save($item);
 
         return $this->request->json_response(json_encode(array(
             'success' => true,
-            'value' => $value,
             'message' => 'Lưu nhập liệu thành công'
         )));
+    }
+
+    private function docBieuMau($json)
+    {
+        $bieuMau = is_array($json) ? $json : json_decode((string) $json, true);
+        if (isset($bieuMau['cau_hoi']) && is_array($bieuMau['cau_hoi'])) {
+            return $bieuMau;
+        }
+        if (is_array($bieuMau) && array_values($bieuMau) === $bieuMau) {
+            return array('version' => 1, 'cau_hoi' => $bieuMau);
+        }
+        return array('version' => 1, 'cau_hoi' => array());
+    }
+
+    private function kiemTraCauTraLoi($bieuMau, $duLieuGui)
+    {
+        $cauHoi = isset($bieuMau['cau_hoi']) ? $bieuMau['cau_hoi'] : array();
+        $giaTriGui = isset($duLieuGui['cau_tra_loi']) && is_array($duLieuGui['cau_tra_loi'])
+            ? $duLieuGui['cau_tra_loi']
+            : array();
+        $ketQua = array();
+        $tongDiem = 0;
+        $diemToiDa = 0;
+
+        if (empty($cauHoi)) {
+            $this->lastErrorMessage = 'Chỉ tiêu chưa được thiết kế biểu mẫu nhập liệu';
+            return false;
+        }
+
+        foreach ($cauHoi as $index => $item) {
+            $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+            $noiDung = trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : '');
+            $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
+            $batBuoc = !empty($item['bat_buoc']);
+            $giaTri = isset($giaTriGui[$id]) ? $giaTriGui[$id] : null;
+            $luaChonGoc = isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array();
+            $luaChon = array();
+            $diemLuaChon = array();
+            foreach ($luaChonGoc as $phuongAn) {
+                $tenPhuongAn = is_array($phuongAn)
+                    ? trim(isset($phuongAn['noi_dung']) ? (string) $phuongAn['noi_dung'] : '')
+                    : trim((string) $phuongAn);
+                if ($tenPhuongAn === '') continue;
+                $luaChon[] = $tenPhuongAn;
+                $diemLuaChon[$tenPhuongAn] = is_array($phuongAn) && isset($phuongAn['diem'])
+                    ? (float) $phuongAn['diem']
+                    : 0;
+            }
+
+            if ($loai === 'checkbox') {
+                $giaTri = is_array($giaTri) ? array_values(array_filter(array_map('strval', $giaTri), 'strlen')) : array();
+                $rong = empty($giaTri);
+            } else {
+                $giaTri = is_scalar($giaTri) ? trim((string) $giaTri) : '';
+                $rong = $giaTri === '';
+            }
+
+            if ($batBuoc && $rong) {
+                $this->lastErrorMessage = 'Vui lòng trả lời câu hỏi: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && $loai === 'number' && !is_numeric($giaTri)) {
+                $this->lastErrorMessage = 'Câu trả lời phải là số: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && $loai === 'score' && (!is_numeric($giaTri) || (int) $giaTri < 1 || (int) $giaTri > 10)) {
+                $this->lastErrorMessage = 'Điểm phải nằm trong khoảng từ 1 đến 10: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && in_array($loai, array('radio', 'select'), true) && !in_array($giaTri, $luaChon, true)) {
+                $this->lastErrorMessage = 'Phương án trả lời không hợp lệ: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && $loai === 'checkbox' && array_diff($giaTri, $luaChon)) {
+                $this->lastErrorMessage = 'Phương án trả lời không hợp lệ: ' . $noiDung;
+                return false;
+            }
+
+            if (!$rong && in_array($loai, array('radio', 'select'), true)) {
+                $tongDiem += isset($diemLuaChon[$giaTri]) ? $diemLuaChon[$giaTri] : 0;
+            } elseif (!$rong && $loai === 'checkbox') {
+                foreach ($giaTri as $phuongAnDaChon) {
+                    $tongDiem += isset($diemLuaChon[$phuongAnDaChon]) ? $diemLuaChon[$phuongAnDaChon] : 0;
+                }
+            } elseif (!$rong && $loai === 'score') {
+                $tongDiem += (float) $giaTri;
+            }
+
+            if (in_array($loai, array('radio', 'select'), true) && !empty($diemLuaChon)) {
+                $diemToiDa += max(0, max($diemLuaChon));
+            } elseif ($loai === 'checkbox') {
+                foreach ($diemLuaChon as $diemPhuongAn) {
+                    if ($diemPhuongAn > 0) $diemToiDa += $diemPhuongAn;
+                }
+            } elseif ($loai === 'score') {
+                $diemToiDa += 10;
+            }
+
+            $ketQua[$id] = $giaTri;
+        }
+
+        $tyLePhanTram = $diemToiDa > 0 ? round(($tongDiem / $diemToiDa) * 100, 2) : 0;
+
+        return array(
+            'cau_tra_loi' => $ketQua,
+            'tong_diem' => round($tongDiem, 2),
+            'diem_toi_da' => round($diemToiDa, 2),
+            'ty_le_phan_tram' => $tyLePhanTram
+        );
     }
 
     private function jsonError($message)

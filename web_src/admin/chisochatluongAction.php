@@ -149,6 +149,15 @@ class chisochatluongAction
 			}
 		}
 
+		$bieumau = $chiso->get("bieumau");
+		if (is_string($bieumau)) {
+			$bieumau = json_decode($bieumau, true);
+		}
+		if (!is_array($bieumau)) {
+			$bieumau = array("version" => 1, "cau_hoi" => array());
+		}
+		$chiso->set("bieumau", json_encode($bieumau, JSON_UNESCAPED_UNICODE));
+
 		$maPhong = $chiso->get("phong");
 		if (is_string($maPhong)) {
 			$phongDaGiaiMa = json_decode($maPhong, true);

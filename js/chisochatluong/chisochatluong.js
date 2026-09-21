@@ -28,6 +28,7 @@ table = $('#datatable-chiso').DataTable({
 
                 // reset form
                 $('#formChiTieu')[0].reset();
+                khoiTaoBieuMauKhaoSat();
                 capNhatKhoaPhongTheoPhamVi();
 
                 // đánh dấu đang thêm
@@ -290,6 +291,8 @@ $('#datatable-chiso').on('click', '.btn-sua', function () {
     $('#modalChiTieu .modal-title')
         .text('Sửa Chỉ tiêu');
 
+    khoiTaoBieuMauKhaoSat();
+    napDuLieuBieuMau(row.bieumau);
     $('#modalChiTieu').modal('show');
 });
 
@@ -335,6 +338,7 @@ $('#formChiTieu').on('submit', function (e) {
                 thu_thap: $('#thu_thap').val(),
                 ten_tu_so: $('#ten_tu_so').val(),
                 ten_mau_so: $('#ten_mau_so').val(),
+                bieumau: layDuLieuBieuMau(),
                 nguoi_gui: $('#fullname').val()
             }])
         },
@@ -404,6 +408,61 @@ $('#formChiTieu').on('submit', function (e) {
 
 });
 
+function hienThiBieuMauKhaoSat(duLieu) {
+    var khuVuc = $('#xem_bieu_mau').empty();
+    var tenLoai = {
+        short_text: 'Trả lời ngắn',
+        long_text: 'Đoạn văn',
+        number: 'Số',
+        score: 'Chọn điểm (1–10)',
+        date: 'Ngày tháng',
+        radio: 'Một lựa chọn',
+        checkbox: 'Nhiều lựa chọn',
+        select: 'Danh sách thả xuống'
+    };
+
+    if (typeof duLieu === 'string') {
+        try {
+            duLieu = JSON.parse(duLieu);
+        } catch (error) {
+            duLieu = null;
+        }
+    }
+
+    var danhSach = Array.isArray(duLieu) ? duLieu : (duLieu && duLieu.cau_hoi);
+    if (!Array.isArray(danhSach) || !danhSach.length) {
+        khuVuc.append($('<span>', { 'class': 'text-muted', text: 'Chưa có câu hỏi.' }));
+        return;
+    }
+
+    danhSach.forEach(function (cauHoi, index) {
+        var khoiCauHoi = $('<div>', { 'class': 'survey-view-question' });
+        var tieuDe = $('<div>', { 'class': 'survey-view-question__title' });
+
+        tieuDe.append(document.createTextNode((index + 1) + '. ' + (cauHoi.noi_dung || 'Câu hỏi chưa có nội dung')));
+        if (cauHoi.bat_buoc) {
+            tieuDe.append($('<span>', { 'class': 'text-danger', text: ' *' }));
+        }
+        khoiCauHoi.append(tieuDe);
+        khoiCauHoi.append($('<span>', {
+            'class': 'survey-view-question__type',
+            text: tenLoai[cauHoi.loai] || cauHoi.loai || 'Không xác định'
+        }));
+
+        if (Array.isArray(cauHoi.lua_chon) && cauHoi.lua_chon.length) {
+            var luaChon = $('<ul>', { 'class': 'survey-view-question__options' });
+            cauHoi.lua_chon.forEach(function (itemLuaChon) {
+                var noiDung = typeof itemLuaChon === 'object' ? itemLuaChon.noi_dung : itemLuaChon;
+                var diem = typeof itemLuaChon === 'object' ? itemLuaChon.diem : 0;
+                luaChon.append($('<li>').text(noiDung + ' (' + diem + ' điểm)'));
+            });
+            khoiCauHoi.append(luaChon);
+        }
+
+        khuVuc.append(khoiCauHoi);
+    });
+}
+
 $('#datatable-chiso').on('click', '.btn-xem', function () {
     var tr = $(this).closest('tr');
     if (tr.hasClass('child')) {
@@ -469,6 +528,7 @@ $('#datatable-chiso').on('click', '.btn-xem', function () {
     $('#xem_thu_thap').text(hienThi(row.thu_thap));
     $('#xem_tu_so').text(hienThi(row.ten_tu_so));
     $('#xem_mau_so').text(hienThi(row.ten_mau_so));
+    hienThiBieuMauKhaoSat(row.bieumau);
     $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
     $('#xem_nguoi_duyet').text(hienThi(row.nguoi_duyet.hoTen));
     $('#xem_trang_thai').text(hienThi(row.trang_thai && row.trang_thai.tenTrangThai));
@@ -845,6 +905,235 @@ $('#btnChonPopupCon').on('click', function () {
     $('#modalCon').modal('hide');
 });
 
+var soThuTuCauHoi = 0;
+
+function loaiCauHoiCanLuaChon(loai) {
+    return ['radio', 'checkbox', 'select'].indexOf(loai) !== -1;
+}
+
+function capNhatTrangThaiBieuMau() {
+    var danhSach = $('#danhSachCauHoi .survey-question');
+
+    $('#surveyBuilderEmpty').toggle(danhSach.length === 0);
+    danhSach.each(function (index) {
+        $(this).find('.survey-question__number').text('Câu hỏi ' + (index + 1));
+        $(this).find('.btn-cau-hoi-len').prop('disabled', index === 0);
+        $(this).find('.btn-cau-hoi-xuong').prop('disabled', index === danhSach.length - 1);
+    });
+}
+
+function taoLuaChonCauHoi(noiDung, diem) {
+    var luaChon = $('<div>', { 'class': 'survey-option' });
+    luaChon.append($('<i>', { 'class': 'fa fa-circle-o text-muted' }));
+    luaChon.append($('<input>', {
+        type: 'text',
+        'class': 'form-control input-sm survey-option__text',
+        placeholder: 'Nhập phương án trả lời',
+        value: noiDung || ''
+    }));
+    luaChon.append($('<input>', {
+        type: 'number',
+        min: 0,
+        step: 'any',
+        'class': 'form-control input-sm survey-option__score',
+        placeholder: 'Điểm',
+        title: 'Điểm của phương án này',
+        value: diem === undefined || diem === null ? 0 : diem
+    }));
+    luaChon.append(
+        $('<button>', {
+            type: 'button',
+            'class': 'btn btn-link text-danger btn-xoa-lua-chon',
+            title: 'Xóa phương án'
+        }).append($('<i>', { 'class': 'fa fa-times' }))
+    );
+    return luaChon;
+}
+
+function taoCauHoi() {
+    soThuTuCauHoi += 1;
+
+    var cauHoi = $('<div>', {
+        'class': 'survey-question',
+        'data-question-id': soThuTuCauHoi
+    });
+
+    cauHoi.html(
+        '<div class="survey-question__header">' +
+            '<strong class="survey-question__number"></strong>' +
+            '<div class="survey-question__actions">' +
+                '<button type="button" class="btn btn-default btn-xs btn-cau-hoi-len" title="Di chuyển lên"><i class="fa fa-arrow-up"></i></button>' +
+                '<button type="button" class="btn btn-default btn-xs btn-cau-hoi-xuong" title="Di chuyển xuống"><i class="fa fa-arrow-down"></i></button>' +
+                '<button type="button" class="btn btn-danger btn-xs btn-xoa-cau-hoi" title="Xóa câu hỏi"><i class="fa fa-trash"></i></button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="row">' +
+            '<div class="col-md-8"><div class="form-group">' +
+                '<label>Nội dung câu hỏi <span class="text-danger">*</span></label>' +
+                '<input type="text" class="form-control survey-question__title" placeholder="Nhập nội dung câu hỏi">' +
+            '</div></div>' +
+            '<div class="col-md-4"><div class="form-group">' +
+                '<label>Loại câu trả lời</label>' +
+                '<select class="form-control survey-question__type">' +
+                    '<option value="short_text">Trả lời ngắn</option>' +
+                    '<option value="long_text">Đoạn văn</option>' +
+                    '<option value="number">Số</option>' +
+                    '<option value="score">Chọn điểm (1–10)</option>' +
+                    '<option value="date">Ngày tháng</option>' +
+                    '<option value="radio">Một lựa chọn</option>' +
+                    '<option value="checkbox">Nhiều lựa chọn</option>' +
+                    '<option value="select">Danh sách thả xuống</option>' +
+                '</select>' +
+            '</div></div>' +
+        '</div>' +
+        '<div class="survey-question__options" style="display:none">' +
+            '<label>Phương án trả lời <span class="text-muted">(điểm ở ô bên phải)</span></label>' +
+            '<div class="survey-question__option-list"></div>' +
+            '<button type="button" class="btn btn-default btn-sm btn-them-lua-chon"><i class="fa fa-plus"></i> Thêm phương án</button>' +
+        '</div>' +
+        '<div class="survey-question__footer">' +
+            '<label><input type="checkbox" class="survey-question__required"> Bắt buộc trả lời</label>' +
+        '</div>'
+    );
+
+    return cauHoi;
+}
+
+function themCauHoi() {
+    $('#danhSachCauHoi').append(taoCauHoi());
+    capNhatTrangThaiBieuMau();
+}
+
+function khoiTaoBieuMauKhaoSat() {
+    soThuTuCauHoi = 0;
+    $('#danhSachCauHoi').empty();
+    capNhatTrangThaiBieuMau();
+}
+
+function layDuLieuBieuMau() {
+    var cauHoi = [];
+
+    $('#danhSachCauHoi .survey-question').each(function (index) {
+        var item = $(this);
+        var loai = item.find('.survey-question__type').val();
+        var luaChon = [];
+
+        if (loaiCauHoiCanLuaChon(loai)) {
+            item.find('.survey-option').each(function () {
+                var noiDung = $.trim($(this).find('.survey-option__text').val());
+                if (noiDung !== '') {
+                    luaChon.push({
+                        noi_dung: noiDung,
+                        diem: parseFloat($(this).find('.survey-option__score').val()) || 0
+                    });
+                }
+            });
+        }
+
+        cauHoi.push({
+            id: 'q' + (index + 1),
+            noi_dung: $.trim(item.find('.survey-question__title').val()),
+            loai: loai,
+            bat_buoc: item.find('.survey-question__required').prop('checked'),
+            lua_chon: luaChon
+        });
+    });
+
+    return {
+        version: 1,
+        cau_hoi: cauHoi
+    };
+}
+
+function napDuLieuBieuMau(duLieu) {
+    if (!duLieu) {
+        return;
+    }
+
+    if (typeof duLieu === 'string') {
+        try {
+            duLieu = JSON.parse(duLieu);
+        } catch (error) {
+            return;
+        }
+    }
+
+    var danhSach = Array.isArray(duLieu) ? duLieu : duLieu.cau_hoi;
+    if (!Array.isArray(danhSach)) {
+        return;
+    }
+
+    danhSach.forEach(function (duLieuCauHoi) {
+        var cauHoi = taoCauHoi();
+        var loai = duLieuCauHoi.loai || 'short_text';
+
+        cauHoi.find('.survey-question__title').val(duLieuCauHoi.noi_dung || '');
+        cauHoi.find('.survey-question__required').prop('checked', !!duLieuCauHoi.bat_buoc);
+        cauHoi.find('.survey-question__type').val(loai);
+
+        if (loaiCauHoiCanLuaChon(loai)) {
+            var danhSachLuaChon = cauHoi.find('.survey-question__option-list');
+            var luaChon = Array.isArray(duLieuCauHoi.lua_chon) ? duLieuCauHoi.lua_chon : [];
+
+            luaChon.forEach(function (luaChonItem) {
+                var noiDung = typeof luaChonItem === 'object' ? luaChonItem.noi_dung : luaChonItem;
+                var diem = typeof luaChonItem === 'object' ? luaChonItem.diem : 0;
+                danhSachLuaChon.append(taoLuaChonCauHoi(noiDung, diem));
+            });
+            cauHoi.find('.survey-question__options').show();
+        }
+
+        $('#danhSachCauHoi').append(cauHoi);
+    });
+
+    capNhatTrangThaiBieuMau();
+}
+
+$('#btnThemCauHoi').on('click', themCauHoi);
+
+$('#danhSachCauHoi').on('change', '.survey-question__type', function () {
+    var cauHoi = $(this).closest('.survey-question');
+    var khuVucLuaChon = cauHoi.find('.survey-question__options');
+
+    if (!loaiCauHoiCanLuaChon($(this).val())) {
+        khuVucLuaChon.hide();
+        return;
+    }
+
+    var danhSachLuaChon = cauHoi.find('.survey-question__option-list');
+    if (!danhSachLuaChon.children().length) {
+        danhSachLuaChon.append(taoLuaChonCauHoi('Lựa chọn 1'));
+        danhSachLuaChon.append(taoLuaChonCauHoi('Lựa chọn 2'));
+    }
+    khuVucLuaChon.show();
+});
+
+$('#danhSachCauHoi').on('click', '.btn-them-lua-chon', function () {
+    $(this).siblings('.survey-question__option-list').append(taoLuaChonCauHoi());
+});
+
+$('#danhSachCauHoi').on('click', '.btn-xoa-lua-chon', function () {
+    $(this).closest('.survey-option').remove();
+});
+
+$('#danhSachCauHoi').on('click', '.btn-xoa-cau-hoi', function () {
+    $(this).closest('.survey-question').remove();
+    capNhatTrangThaiBieuMau();
+});
+
+$('#danhSachCauHoi').on('click', '.btn-cau-hoi-len', function () {
+    var cauHoi = $(this).closest('.survey-question');
+    cauHoi.prev('.survey-question').before(cauHoi);
+    capNhatTrangThaiBieuMau();
+});
+
+$('#danhSachCauHoi').on('click', '.btn-cau-hoi-xuong', function () {
+    var cauHoi = $(this).closest('.survey-question');
+    cauHoi.next('.survey-question').after(cauHoi);
+    capNhatTrangThaiBieuMau();
+});
+
+khoiTaoBieuMauKhaoSat();
 capNhatKhoaPhongTheoPhamVi();
 
 

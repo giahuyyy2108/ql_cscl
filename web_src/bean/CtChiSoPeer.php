@@ -22,7 +22,7 @@ class CtChiSoPeer
     {
         $maChiSo = (int) $maChiSo;
         $idKhoaPhong = (int) $idKhoaPhong;
-        $sql = "SELECT ck.chuky, cs.created_at
+        $sql = "SELECT ck.chuky, cs.created_at, cs.bieumau
                 FROM chi_so_chat_luong cs
                 INNER JOIN chuky ck ON ck.id = cs.id_chuky
                 WHERE cs.ma_chi_so = $maChiSo

@@ -29,6 +29,7 @@ class ChiSoChatLuong
 	var $thu_thap;
 	var $ten_tu_so;
 	var $ten_mau_so;
+	var $bieumau;
 	var $created_at;
 	var $updated_at;
 	var $da_nhap_ky_hien_tai;
@@ -60,6 +61,7 @@ class ChiSoChatLuong
 		$this->thu_thap = "";
 		$this->ten_tu_so = "";
 		$this->ten_mau_so = "";
+		$this->bieumau = "";
 		$this->created_at = "";
 		$this->updated_at = "";
 		$this->da_nhap_ky_hien_tai = false;

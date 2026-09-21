@@ -356,6 +356,22 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 
                     </div>
 
+					<div class="survey-builder" id="surveyBuilder">
+						<div class="survey-builder__header">
+							<div>
+								<h4>Thiết kế biểu mẫu khảo sát</h4>
+								<p class="text-muted">Tạo các câu hỏi dùng để thu thập dữ liệu cho chỉ tiêu.</p>
+							</div>
+							<button type="button" class="btn btn-success btn-sm" id="btnThemCauHoi">
+								<i class="fa fa-plus"></i> Thêm câu hỏi
+							</button>
+						</div>
+						<div id="danhSachCauHoi"></div>
+						<div id="surveyBuilderEmpty" class="survey-builder__empty">
+							Chưa có câu hỏi. Nhấn “Thêm câu hỏi” để bắt đầu tạo biểu mẫu.
+						</div>
+					</div>
+
                 </div>
 
                 <div class="modal-footer">
@@ -449,6 +465,12 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                             <td id="xem_tu_so"></td>
                             <th>Tên mẫu số</th>
                             <td id="xem_mau_so"></td>
+                        </tr>
+                        <tr>
+                            <th>Biểu mẫu khảo sát</th>
+                            <td colspan="3">
+                                <div id="xem_bieu_mau"></div>
+                            </td>
                         </tr>
                         <tr id="row_xem_ly_do_tu_choi" style="display: none;">
                             <th style="color: red;">Lý do từ chối</th>
