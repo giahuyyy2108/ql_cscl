@@ -70,7 +70,8 @@ function hienThiBieuMauNhap(duLieu) {
             'data-question-id': id,
             'data-question-type': loai
         });
-        var nhan = $('<label>').text((index + 1) + '. ' + (item.noi_dung || 'Câu hỏi'));
+        var nhan = $('<label>', { 'class': 'survey-entry-question__label' })
+            .text((index + 1) + '. ' + (item.noi_dung || 'Câu hỏi'));
         if (item.bat_buoc) nhan.append($('<span>', { 'class': 'text-danger', text: ' *' }));
         khoi.append(nhan);
 
@@ -79,7 +80,6 @@ function hienThiBieuMauNhap(duLieu) {
         } else if (loai === 'radio' || loai === 'checkbox') {
             (item.lua_chon || []).forEach(function (luaChon, optionIndex) {
                 var noiDungLuaChon = typeof luaChon === 'object' ? luaChon.noi_dung : luaChon;
-                var diemLuaChon = typeof luaChon === 'object' ? luaChon.diem : 0;
                 var input = $('<input>', {
                     type: loai,
                     name: 'cau_hoi_' + index + (loai === 'checkbox' ? '[]' : ''),
@@ -92,7 +92,7 @@ function hienThiBieuMauNhap(duLieu) {
                     input.prop('checked', String(giaTri || '') === String(noiDungLuaChon));
                 }
                 khoi.append($('<div>', { 'class': loai }).append(
-                    $('<label>').append(input, document.createTextNode(' ' + noiDungLuaChon + ' (' + diemLuaChon + ' điểm)'))
+                    $('<label>').append(input, document.createTextNode(' ' + noiDungLuaChon))
                 ));
             });
         } else if (loai === 'select' || loai === 'score') {
@@ -105,10 +105,9 @@ function hienThiBieuMauNhap(duLieu) {
             } else {
                 (item.lua_chon || []).forEach(function (luaChon) {
                     var noiDungLuaChon = typeof luaChon === 'object' ? luaChon.noi_dung : luaChon;
-                    var diemLuaChon = typeof luaChon === 'object' ? luaChon.diem : 0;
                     select.append($('<option>', {
                         value: noiDungLuaChon,
-                        text: noiDungLuaChon + ' (' + diemLuaChon + ' điểm)'
+                        text: noiDungLuaChon
                     }));
                 });
             }
@@ -480,7 +479,7 @@ $('#formNhapLieu').on('submit', function (event) {
             du_lieu: JSON.stringify({ cau_tra_loi: layCauTraLoiBieuMau() })
         },
         beforeSend: function () {
-            button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang lưu...');
+            button.prop('disabled', true).text('Đang lưu...');
         },
         success: function (response) {
             if (response.success) {
@@ -496,7 +495,7 @@ $('#formNhapLieu').on('submit', function (event) {
         },
         complete: function () {
             var coCauHoi = bieuMauNhap && Array.isArray(bieuMauNhap.cau_hoi) && bieuMauNhap.cau_hoi.length > 0;
-            button.prop('disabled', !coCauHoi).html('<i class="fa fa-save"></i> Lưu biểu mẫu');
+            button.prop('disabled', !coCauHoi).text('Lưu biểu mẫu');
         }
     });
 });

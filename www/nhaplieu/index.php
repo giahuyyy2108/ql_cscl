@@ -117,7 +117,7 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Chi tiết chỉ tiêu</h4>
+                <h4 class="modal-title">Phiếu nhập chỉ tiêu</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -200,18 +200,16 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
 </div>
 
 <!-- Modal nhập liệu chỉ tiêu. -->
-<div class="modal fade" id="modalNhapLieu" tabindex="-1" role="dialog">
+<div class="modal fade" id="modalNhapLieu" tabindex="-1" role="dialog" aria-labelledby="nhapLieuTitle">
     <div class="modal-dialog modal-lg survey-entry-dialog" role="document">
         <div class="modal-content survey-entry-modal">
             <form id="formNhapLieu">
                 <div class="modal-header survey-entry-modal__header">
                     <div>
-                        <h4 class="modal-title"><i class="fa fa-list-alt"></i> Nhập biểu mẫu theo chu kỳ</h4>
+                        <h4 class="modal-title" id="nhapLieuTitle">Nhập biểu mẫu theo chu kỳ</h4>
                         <p>Chọn chu kỳ, hoàn thành các câu hỏi và kiểm tra kết quả trước khi lưu.</p>
                     </div>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn btn-default survey-entry-dismiss" data-dismiss="modal">Đóng</button>
                 </div>
 
                 <div class="modal-body">
@@ -219,36 +217,11 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                     <input type="hidden" id="nhap_so_chu_ky">
                     <input type="hidden" id="nhap_nam" value="<?= (int) date('Y') ?>">
 
-                    <table class="table table-condensed survey-entry-meta">
-                        <tbody>
-                            <tr>
-                                <th style="width: 25%;">Mã chỉ số</th>
-                                <td id="nhap_hien_thi_ma_chi_so"></td>
-                            </tr>
-                            <tr>
-                                <th>Tên chỉ số</th>
-                                <td id="nhap_ten_chi_so"></td>
-                            </tr>
-                            <tr>
-                                <th>Chu kỳ</th>
-                                <td id="nhap_chu_ky"></td>
-                            </tr>
-                            <tr>
-                                <th>Mục tiêu</th>
-                                <td id="nhap_muc_tieu"></td>
-                            </tr>
-                            <tr>
-                                <th>Ngưỡng cảnh báo</th>
-                                <td id="nhap_nguong_canh_bao"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-
                     <div class="survey-cycle-panel">
                         <div class="row">
                             <div class="col-sm-5">
                                 <div class="form-group survey-cycle-select">
-                                    <label for="nhap_ky"><i class="fa fa-calendar"></i> Chu kỳ cần nhập</label>
+                                    <label for="nhap_ky">Chọn quý</label>
                                     <select id="nhap_ky" class="form-control" required></select>
                                 </div>
                             </div>
@@ -257,13 +230,39 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                             </div>
                         </div>
                         <div id="tong_quan_chu_ky" class="survey-cycle-overview"></div>
-                        <div id="trang_thai_ky" class="alert survey-cycle-status" style="display: none;"></div>
+                        <div id="trang_thai_ky" class="alert survey-cycle-status" role="status" style="display: none;"></div>
                     </div>
+
+                    <section class="survey-entry-summary" aria-labelledby="nhapLieuSummaryTitle">
+                        <h5 id="nhapLieuSummaryTitle">Thông tin chỉ số</h5>
+                        <div class="table-responsive survey-entry-summary__table-wrap">
+                            <table class="table table-bordered survey-entry-summary__table">
+                                <thead>
+                                    <tr>
+                                        <th>Mã chỉ số</th>
+                                        <th>Tên chỉ số</th>
+                                        <th>Chu kỳ</th>
+                                        <th>Mục tiêu</th>
+                                        <th>Ngưỡng cảnh báo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="nhap_hien_thi_ma_chi_so"></td>
+                                        <td id="nhap_ten_chi_so"></td>
+                                        <td id="nhap_chu_ky"></td>
+                                        <td id="nhap_muc_tieu"></td>
+                                        <td id="nhap_nguong_canh_bao"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
 
                     <div class="survey-entry">
                         <div class="survey-entry__title">
-                            <h4><i class="fa fa-pencil-square-o"></i> Nội dung biểu mẫu</h4>
-                            <span><span class="text-danger">*</span> Câu hỏi bắt buộc</span>
+                            <h4>Nội dung biểu mẫu</h4>
+                            <!-- <span><span class="text-danger">*</span> Câu hỏi bắt buộc</span> -->
                         </div>
                         <div id="nhap_bieu_mau"></div>
                         <div id="nhap_ket_qua_diem" class="alert alert-success" style="display: none;"></div>
@@ -271,9 +270,9 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                 </div>
 
                 <div class="modal-footer survey-entry-modal__footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Đóng</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>
                     <button type="submit" id="btnLuuNhapLieu" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Lưu biểu mẫu
+                        Lưu biểu mẫu
                     </button>
                 </div>
             </form>
