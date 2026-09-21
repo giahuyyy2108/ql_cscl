@@ -31,6 +31,7 @@ class ChiSoChatLuong
 	var $ten_mau_so;
 	var $created_at;
 	var $updated_at;
+	var $da_nhap_ky_hien_tai;
 
 	function __construct()
 	{
@@ -61,6 +62,7 @@ class ChiSoChatLuong
 		$this->ten_mau_so = "";
 		$this->created_at = "";
 		$this->updated_at = "";
+		$this->da_nhap_ky_hien_tai = false;
 	}
 
 	function set($key, $value)

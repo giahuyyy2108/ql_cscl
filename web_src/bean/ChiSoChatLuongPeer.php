@@ -206,6 +206,30 @@ class ChiSoChatLuongPeer
         return $items;
     }
 
+    public function getListDaDuyetByKhoa($idKhoaPhong)
+    {
+        $idKhoaPhong = (int) $idKhoaPhong;
+        if ($idKhoaPhong <= 0) return array();
+
+        $sql = "SELECT cs.*, tt.tenTrangThai, tt.tag
+                FROM chi_so_chat_luong cs
+                LEFT JOIN trangthai tt ON tt.maTrangThai = cs.trang_thai
+                WHERE cs.trang_thai = 2
+                  AND CASE
+                        WHEN JSON_VALID(cs.phong) = 1
+                        THEN JSON_CONTAINS(cs.phong, '" . $idKhoaPhong . "', '$')
+                        ELSE cs.id_khoaphong = " . $idKhoaPhong . "
+                      END = 1
+                ORDER BY cs.ma_chi_so DESC";
+
+        $result = $this->dbsql->query($sql);
+        $items = array();
+        while ($row = $this->dbsql->fetch_Array($result)) {
+            $items[] = $this->Set_chiso($row);
+        }
+        return $items;
+    }
+
     public function getKhoaPhongIdByUserId($userId)
     {
         $userId = (int) $userId;

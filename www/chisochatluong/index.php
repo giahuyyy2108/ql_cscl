@@ -9,7 +9,7 @@ $listKhoi = $request->getAttribute("listKhoi");
 $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 
-
+var_dump($listNQ);
 
 ?>
 
@@ -445,6 +445,13 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                             <td id="xem_tu_so"></td>
                             <th>Tên mẫu số</th>
                             <td id="xem_mau_so"></td>
+                        </tr>
+                        <tr id="row_xem_ly_do_tu_choi" style="display: none;">
+                            <th style="color: red;">Lý do từ chối</th>
+                            <td id="xem_ly_do_tu_choi"
+                                colspan="3"
+                                style="color: red;">
+                            </td>
                         </tr>
                     </tbody>
                 </table>

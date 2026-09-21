@@ -466,6 +466,16 @@ $('#datatable-chiso').on('click', '.btn-xem', function () {
     $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
     $('#xem_nguoi_duyet').text(hienThi(row.nguoi_duyet.hoTen));
     $('#xem_trang_thai').text(hienThi(row.trang_thai && row.trang_thai.tenTrangThai));
+    
+    var lyDoTuChoi = (row.ly_do_tu_choi || '').trim();
+
+    if (lyDoTuChoi) {
+        $('#xem_ly_do_tu_choi').text(lyDoTuChoi);
+        $('#row_xem_ly_do_tu_choi').show();
+    } else {
+        $('#xem_ly_do_tu_choi').text('');
+        $('#row_xem_ly_do_tu_choi').hide();
+    }
 
     $('#modalXemChiTieu').modal('show');
 });
