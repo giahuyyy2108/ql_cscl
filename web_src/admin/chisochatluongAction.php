@@ -13,7 +13,7 @@ class chisochatluongAction
 	var $request;
 	var $ChiSoPeer;
 	var $lastErrorMessage;
-	public static $listRole ="chisochatluong,save,update,gui,duyet,xoa,tuchoi";
+  	public static $listRole ="chisochatluong,save,update,gui,duyet,xoa,tuchoi,khoaA,khoaB";
 	public function __construct()
 	{
 		$this->request = new Request;

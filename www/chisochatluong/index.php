@@ -7,10 +7,14 @@ $listDvt = $request->getAttribute("listDvt");
 $listTinhTrang = $request->getAttribute("listTT");
 $listKhoi = $request->getAttribute("listKhoi");
 $listKhoaPhong = $request->getAttribute("listKhoaPhong");
+
+
+
 $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 
-var_dump($listNQ);
-
+// echo '<pre>';
+// print_r($_SESSION["quyen"]);
+// echo '<pre> ';
 ?>
 
 

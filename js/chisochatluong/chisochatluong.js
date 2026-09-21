@@ -236,6 +236,12 @@ function hiddenChiSoChatLuongButtons() {
     if (!coQuyenChiSo('tuchoi')) {
         $('#datatable-chiso .btn-tuchoi').hide();
     }
+    if (coQuyenChiSo('khoaB')) {
+        // $('#datatable-chiso .btn-tuchoi').hide();
+        // alert('co quyen nè');
+        $('#pham_vi').hide();
+        $('#btnMoPopupCon').hide();
+    }
 }
 
 $('#datatable-chiso').on('click', '.btn-sua', function () {
@@ -758,6 +764,14 @@ $('#datatable-chiso').on('click', '.btn-tuchoi', function (e) {
 });
 
 function capNhatKhoaPhongTheoPhamVi() {
+    // Quyền khoaB không được phép mở popup chọn Khoa/Phòng.
+    // Kiểm tra tại đây vì hàm này có thể được gọi lại khi thêm, sửa
+    // hoặc thay đổi phạm vi; nếu không, lệnh show() bên dưới sẽ hiện lại nút.
+    if (coQuyenChiSo('khoaB')) {
+        $('#btnMoPopupCon').hide();
+        return;
+    }
+
     var laPhamViToanBo = String($('#pham_vi').val()) === '3';
 
     if (laPhamViToanBo) {
