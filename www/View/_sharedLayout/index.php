@@ -288,23 +288,6 @@
     margin-bottom: 10px;
 }
 
-.tab-content {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 20px;
-    /* background-color: white; */
-    /* border: 1px solid #ccc; */
-    z-index: 2;
-}
-
-.tab-content.active {
-    display: block;
-}
-
 #vetrang {
     cursor: pointer;
     color: #007bff;

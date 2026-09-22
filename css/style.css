@@ -10,14 +10,14 @@ A {
 	FONT-FAMILY: tahoma, sans-serif
 }
 
-A {
+/* A {
 	COLOR: #000099;
 	TEXT-DECORATION: none
-}
+} */
 
-A:hover {
+/* A:hover {
 	TEXT-DECORATION: underline
-}
+} */
 
 INPUT {
 	FONT-SIZE: 12px;

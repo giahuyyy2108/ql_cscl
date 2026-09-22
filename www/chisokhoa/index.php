@@ -96,74 +96,120 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 			</div>
 
 			<div class="modal-body">
-				<table class="table table-bordered table-striped" style="margin-bottom: 0;">
-					<tbody>
-						<tr>
-							<th style="width: 20%;">Mã chỉ số</th>
-							<td id="xem_ma_chi_so"></td>
-							<th style="width: 20%;">Trạng thái</th>
-							<td id="xem_trang_thai"></td>
-						</tr>
-						<tr>
-							<th>Tên chỉ số</th>
-							<td id="xem_ten_chi_so" colspan="3"></td>
-						</tr>
-						<tr>
-							<th>Khía cạnh</th>
-							<td id="xem_khia_canh"></td>
-							<th>Thành tố</th>
-							<td id="xem_thanh_to"></td>
-						</tr>
-						<tr>
-							<th>Phạm vi</th>
-							<td id="xem_pham_vi"></td>
-							<th>Chu kỳ</th>
-							<td id="xem_chu_ky"></td>
-						</tr>
-						<tr>
-							<th>Khoa/Phòng áp dụng</th>
-							<td id="xem_khoa_phong" colspan="3" style="white-space: pre-wrap;"></td>
-						</tr>
-						<tr>
-							<th>Mục tiêu</th>
-							<td id="xem_muc_tieu"></td>
-							<th>Ngưỡng cảnh báo</th>
-							<td id="xem_nguong_canh_bao"></td>
-						</tr>
-						<tr>
-							<th>Người gửi</th>
-							<td id="xem_nguoi_gui"></td>
-							<th>Khoa</th>
-							<td id="xem_khoa"></td>
-						</tr>
-						<tr>
-							<th>Người duyệt</th>
-							<td id="xem_nguoi_duyet" colspan="3"></td>
-						</tr>
-						<tr>
-							<th>Định nghĩa</th>
-							<td id="xem_dinh_nghia" colspan="3" style="white-space: pre-wrap;"></td>
-						</tr>
-						<tr>
-							<th>Phương pháp thu thập</th>
-							<td id="xem_thu_thap" colspan="3" style="white-space: pre-wrap;"></td>
-						</tr>
-						<tr>
-							<th>Tên tử số</th>
-							<td id="xem_tu_so"></td>
-							<th>Tên mẫu số</th>
-							<td id="xem_mau_so"></td>
-						</tr>
-					</tbody>
-				</table>
+				<ul class="nav nav-tabs" id="myTab" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link active"
+						id="thongtin-tab"
+						data-toggle="tab"
+						href="#thongtin"
+						role="tab">
+							Thông tin
+						</a>
+					</li>
 
-				<div class="indicator-cycle-chart">
-					<h4>Trung bình theo chu kỳ</h4>
-					<div id="bieu_do_chu_ky_loading" class="text-muted">Đang tải dữ liệu...</div>
-					<div id="bieu_do_chu_ky_empty" class="alert alert-info" style="display: none;">Chưa có dữ liệu nhập liệu để hiển thị.</div>
-					<div class="indicator-cycle-chart__canvas">
-						<canvas id="bieu_do_chu_ky"></canvas>
+					<li class="nav-item">
+						<a class="nav-link"
+						id="bieudo-tab"
+						data-toggle="tab"
+						href="#bieudo"
+						role="tab">
+							Biểu đồ
+						</a>
+					</li>
+
+					<li class="nav-item">
+						<a class="nav-link"
+						id="thongke-tab"
+						data-toggle="tab"
+						href="#thongke"
+						role="tab">
+							Thống kê
+						</a>
+					</li>
+				</ul>
+
+				<div class="tab-content mt-3" id="myTabContent">
+					<div class="tab-pane fade show active" id="thongtin" role="tabpanel">
+						<!-- table thong tin -->
+						<table class="table table-boƯrdered table-striped" style="margin-bottom: 0;">
+							<tbody>
+								<tr>
+									<th style="width: 20%;">Mã chỉ số</th>
+									<td id="xem_ma_chi_so"></td>
+									<th style="width: 20%;">Trạng thái</th>
+									<td id="xem_trang_thai"></td>
+								</tr>
+								<tr>
+									<th>Tên chỉ số</th>
+									<td id="xem_ten_chi_so" colspan="3"></td>
+								</tr>
+								<tr>
+									<th>Khía cạnh</th>
+									<td id="xem_khia_canh"></td>
+									<th>Thành tố</th>
+									<td id="xem_thanh_to"></td>
+								</tr>
+								<tr>
+									<th>Phạm vi</th>
+									<td id="xem_pham_vi"></td>
+									<th>Chu kỳ</th>
+									<td id="xem_chu_ky"></td>
+								</tr>
+								<tr>
+									<th>Khoa/Phòng áp dụng</th>
+									<td id="xem_khoa_phong" colspan="3" style="white-space: pre-wrap;"></td>
+								</tr>
+								<tr>
+									<th>Mục tiêu</th>
+									<td id="xem_muc_tieu"></td>
+									<th>Ngưỡng cảnh báo</th>
+									<td id="xem_nguong_canh_bao"></td>
+								</tr>
+								<tr>
+									<th>Người gửi</th>
+									<td id="xem_nguoi_gui"></td>
+									<th>Khoa</th>
+									<td id="xem_khoa"></td>
+								</tr>
+								<tr>
+									<th>Người duyệt</th>
+									<td id="xem_nguoi_duyet" colspan="3"></td>
+								</tr>
+								<tr>
+									<th>Định nghĩa</th>
+									<td id="xem_dinh_nghia" colspan="3" style="white-space: pre-wrap;"></td>
+								</tr>
+								<tr>
+									<th>Phương pháp thu thập</th>
+									<td id="xem_thu_thap" colspan="3" style="white-space: pre-wrap;"></td>
+								</tr>
+								<tr>
+									<th>Tên tử số</th>
+									<td id="xem_tu_so"></td>
+									<th>Tên mẫu số</th>
+									<td id="xem_mau_so"></td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
+
+					<div class="tab-pane fade" id="bieudo" role="tabpanel">
+						<div class="indicator-cycle-chart">
+							<h4>Trung bình theo chu kỳ</h4>
+							<div id="bieu_do_chu_ky_loading" class="text-muted">Đang tải dữ liệu...</div>
+							<div id="bieu_do_chu_ky_empty" class="alert alert-info" style="display: none;">Chưa có dữ liệu nhập liệu để hiển thị.</div>
+							<div class="indicator-cycle-chart__canvas">
+								<canvas id="bieu_do_chu_ky"></canvas>
+							</div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+						</div>
+					</div>
+
+					<div class="tab-pane fade"
+						id="thongke"
+						role="tabpanel">
+						Nội dung Setting
+					</div>
+
 				</div>
 			</div>
 			<div class="modal-footer">
