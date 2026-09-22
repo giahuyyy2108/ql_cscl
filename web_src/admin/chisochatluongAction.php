@@ -64,7 +64,8 @@ class chisochatluongAction
 
 		$data['data'] = $this->ChiSoPeer->getList(
 			$coQuyenDuyet,
-			$idKhoaPhong
+			$idKhoaPhong,
+			$userId
 		);
 
 		return $this->request->json_response(
@@ -307,6 +308,31 @@ class chisochatluongAction
 			"success" => true,
 			"id" => $id,
 			"message" => $message
+		)));
+	}
+	public function taolai()
+	{
+		$maChiSoCu = (int) $this->request->getParameter('ma_chi_so');
+		$userId = isset($_SESSION['sUserID'])
+			? (int) $_SESSION['sUserID']
+			: 0;
+
+		$maChiSoMoi = $this->ChiSoPeer->taoLaiTuDonBiTuChoi(
+			$maChiSoCu,
+			$userId
+		);
+
+		if ($maChiSoMoi <= 0) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'message' => 'Không thể tạo lại chỉ số này'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'id' => $maChiSoMoi,
+			'message' => 'Đã tạo một bản nháp mới'
 		)));
 	}
 }

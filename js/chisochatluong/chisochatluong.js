@@ -194,10 +194,19 @@ table = $('#datatable-chiso').DataTable({
                         data-id="${row.ma_chi_so}"
                         title="Từ chối"
                         ${(data.trang_thai.maTrangThai==2)? 'hidden' : "" }
+                        ${(data.trang_thai.maTrangThai==0)? 'hidden' : "" }
                         ${(data.trang_thai.maTrangThai==3)? 'hidden' : "" }
                         data-toggle="tooltip"
                         aria-label="Từ chối">
                         <i class="fa fa-remove"></i>
+                    </button>
+                    <button type="button"
+                        class="btn btn-primary btn-sm btn-tao-lai"
+                        data-id="${row.ma_chi_so}"
+                        title="Tạo lại từ chỉ số bị từ chối"
+                        data-toggle="tooltip"
+                        ${Number(row.trang_thai.maTrangThai) !== 3 ? 'hidden' : ''}>
+                        <i class="fa fa-copy"></i>
                     </button>
                 `;
             }
@@ -1141,4 +1150,62 @@ capNhatKhoaPhongTheoPhamVi();
 //test
 $("#xem_ma_chi_so").on("click", function(e) {
     alert($("#xem_ma_chi_so").text()); 
+});
+
+
+$('#datatable-chiso').on('click', '.btn-tao-lai', function () {
+    var button = $(this);
+    var maChiSo = button.data('id');
+
+    Swal.fire({
+        title: 'Tạo lại chỉ số?',
+        text: 'Một bản nháp mới sẽ được tạo từ chỉ số bị từ chối.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Tạo lại',
+        cancelButtonText: 'Hủy'
+    }).then(function (result) {
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        button.prop('disabled', true);
+
+        $.ajax({
+            url: $('#ULocal').val() + 'chisochatluong/taolai/',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                ma_chi_so: maChiSo
+            },
+            success: function (response) {
+                if (!response || !response.success) {
+                    Swal.fire(
+                        'Không thành công',
+                        response.message || 'Không thể tạo lại chỉ số.',
+                        'error'
+                    );
+                    return;
+                }
+
+                table.ajax.reload(null, false);
+
+                Swal.fire(
+                    'Thành công',
+                    'Đã tạo bản nháp mới. Bạn có thể chỉnh sửa và gửi lại.',
+                    'success'
+                );
+            },
+            error: function () {
+                Swal.fire(
+                    'Lỗi',
+                    'Không thể kết nối đến máy chủ.',
+                    'error'
+                );
+            },
+            complete: function () {
+                button.prop('disabled', false);
+            }
+        });
+    });
 });

@@ -78,9 +78,10 @@ class ChiSoChatLuongPeer
 	}
 
 
-    public function getList($coQuyenDuyet = false,$idKhoaPhong = 0) 
+    public function getList($coQuyenDuyet = false, $idKhoaPhong = 0, $userId = 0) 
     {
         $idKhoaPhong = (int) $idKhoaPhong;
+        $userId = (int) $userId;
 
         $sqlSelect = "
             SELECT cs.*, tt.tenTrangThai, tt.tag
@@ -89,27 +90,30 @@ class ChiSoChatLuongPeer
                 ON tt.maTrangThai = cs.trang_thai
         ";
 
-        /*
-        * Người không có quyền duyệt chỉ được xem những chỉ tiêu
-        * áp dụng cho Khoa/Phòng của mình.
-        */
-        if (!$coQuyenDuyet) {
-            if ($idKhoaPhong <= 0) {
-                // User chưa được gán Khoa/Phòng: không trả dữ liệu.
-                $sqlSelect .= " WHERE 1 = 0";
-            } else {
-                $sqlSelect .= "
-                    WHERE CASE
-                        WHEN JSON_VALID(cs.phong) = 1
-                        THEN JSON_CONTAINS(
-                            cs.phong,
-                            '" . $idKhoaPhong . "',
-                            '$'
-                        )
-                        ELSE cs.id_khoaphong = " . $idKhoaPhong . "
-                    END = 1
-                ";
-            }
+        if ($coQuyenDuyet) {
+            /*
+            * Người duyệt:
+            * - Thấy tất cả chỉ số do mình tạo, kể cả bản nháp.
+            * - Chỉ thấy chỉ số của người khác sau khi đã gửi.
+            */
+            $sqlSelect .= "
+                WHERE cs.nguoi_gui = $userId
+                OR cs.trang_thai IN (1, 2, 3)
+            ";
+        } elseif ($idKhoaPhong <= 0) {
+            $sqlSelect .= " WHERE 1 = 0";
+        } else {
+            $sqlSelect .= "
+                WHERE CASE
+                    WHEN JSON_VALID(cs.phong) = 1
+                    THEN JSON_CONTAINS(
+                        cs.phong,
+                        '" . $idKhoaPhong . "',
+                        '$'
+                    )
+                    ELSE cs.id_khoaphong = $idKhoaPhong
+                END = 1
+            ";
         }
 
         $sqlSelect .= " ORDER BY cs.ma_chi_so DESC";
@@ -413,6 +417,78 @@ class ChiSoChatLuongPeer
 
         $this->dbsql->query($sql);
         return $_chisochatluong->get("ma_chi_so");
+    }
+    public function taoLaiTuDonBiTuChoi($maChiSoCu, $userId)
+    {
+        $maChiSoCu = (int) $maChiSoCu;
+        $userId = (int) $userId;
+
+        if ($maChiSoCu <= 0 || $userId <= 0) {
+            return 0;
+        }
+
+        $sql = "
+            INSERT INTO chi_so_chat_luong (
+                ten_chi_so,
+                ma_khia_canh,
+                ma_thanh_to,
+                nhom_chi_so,
+                pham_vi,
+                muc_tieu,
+                nguong_canh_bao,
+                id_donvitinh,
+                id_chuky,
+                id_khoaphong,
+                phong,
+                loai_cong_thuc,
+                cong_thuc,
+                trang_thai,
+                nguoi_gui,
+                thoi_gian_gui,
+                nguoi_duyet,
+                thoi_gian_duyet,
+                ly_do_tu_choi,
+                dinh_nghia,
+                thu_thap,
+                ten_tu_so,
+                ten_mau_so,
+                bieumau
+            )
+            SELECT
+                ten_chi_so,
+                ma_khia_canh,
+                ma_thanh_to,
+                nhom_chi_so,
+                pham_vi,
+                muc_tieu,
+                nguong_canh_bao,
+                id_donvitinh,
+                id_chuky,
+                id_khoaphong,
+                phong,
+                loai_cong_thuc,
+                cong_thuc,
+                0,
+                $userId,
+                NULL,
+                NULL,
+                NULL,
+                '',
+                dinh_nghia,
+                thu_thap,
+                ten_tu_so,
+                ten_mau_so,
+                bieumau
+            FROM chi_so_chat_luong
+            WHERE ma_chi_so = $maChiSoCu
+            AND nguoi_gui = $userId
+            AND trang_thai = 3
+            LIMIT 1
+        ";
+
+        $this->dbsql->query($sql);
+
+        return $this->dbsql->insert_id();
     }
 }
 ?>

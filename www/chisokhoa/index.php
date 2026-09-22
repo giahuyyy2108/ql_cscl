@@ -77,7 +77,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 					<th>Người duyệt</th>
 					<th>Tình trạng</th>
 					<th>Thao tác</th>
-				</tr>
+				</tr>n 
 			</thead>
 			<tbody></tbody>
 		</table>
@@ -207,7 +207,26 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 					<div class="tab-pane fade"
 						id="thongke"
 						role="tabpanel">
-						Nội dung Setting
+						<div class="table-responsive">
+							<table id="datatable-ct-chiso"
+								class="table table-striped table-bordered"
+								width="100%">
+								<thead>
+									<tr>
+										<th>Khoa/Phòng</th>
+										<th>Năm</th>
+										<th>Kỳ</th>
+										<th>Tổng điểm</th>
+										<th>Điểm tối đa</th>
+										<th>Tỷ lệ</th>
+										<th>Người nhập</th>
+										<th>Cập nhật lúc</th>
+										<th>Thao tác</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
 					</div>
 
 				</div>
