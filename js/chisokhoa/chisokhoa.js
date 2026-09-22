@@ -303,6 +303,9 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
     $('#xem_thanh_to').text(hienThi(getOptionText('ma_thanh_to', row.ma_thanh_to)));
     $('#xem_pham_vi').text(hienThi(getOptionText('pham_vi', row.pham_vi)));
     $('#xem_chu_ky').text(hienThi(getOptionText('id_chuky', row.id_chuky)));
+    var tenChuKy = getOptionText('id_chuky', row.id_chuky);
+
+    $('#tieu_de_bieu_do_chu_ky').text(tenChuKy);
     $('#xem_muc_tieu').text(hienThi(row.muc_tieu +" " + row.donvitinh.ten));
     $('#xem_nguong_canh_bao').text(hienThi(row.nguong_canh_bao +" " + row.donvitinh.ten));
     $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
