@@ -29,6 +29,7 @@ class NhapLieuAction
         $PVpeer = new PhamViPeer();
         $ChuKyPeer = new ChuKyPeer();
 
+        $this->request->setAttribute('css', '<link href="' . _DEFAULT_URL_ . 'css/style.css?' . _DEFAULT_VERSION_JS_CSS_ . '" rel="stylesheet">');
         $this->request->setAttribute('script', '<script src="' . _DEFAULT_URL_ . 'js/nhaplieu/nhaplieu.js?' . _DEFAULT_VERSION_JS_CSS_ . '"></script>');
         $this->request->setAttribute("listKCCT", $KCTTpeer->Get_danhmucKCTT());
         $this->request->setAttribute("listPV", $PVpeer->getPhamVi());
@@ -131,14 +132,12 @@ class NhapLieuAction
         $item->set('id_khoaphong', $idKhoaPhong);
         $item->set('nam', $nam);
         $item->set('ky', $ky);
-        $item->set('du_lieu', array(
-            (string) $ky => $duLieuKy
-        ));
+        $item->set('du_lieu', $duLieuKy);
         $this->CtChiSoPeer->save($item);
 
         return $this->request->json_response(json_encode(array(
             'success' => true,
-            'message' => 'Lưu nhập liệu thành công'
+            'message' => 'Lưu phiếu mới thành công'
         )));
     }
 

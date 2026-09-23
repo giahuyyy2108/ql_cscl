@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `ct_chiso` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_ct_chiso_khoa` (`ma_chi_so`, `id_khoaphong`),
+    KEY `idx_ct_chiso_luot_nhap` (`ma_chi_so`, `id_khoaphong`, `nam`, `ky`),
     KEY `idx_ct_chiso_khoa` (`id_khoaphong`),
     KEY `idx_ct_chiso_nam` (`ma_chi_so`, `nam`),
     CONSTRAINT `fk_ct_chiso_ma_chi_so`

@@ -12,23 +12,13 @@ function hienThi(value) {
     return value === null || value === undefined || value === '' ? '-' : value;
 }
 
-function hienThiTomTatCauTraLoi(container, duLieu) {
-    var tyLe = duLieu.ty_le_phan_tram;
+function hienThiTrungBinhPhieu(container, thongKe) {
+    var trungBinh = Math.round((thongKe.tong / thongKe.so_phieu) * 100) / 100;
+    var ketQua = $('<div>', { 'class': 'survey-cycle-average' });
 
-    // Tương thích dữ liệu cũ dạng tử số/mẫu số.
-    if (tyLe === undefined && duLieu.value !== undefined) {
-        tyLe = duLieu.value;
-    }
-
-    if (tyLe === undefined || tyLe === null || tyLe === '') {
-        $('<span>', { 'class': 'text-muted', text: '-' }).appendTo(container);
-        return;
-    }
-
-    $('<strong>', {
-        'class': 'text-success',
-        text: tyLe + '%'
-    }).appendTo(container);
+    $('<strong>', { text: trungBinh + '%' }).appendTo(ketQua);
+    $('<small>', { text: 'Trung bình ' + thongKe.so_phieu + ' phiếu' }).appendTo(ketQua);
+    ketQua.appendTo(container);
 }
 
 function giaTriCauTraLoiDaNhap(duLieu) {
@@ -70,9 +60,15 @@ function hienThiBieuMauNhap(duLieu) {
             'data-question-id': id,
             'data-question-type': loai
         });
-        var nhan = $('<label>', { 'class': 'survey-entry-question__label' })
-            .text((index + 1) + '. ' + (item.noi_dung || 'Câu hỏi'));
-        if (item.bat_buoc) nhan.append($('<span>', { 'class': 'text-danger', text: ' *' }));
+        var noiDungCauHoi = $('<span>', {
+            'class': 'survey-entry-question__text',
+            text: item.noi_dung || 'Câu hỏi'
+        });
+        var nhan = $('<label>', { 'class': 'survey-entry-question__label' }).append(
+            $('<span>', { 'class': 'survey-entry-question__number', text: index + 1 }),
+            noiDungCauHoi
+        );
+        if (item.bat_buoc) noiDungCauHoi.append($('<span>', { 'class': 'text-danger', text: ' *' }));
         khoi.append(nhan);
 
         if (loai === 'long_text') {
@@ -313,16 +309,30 @@ function taiDuLieuChuKyXem(maChiSo) {
             var kyHienTai = parseInt(response.ky, 10) || 0;
             var thangBatDau = parseInt(response.thang_bat_dau, 10) || 1;
             var namBatDau = parseInt(response.nam_bat_dau, 10) || parseInt(response.nam, 10);
-            var duLieuTheoKy = {};
+            var thongKeTheoKy = {};
             bieuMauNhap = response.bieumau && Array.isArray(response.bieumau.cau_hoi)
                 ? response.bieumau
                 : { version: 1, cau_hoi: [] };
 
             (response.da_nhap || []).forEach(function (item) {
                 var ky = String(item.ky);
-                duLieuTheoKy[ky] = item.du_lieu && item.du_lieu[ky]
+                var duLieu = item.du_lieu && item.du_lieu[ky]
                     ? item.du_lieu[ky]
                     : item.du_lieu;
+                var tyLe = duLieu ? duLieu.ty_le_phan_tram : null;
+
+                // Tương thích dữ liệu cũ dạng tử số/mẫu số.
+                if ((tyLe === undefined || tyLe === null || tyLe === '') && duLieu && duLieu.value !== undefined) {
+                    tyLe = duLieu.value;
+                }
+                tyLe = parseFloat(tyLe);
+                if (!isFinite(tyLe)) return;
+
+                if (!thongKeTheoKy[ky]) {
+                    thongKeTheoKy[ky] = { tong: 0, so_phieu: 0 };
+                }
+                thongKeTheoKy[ky].tong += tyLe;
+                thongKeTheoKy[ky].so_phieu++;
             });
 
             for (var i = 1; i <= soChuKy; i++) {
@@ -332,9 +342,9 @@ function taiDuLieuChuKyXem(maChiSo) {
                     .appendTo(tieuDe);
 
                 var cell = $('<td>').css('vertical-align', 'middle');
-                var duLieu = duLieuTheoKy[String(i)];
-                if (duLieu) {
-                    hienThiTomTatCauTraLoi(cell, duLieu);
+                var thongKe = thongKeTheoKy[String(i)];
+                if (thongKe && thongKe.so_phieu > 0) {
+                    hienThiTrungBinhPhieu(cell, thongKe);
                 } else if (i > kyHienTai) {
                     $('<span>').addClass('label label-default').text('Chưa đến kỳ').appendTo(cell);
                 } else {
@@ -451,15 +461,14 @@ function hienThiDuLieuKy() {
     var duLieu = duLieuDaNhap[ky];
     var trangThai = $('#trang_thai_ky');
 
-    if (duLieu) {
-        trangThai.removeClass('alert-info').addClass('alert-warning')
-            .text('Chu kỳ này đã được nhập. Lưu lại sẽ cập nhật dữ liệu cũ.').show();
-    } else {
-        trangThai.removeClass('alert-warning').addClass('alert-info')
-            .text('Chu kỳ này chưa được nhập liệu.').show();
-    }
+    // if (duLieu) {
+    //     trangThai.removeClass('alert-info').addClass('alert-warning')
+    //         .text('Chu kỳ này đã có dữ liệu. Mỗi lần lưu sẽ tạo một phiếu mới.').show();
+    // } else {
+    //     trangThai.removeClass('alert-warning alert-info').text('').hide();
+    // }
 
-    hienThiBieuMauNhap(duLieu);
+    hienThiBieuMauNhap();
 }
 
 $('#nhap_ky').on('change', hienThiDuLieuKy);

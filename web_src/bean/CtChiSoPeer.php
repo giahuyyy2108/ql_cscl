@@ -43,22 +43,21 @@ class CtChiSoPeer
         $sql = "SELECT * FROM ct_chiso
                 WHERE ma_chi_so = " . (int) $maChiSo . "
                   AND id_khoaphong = " . (int) $idKhoaPhong . "
-                LIMIT 1";
+                  AND nam = " . (int) $nam . "
+                ORDER BY ky ASC, created_at ASC, id ASC";
         $result = $this->dbsql->query($sql);
         $items = array();
-        if ($this->dbsql->num_rows($result) === 0) return $items;
 
-        $row = $this->dbsql->fetch_array($result);
-        $duLieu = json_decode($row['du_lieu'], true);
-        $duLieuNam = isset($duLieu[(string) $nam]) && is_array($duLieu[(string) $nam])
-            ? $duLieu[(string) $nam]
-            : array();
-        foreach ($duLieuNam as $ky => $giaTri) {
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $duLieu = json_decode($row['du_lieu'], true);
+            if (!is_array($duLieu)) $duLieu = array();
+
             $items[] = array(
                 'id' => $row['id'],
-                'nam' => (int) $nam,
-                'ky' => (int) $ky,
-                'du_lieu' => array((string) $ky => $giaTri)
+                'nam' => (int) $row['nam'],
+                'ky' => (int) $row['ky'],
+                'du_lieu' => $duLieu,
+                'created_at' => $row['created_at']
             );
         }
         return $items;
@@ -66,39 +65,34 @@ class CtChiSoPeer
 
     public function daNhapKy($maChiSo, $idKhoaPhong, $nam, $ky)
     {
-        $sql = "SELECT du_lieu FROM ct_chiso
+        $sql = "SELECT 1 FROM ct_chiso
                 WHERE ma_chi_so = " . (int) $maChiSo . "
                   AND id_khoaphong = " . (int) $idKhoaPhong . "
+                  AND nam = " . (int) $nam . "
+                  AND ky = " . (int) $ky . "
                 LIMIT 1";
         $result = $this->dbsql->query($sql);
-        if ($this->dbsql->num_rows($result) === 0) return false;
-        $row = $this->dbsql->fetch_array($result);
-        $duLieu = json_decode($row['du_lieu'], true);
-        return isset($duLieu[(string) $nam][(string) $ky]);
+        return $this->dbsql->num_rows($result) > 0;
     }
 
     public function getTrungBinhTheoKy($maChiSo)
     {
         $maChiSo = (int) $maChiSo;
-        $result = $this->dbsql->query("SELECT du_lieu FROM ct_chiso WHERE ma_chi_so = $maChiSo");
+        $result = $this->dbsql->query("SELECT nam, ky, du_lieu FROM ct_chiso WHERE ma_chi_so = $maChiSo");
         $tongTheoKy = array();
 
         while ($row = $this->dbsql->fetch_array($result)) {
-            $duLieu = json_decode($row['du_lieu'], true);
-            if (!is_array($duLieu)) continue;
+            $giaTri = json_decode($row['du_lieu'], true);
+            if (!is_array($giaTri) || !isset($giaTri['ty_le_phan_tram']) || !is_numeric($giaTri['ty_le_phan_tram'])) continue;
 
-            foreach ($duLieu as $nam => $cacKy) {
-                if (!is_array($cacKy)) continue;
-                foreach ($cacKy as $ky => $giaTri) {
-                    if (!is_array($giaTri) || !isset($giaTri['ty_le_phan_tram']) || !is_numeric($giaTri['ty_le_phan_tram'])) continue;
-                    $khoa = (int) $nam . '-' . (int) $ky;
-                    if (!isset($tongTheoKy[$khoa])) {
-                        $tongTheoKy[$khoa] = array('nam' => (int) $nam, 'ky' => (int) $ky, 'tong' => 0, 'so_phieu' => 0);
-                    }
-                    $tongTheoKy[$khoa]['tong'] += (float) $giaTri['ty_le_phan_tram'];
-                    $tongTheoKy[$khoa]['so_phieu']++;
-                }
+            $nam = (int) $row['nam'];
+            $ky = (int) $row['ky'];
+            $khoa = $nam . '-' . $ky;
+            if (!isset($tongTheoKy[$khoa])) {
+                $tongTheoKy[$khoa] = array('nam' => $nam, 'ky' => $ky, 'tong' => 0, 'so_phieu' => 0);
             }
+            $tongTheoKy[$khoa]['tong'] += (float) $giaTri['ty_le_phan_tram'];
+            $tongTheoKy[$khoa]['so_phieu']++;
         }
 
         $ketQua = array_values($tongTheoKy);
@@ -118,21 +112,8 @@ class CtChiSoPeer
         $maChiSo = (int) $item->get('ma_chi_so');
         $idUser = (int) $item->get('id_user');
         $idKhoaPhong = (int) $item->get('id_khoaphong');
-        $nam = (string) (int) $item->get('nam');
-        $ky = (string) (int) $item->get('ky');
-        $duLieuMoi = $item->get('du_lieu');
-        $duLieuKy = isset($duLieuMoi[$ky]) ? $duLieuMoi[$ky] : array();
-        $duLieu = array();
-
-        $result = $this->dbsql->query("SELECT du_lieu FROM ct_chiso
-            WHERE ma_chi_so = $maChiSo AND id_khoaphong = $idKhoaPhong LIMIT 1");
-        if ($this->dbsql->num_rows($result) > 0) {
-            $row = $this->dbsql->fetch_array($result);
-            $duLieu = json_decode($row['du_lieu'], true);
-            if (!is_array($duLieu)) $duLieu = array();
-        }
-        if (!isset($duLieu[$nam]) || !is_array($duLieu[$nam])) $duLieu[$nam] = array();
-        $duLieu[$nam][$ky] = $duLieuKy;
+        $duLieu = $item->get('du_lieu');
+        if (!is_array($duLieu)) $duLieu = array();
         $duLieuJson = addslashes(json_encode($duLieu, JSON_UNESCAPED_UNICODE));
 
         $sql = "INSERT INTO ct_chiso
@@ -144,14 +125,7 @@ class CtChiSoPeer
                     " . (int) $item->get('nam') . ",
                     " . (int) $item->get('ky') . ",
                     '$duLieuJson'
-                )
-                ON DUPLICATE KEY UPDATE
-                    id_user = VALUES(id_user),
-                    id_khoaphong = VALUES(id_khoaphong),
-                    nam = VALUES(nam),
-                    ky = VALUES(ky),
-                    du_lieu = VALUES(du_lieu),
-                    updated_at = NOW()";
+                )";
         $this->dbsql->query($sql);
         return true;
     }

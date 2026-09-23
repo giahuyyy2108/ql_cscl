@@ -1113,4 +1113,413 @@ div#datatable-user_length {
 	}
 }
 
+/* Phieu nhap lieu: trinh bay nhu mot bieu mau giay */
+#modalNhapLieu {
+	padding-right: 0 !important;
+}
 
+#modalNhapLieu .survey-entry-dialog {
+	width: calc(100% - 32px);
+	max-width: 920px;
+	margin: 20px auto;
+}
+
+#modalNhapLieu .survey-entry-modal {
+	border: 0;
+	border-radius: 2px;
+	background: #fff;
+	box-shadow: 0 18px 60px rgba(23, 50, 77, .28);
+	font-family: "Times New Roman", Times, serif;
+}
+
+#modalNhapLieu .survey-entry-modal button,
+#modalNhapLieu .survey-entry-modal input,
+#modalNhapLieu .survey-entry-modal select,
+#modalNhapLieu .survey-entry-modal textarea {
+	font-family: "Times New Roman", Times, serif;
+}
+
+#modalNhapLieu form {
+	max-height: calc(100vh - 40px);
+	max-height: calc(100dvh - 40px);
+}
+
+#modalNhapLieu .survey-entry-modal__header {
+	position: relative;
+	display: block;
+	padding: 26px 64px 22px;
+	border: 0;
+	border-top: 7px solid #087f8c;
+	border-bottom: 3px double #9fb8bd;
+	color: #17324d;
+	background: #fff;
+	text-align: center;
+}
+
+#modalNhapLieu .survey-form-heading__eyebrow {
+	display: inline-block;
+	margin-bottom: 7px;
+	color: #087f8c;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 2px;
+}
+
+#modalNhapLieu .survey-entry-modal__header .modal-title {
+	margin: 0;
+	color: #17324d;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 25px;
+	font-weight: 700;
+	letter-spacing: .2px;
+	text-transform: uppercase;
+}
+
+#modalNhapLieu .survey-entry-modal__header p {
+	margin: 8px 0 0;
+	color: #607080;
+	font-size: 13px;
+}
+
+#modalNhapLieu .survey-entry-modal__header .survey-entry-dismiss {
+	position: absolute;
+	top: 13px;
+	right: 18px;
+	display: block;
+	width: 34px;
+	height: 34px;
+	margin: 0;
+	border: 1px solid #cfdbde;
+	border-radius: 50%;
+	color: #526575;
+	background: #fff;
+	font-size: 25px;
+	font-weight: 400;
+	line-height: 29px;
+	opacity: 1;
+}
+
+#modalNhapLieu .survey-entry-modal__header .survey-entry-dismiss:hover {
+	border-color: #087f8c;
+	color: #087f8c;
+}
+
+#modalNhapLieu .modal-body {
+	padding: 28px 46px 34px;
+	background-color: #fff;
+	background-image: linear-gradient(rgba(8, 127, 140, .025) 1px, transparent 1px);
+	background-size: 100% 32px;
+}
+
+#modalNhapLieu .survey-form-section-title,
+#modalNhapLieu .survey-entry-summary h5,
+#modalNhapLieu .survey-entry__title h4 {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	margin: 0 0 12px;
+	color: #075e70;
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: .35px;
+	text-transform: uppercase;
+}
+
+#modalNhapLieu .survey-form-section-title > span,
+#modalNhapLieu .survey-entry-summary h5 > span,
+#modalNhapLieu .survey-entry__title h4 > span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 27px;
+	height: 27px;
+	border-radius: 50%;
+	color: #fff;
+	background: #087f8c;
+	font-size: 11px;
+	letter-spacing: 0;
+}
+
+#modalNhapLieu .survey-cycle-panel {
+	margin: 0 0 24px;
+	padding: 16px 18px;
+	border: 1px solid #c8dadd;
+	border-left: 4px solid #087f8c;
+	border-radius: 0;
+	background: rgba(239, 249, 250, .88);
+}
+
+#modalNhapLieu .survey-cycle-panel label {
+	color: #29465b;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+#modalNhapLieu .survey-cycle-current {
+	margin: 25px 0 8px;
+	color: #29465b;
+	font-weight: 600;
+}
+
+#modalNhapLieu .survey-cycle-overview {
+	border-top: 1px dashed #b9cfd3;
+}
+
+#modalNhapLieu .survey-cycle-status {
+	border-radius: 0;
+}
+
+#modalNhapLieu .survey-entry-summary {
+	margin-bottom: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+#modalNhapLieu .survey-entry-summary__table-wrap {
+	border: 1px solid #9fb8bd;
+	background: #fff;
+}
+
+#modalNhapLieu .survey-entry-summary__table {
+	margin: 0;
+	border: 0;
+}
+
+#modalNhapLieu .survey-entry-summary__table th {
+	padding: 8px 10px;
+	border-color: #c8dadd;
+	color: #45616f;
+	background: #eef6f7;
+	font-size: 11px;
+	letter-spacing: .25px;
+	text-transform: uppercase;
+}
+
+#modalNhapLieu .survey-entry-summary__table td {
+	min-height: 43px;
+	padding: 11px 10px;
+	border-color: #c8dadd;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 14px;
+}
+
+#modalNhapLieu .survey-entry {
+	margin-top: 0;
+	padding: 0;
+	border: 0;
+}
+
+#modalNhapLieu .survey-entry__title {
+	margin-bottom: 2px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #087f8c;
+}
+
+#modalNhapLieu .survey-entry__title small {
+	color: #687784;
+	font-size: 12px;
+	font-weight: 400;
+}
+
+#modalNhapLieu .survey-entry-question {
+	position: relative;
+	margin: 0;
+	padding: 19px 10px 21px;
+	border: 0;
+	border-bottom: 1px dashed #b9c7cc;
+	border-radius: 0;
+	background: rgba(255, 255, 255, .9);
+	box-shadow: none;
+}
+
+#modalNhapLieu .survey-entry-question:last-child {
+	border-bottom: 1px solid #9fb8bd;
+}
+
+#modalNhapLieu .survey-entry-question__label {
+	display: flex;
+	align-items: flex-start;
+	gap: 11px;
+	margin: 0 0 12px;
+	color: #17324d;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.55;
+}
+
+#modalNhapLieu .survey-entry-question__number {
+	display: inline-flex;
+	flex: 0 0 27px;
+	align-items: center;
+	justify-content: center;
+	width: 27px;
+	height: 27px;
+	border: 1px solid #087f8c;
+	border-radius: 50%;
+	color: #087f8c;
+	background: #fff;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 12px;
+	line-height: 1;
+}
+
+#modalNhapLieu .survey-entry-question__text {
+	flex: 1;
+	padding-top: 2px;
+}
+
+#modalNhapLieu .survey-entry-question .form-control {
+	min-height: 42px;
+	border: 0;
+	border-bottom: 1px solid #8fa6ad;
+	border-radius: 0;
+	background: rgba(247, 250, 250, .92);
+	box-shadow: none;
+}
+
+#modalNhapLieu .survey-entry-question textarea.form-control {
+	border: 1px solid #b9c9ce;
+	background-image: repeating-linear-gradient(to bottom, transparent, transparent 31px, #d9e2e5 32px);
+	line-height: 32px;
+}
+
+#modalNhapLieu .survey-entry-question .form-control:focus {
+	border-color: #087f8c;
+	box-shadow: 0 2px 0 rgba(8, 127, 140, .18);
+}
+
+#modalNhapLieu .survey-entry-question .radio,
+#modalNhapLieu .survey-entry-question .checkbox {
+	display: inline-block;
+	margin: 3px 18px 3px 0;
+}
+
+#modalNhapLieu .survey-entry-question .radio label,
+#modalNhapLieu .survey-entry-question .checkbox label {
+	padding: 7px 11px 7px 29px;
+	border: 1px solid #d2dee1;
+	border-radius: 2px;
+	background: #fff;
+	font-weight: 400;
+}
+
+#modalNhapLieu #nhap_ket_qua_diem {
+	margin: 20px 0 0;
+	border-radius: 0;
+	font-weight: 700;
+	text-align: right;
+}
+
+#modalNhapLieu .survey-form-signature {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 50px;
+	margin-top: 34px;
+	padding: 20px 28px 46px;
+	border-top: 1px solid #9fb8bd;
+	text-align: center;
+}
+
+#modalNhapLieu .survey-form-signature strong,
+#modalNhapLieu .survey-form-signature span {
+	display: block;
+}
+
+#modalNhapLieu .survey-form-signature strong {
+	color: #29465b;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 14px;
+}
+
+#modalNhapLieu .survey-form-signature span {
+	margin-top: 4px;
+	color: #74858e;
+	font-size: 11px;
+	font-style: italic;
+}
+
+#modalNhapLieu .survey-entry-modal__footer {
+	padding: 14px 46px;
+	border-top: 1px solid #d4e0e3;
+	background: #f4f8f8;
+	text-align: right;
+}
+
+#modalNhapLieu .survey-entry-modal__footer .btn {
+	min-width: 118px;
+	border-radius: 2px;
+}
+
+#modalNhapLieu .survey-entry-modal__footer .btn-primary {
+	border-color: #075e70;
+	background: #087f8c;
+}
+
+#modalXemChiTieu .survey-cycle-average {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	text-align: center;
+}
+
+#modalXemChiTieu .survey-cycle-average strong {
+	color: #087f8c;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 18px;
+}
+
+#modalXemChiTieu .survey-cycle-average small {
+	color: #687784;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 12px;
+}
+
+@media (max-width: 767px) {
+	#modalNhapLieu .survey-entry-dialog {
+		width: calc(100% - 12px);
+		margin: 6px auto;
+	}
+
+	#modalNhapLieu form {
+		max-height: calc(100vh - 12px);
+		max-height: calc(100dvh - 12px);
+	}
+
+	#modalNhapLieu .survey-entry-modal__header {
+		padding: 22px 45px 18px 16px;
+	}
+
+	#modalNhapLieu .survey-entry-modal__header .modal-title {
+		font-size: 19px;
+	}
+
+	#modalNhapLieu .modal-body {
+		padding: 20px 16px 26px;
+	}
+
+	#modalNhapLieu .survey-entry-question {
+		padding: 16px 4px 18px;
+	}
+
+	#modalNhapLieu .survey-entry-question .radio,
+	#modalNhapLieu .survey-entry-question .checkbox {
+		display: block;
+		margin-right: 0;
+	}
+
+	#modalNhapLieu .survey-form-signature {
+		grid-template-columns: 1fr;
+		gap: 24px;
+		padding-right: 0;
+		padding-left: 0;
+	}
+
+	#modalNhapLieu .survey-entry-modal__footer {
+		padding: 12px 16px;
+	}
+}
