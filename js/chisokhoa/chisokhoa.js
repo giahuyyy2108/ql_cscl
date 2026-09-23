@@ -2,6 +2,7 @@
 var table;
 var allKhoaOptions = [];
 var bieuDoChuKy = null;
+var yeuCauBieuDoChuKy = null;
 
 function taiBieuDoChuKy(maChiSo, soChuKy) {
     var loading = $('#bieu_do_chu_ky_loading').show();
@@ -19,7 +20,11 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
         dataType: 'json',
         data: { ma_chi_so: maChiSo },
         success: function (response) {
-            var data = response && response.success && Array.isArray(response.data) ? response.data : [];
+            var data = response && response.success && Array.isArray(response.data)
+                ? response.data.filter(function (item) {
+                    return isFinite(parseFloat(item.trung_binh)) && parseInt(item.so_phieu, 10) > 0;
+                })
+                : [];
             loading.hide();
             if (!data.length) {
                 canvas.hide();
@@ -35,13 +40,17 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
                 if (soChuKy === 1) tenKy = 'Năm';
                 return tenKy + '/' + item.nam;
             });
+            var tongSoPhieu = data.reduce(function (tong, item) {
+                return tong + (parseInt(item.so_phieu, 10) || 0);
+            }, 0);
+
             bieuDoChuKy = new Chart(canvas[0].getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Trung bình (%)',
-                        data: data.map(function (item) { return item.trung_binh; }),
+                        label: 'Trung bình toàn bộ phiếu (' + tongSoPhieu + ' phiếu)',
+                        data: data.map(function (item) { return parseFloat(item.trung_binh); }),
                         borderColor: '#337ab7',
                         backgroundColor: 'rgba(51, 122, 183, 0.12)',
                         pointBackgroundColor: '#337ab7',
@@ -56,6 +65,9 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
                     maintainAspectRatio: false,
                     tooltips: {
                         callbacks: {
+                            label: function (tooltipItem) {
+                                return 'Trung bình: ' + tooltipItem.yLabel + '%';
+                            },
                             afterLabel: function (tooltipItem) {
                                 return 'Số phiếu: ' + data[tooltipItem.index].so_phieu;
                             }
@@ -77,6 +89,15 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
         }
     });
 }
+
+$('#bieudo-tab').on('shown.bs.tab', function () {
+    if (yeuCauBieuDoChuKy) {
+        taiBieuDoChuKy(yeuCauBieuDoChuKy.maChiSo, yeuCauBieuDoChuKy.soChuKy);
+        yeuCauBieuDoChuKy = null;
+    } else if (bieuDoChuKy) {
+        bieuDoChuKy.resize();
+    }
+});
 
 function getOptionText(selectId, value) {
     var text = $('#' + selectId + ' option').filter(function () {
@@ -305,7 +326,7 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
     $('#xem_chu_ky').text(hienThi(getOptionText('id_chuky', row.id_chuky)));
     var tenChuKy = getOptionText('id_chuky', row.id_chuky);
 
-    $('#tieu_de_bieu_do_chu_ky').text(tenChuKy);
+    $('#tieu_de_bieu_do_chu_ky').text('Trung bình toàn bộ phiếu theo ' + tenChuKy.toLowerCase());
     $('#xem_muc_tieu').text(hienThi(row.muc_tieu +" " + row.donvitinh.ten));
     $('#xem_nguong_canh_bao').text(hienThi(row.nguong_canh_bao +" " + row.donvitinh.ten));
     $('#xem_nguoi_gui').text(hienThi(row.nguoi_gui && row.nguoi_gui.hoTen));
@@ -321,9 +342,18 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
     $('#xem_mau_so').text(hienThi(row.ten_mau_so));
 
     var soChuKy = parseInt($('#id_chuky option[value="' + row.id_chuky + '"]').data('so-ky'), 10) || 0;
-    $('#modalChiTieu')
-        .one('shown.bs.modal', function () {
-            taiBieuDoChuKy(row.ma_chi_so, soChuKy);
-        })
-        .modal('show');
+    yeuCauBieuDoChuKy = {
+        maChiSo: row.ma_chi_so,
+        soChuKy: soChuKy
+    };
+
+    if (bieuDoChuKy) {
+        bieuDoChuKy.destroy();
+        bieuDoChuKy = null;
+    }
+    $('#bieu_do_chu_ky_loading').show();
+    $('#bieu_do_chu_ky_empty').hide();
+    $('#bieu_do_chu_ky').hide();
+    $('#thongtin-tab').tab('show');
+    $('#modalChiTieu').modal('show');
 });

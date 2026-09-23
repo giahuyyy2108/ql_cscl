@@ -78,7 +78,11 @@ class CtChiSoPeer
     public function getTrungBinhTheoKy($maChiSo)
     {
         $maChiSo = (int) $maChiSo;
-        $result = $this->dbsql->query("SELECT nam, ky, du_lieu FROM ct_chiso WHERE ma_chi_so = $maChiSo");
+        // Không lọc Khoa/Phòng: biểu đồ của chỉ số sử dụng toàn bộ phiếu đã lưu.
+        $result = $this->dbsql->query("SELECT nam, ky, du_lieu
+            FROM ct_chiso
+            WHERE ma_chi_so = $maChiSo
+            ORDER BY nam ASC, ky ASC, id ASC");
         $tongTheoKy = array();
 
         while ($row = $this->dbsql->fetch_array($result)) {

@@ -195,7 +195,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 
 					<div class="tab-pane fade" id="bieudo" role="tabpanel">
 						<div class="indicator-cycle-chart">
-							<h4 id="tieu_de_bieu_do_chu_ky">Trung bình theo chu kỳ</h4>
+							<h4 id="tieu_de_bieu_do_chu_ky">Trung bình toàn bộ phiếu theo chu kỳ</h4>
 							<div id="bieu_do_chu_ky_loading" class="text-muted">Đang tải dữ liệu...</div>
 							<div id="bieu_do_chu_ky_empty" class="alert alert-info" style="display: none;">Chưa có dữ liệu nhập liệu để hiển thị.</div>
 							<div class="indicator-cycle-chart__canvas">
