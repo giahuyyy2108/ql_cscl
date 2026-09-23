@@ -64,5 +64,22 @@ class chisokhoaAction
 			'data' => $this->CtChiSoPeer->getTrungBinhTheoKy($maChiSo)
 		)));
 	}
+
+	function getDanhSachPhieu()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		if ($maChiSo <= 0) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'data' => array(),
+				'message' => 'Mã chỉ số không hợp lệ'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'data' => $this->CtChiSoPeer->getDanhSachPhieu($maChiSo)
+		)));
+	}
 }
 ?>

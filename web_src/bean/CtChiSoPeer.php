@@ -111,6 +111,47 @@ class CtChiSoPeer
         return $ketQua;
     }
 
+    public function getDanhSachPhieu($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        $sql = "SELECT ct.id, ct.ma_chi_so, ct.id_khoaphong, ct.nam, ct.ky,
+                       ct.du_lieu, ct.created_at, ct.updated_at,
+                       k.ten AS ten_khoaphong,
+                       u.hoTen AS nguoi_nhap
+                FROM ct_chiso ct
+                LEFT JOIN khoa k ON k.id = ct.id_khoaphong
+                LEFT JOIN user u ON u.id = ct.id_user
+                WHERE ct.ma_chi_so = $maChiSo
+                ORDER BY ct.nam DESC, ct.ky DESC, ct.created_at DESC, ct.id DESC";
+        $result = $this->dbsql->query($sql);
+        $items = array();
+
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $duLieu = json_decode($row['du_lieu'], true);
+            if (!is_array($duLieu)) $duLieu = array();
+
+            $items[] = array(
+                'id' => (int) $row['id'],
+                'ma_chi_so' => (int) $row['ma_chi_so'],
+                'id_khoaphong' => (int) $row['id_khoaphong'],
+                'ten_khoaphong' => $row['ten_khoaphong'] !== null ? $row['ten_khoaphong'] : '',
+                'nam' => (int) $row['nam'],
+                'ky' => (int) $row['ky'],
+                'tong_diem' => isset($duLieu['tong_diem']) ? (float) $duLieu['tong_diem'] : 0,
+                'diem_toi_da' => isset($duLieu['diem_toi_da']) ? (float) $duLieu['diem_toi_da'] : 0,
+                'ty_le_phan_tram' => isset($duLieu['ty_le_phan_tram']) ? (float) $duLieu['ty_le_phan_tram'] : 0,
+                'nguoi_nhap' => $row['nguoi_nhap'] !== null ? $row['nguoi_nhap'] : '',
+                'created_at' => $row['created_at'],
+                'updated_at' => $row['updated_at'],
+                'cau_tra_loi' => isset($duLieu['cau_tra_loi']) && is_array($duLieu['cau_tra_loi'])
+                    ? $duLieu['cau_tra_loi']
+                    : array()
+            );
+        }
+
+        return $items;
+    }
+
     public function save($item)
     {
         $maChiSo = (int) $item->get('ma_chi_so');

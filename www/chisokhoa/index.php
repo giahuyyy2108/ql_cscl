@@ -77,7 +77,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 					<th>Người duyệt</th>
 					<th>Tình trạng</th>
 					<th>Thao tác</th>
-				</tr>n 
+				</tr>
 			</thead>
 			<tbody></tbody>
 		</table>
@@ -131,7 +131,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 				<div class="tab-content mt-3" id="myTabContent">
 					<div class="tab-pane fade show active" id="thongtin" role="tabpanel">
 						<!-- table thong tin -->
-						<table class="table table-boƯrdered table-striped" style="margin-bottom: 0;">
+						<table class="table table-bordered table-striped" style="margin-bottom: 0;">
 							<tbody>
 								<tr>
 									<th style="width: 20%;">Mã chỉ số</th>

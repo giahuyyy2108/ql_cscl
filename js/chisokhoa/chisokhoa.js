@@ -3,6 +3,10 @@ var table;
 var allKhoaOptions = [];
 var bieuDoChuKy = null;
 var yeuCauBieuDoChuKy = null;
+var tableCtChiSo = null;
+var maChiSoThongKe = 0;
+var soChuKyThongKe = 0;
+var canTaiThongKe = false;
 
 function taiBieuDoChuKy(maChiSo, soChuKy) {
     var loading = $('#bieu_do_chu_ky_loading').show();
@@ -97,6 +101,134 @@ $('#bieudo-tab').on('shown.bs.tab', function () {
     } else if (bieuDoChuKy) {
         bieuDoChuKy.resize();
     }
+});
+
+function tenKyThongKe(ky) {
+    if (soChuKyThongKe === 12) return 'Tháng ' + ky;
+    if (soChuKyThongKe === 4) return 'Quý ' + ky;
+    if (soChuKyThongKe === 2) return '6 tháng ' + ky;
+    if (soChuKyThongKe === 1) return 'Năm';
+    return 'Kỳ ' + ky;
+}
+
+function dinhDangThoiGian(value) {
+    if (!value) return '-';
+    var parts = String(value).split(' ');
+    var dateParts = parts[0].split('-');
+    if (dateParts.length !== 3) return value;
+    return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + (parts[1] ? ' ' + parts[1].slice(0, 5) : '');
+}
+
+function khoiTaoBangThongKe() {
+    if (tableCtChiSo) return false;
+
+    tableCtChiSo = $('#datatable-ct-chiso').DataTable({
+        ordering: false,
+        responsive: true,
+        autoWidth: false,
+        processing: true,
+        lengthChange: false,
+        paging: false,
+        scrollY:        '50vh',
+        scrollCollapse: true,
+        ajax: {
+            url: $('#ULocal').val() + 'chisokhoa/getDanhSachPhieu/',
+            type: 'POST',
+            data: function (data) {
+                data.ma_chi_so = maChiSoThongKe;
+            },
+            dataSrc: function (response) {
+                return response && response.success && Array.isArray(response.data) ? response.data : [];
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Không tải được danh sách phiếu nhập liệu.', 'error');
+            }
+        },
+        columns: [
+            {
+                data: 'ten_khoaphong',
+                render: function (data) { return data || '-'; }
+            },
+            { data: 'nam' },
+            {
+                data: 'ky',
+                render: function (data) { return tenKyThongKe(data); }
+            },
+            { data: 'tong_diem' },
+            { data: 'diem_toi_da' },
+            {
+                data: 'ty_le_phan_tram',
+                render: function (data) {
+                    return $('<strong>', { 'class': 'text-success', text: data + '%' }).prop('outerHTML');
+                }
+            },
+            {
+                data: 'nguoi_nhap',
+                render: function (data) { return data || '-'; }
+            },
+            {
+                data: 'updated_at',
+                render: function (data) { return dinhDangThoiGian(data); }
+            },
+            {
+                data: null,
+                searchable: false,
+                render: function () {
+                    return '<button type="button" class="btn btn-info btn-sm btn-xem-phieu" title="Xem câu trả lời">' +
+                        '<i class="fa fa-eye"></i></button>';
+                }
+            }
+        ],
+        language: {
+            emptyTable: 'Chưa có phiếu nhập liệu',
+            processing: 'Đang tải dữ liệu...'
+        }
+    });
+    return true;
+}
+
+$('#thongke-tab').on('shown.bs.tab', function () {
+    var vuaKhoiTao = khoiTaoBangThongKe();
+    if (canTaiThongKe && !vuaKhoiTao) {
+        tableCtChiSo.ajax.reload(function () {
+            tableCtChiSo.columns.adjust().responsive.recalc();
+        }, false);
+    } else if (!vuaKhoiTao) {
+        tableCtChiSo.columns.adjust().responsive.recalc();
+    }
+    canTaiThongKe = false;
+});
+
+$('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
+    var tr = $(this).closest('tr');
+    if (tr.hasClass('child')) tr = tr.prev();
+    var row = tableCtChiSo.row(tr).data();
+    if (!row) return;
+
+    var tableChiTiet = $('<table>', { 'class': 'table table-bordered text-left' });
+    var tbody = $('<tbody>').appendTo(tableChiTiet);
+    var soThuTu = 0;
+
+    Object.keys(row.cau_tra_loi || {}).forEach(function (idCauHoi) {
+        soThuTu++;
+        var giaTri = row.cau_tra_loi[idCauHoi];
+        if (Array.isArray(giaTri)) giaTri = giaTri.join(', ');
+        $('<tr>').append(
+            $('<th>', { text: 'Câu ' + soThuTu, css: { width: '25%' } }),
+            $('<td>', { text: giaTri === '' || giaTri === null ? '-' : giaTri })
+        ).appendTo(tbody);
+    });
+
+    if (!soThuTu) {
+        $('<tr>').append($('<td>', { text: 'Phiếu không có câu trả lời.' })).appendTo(tbody);
+    }
+
+    Swal.fire({
+        title: 'Chi tiết phiếu #' + row.id,
+        html: tableChiTiet.prop('outerHTML'),
+        width: 720,
+        confirmButtonText: 'Đóng'
+    });
 });
 
 function getOptionText(selectId, value) {
@@ -342,6 +474,10 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
     $('#xem_mau_so').text(hienThi(row.ten_mau_so));
 
     var soChuKy = parseInt($('#id_chuky option[value="' + row.id_chuky + '"]').data('so-ky'), 10) || 0;
+    maChiSoThongKe = row.ma_chi_so;
+    soChuKyThongKe = soChuKy;
+    canTaiThongKe = true;
+    if (tableCtChiSo) tableCtChiSo.clear().draw();
     yeuCauBieuDoChuKy = {
         maChiSo: row.ma_chi_so,
         soChuKy: soChuKy
