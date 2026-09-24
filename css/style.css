@@ -1479,6 +1479,133 @@ div#datatable-user_length {
 	font-size: 12px;
 }
 
+.survey-response-detail {
+	color: #17324d;
+	font-family: "Times New Roman", Times, serif;
+	text-align: left;
+}
+
+.survey-response-detail__meta {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1px;
+	margin-bottom: 14px;
+	border: 1px solid #cadadd;
+	background: #cadadd;
+}
+
+.survey-response-detail__meta > div {
+	min-width: 0;
+	padding: 10px 12px;
+	background: #f6fafb;
+}
+
+.survey-response-detail__meta span,
+.survey-response-detail__meta strong {
+	display: block;
+}
+
+.survey-response-detail__meta span {
+	margin-bottom: 3px;
+	color: #71838c;
+	font-size: 12px;
+}
+
+.survey-response-detail__meta strong {
+	overflow-wrap: anywhere;
+	font-size: 14px;
+}
+
+.survey-response-detail__score {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+	margin-bottom: 18px;
+}
+
+.survey-response-detail__score > div {
+	padding: 10px;
+	border: 1px solid #bcd8dc;
+	border-radius: 3px;
+	background: #eff9fa;
+	text-align: center;
+}
+
+.survey-response-detail__score span,
+.survey-response-detail__score strong {
+	display: block;
+}
+
+.survey-response-detail__score span {
+	color: #607780;
+	font-size: 12px;
+}
+
+.survey-response-detail__score strong {
+	margin-top: 3px;
+	color: #087f8c;
+	font-size: 19px;
+}
+
+.survey-response-detail__answers {
+	max-height: 360px;
+	overflow-y: auto;
+	padding-right: 5px;
+	border-top: 2px solid #087f8c;
+}
+
+.survey-response-question {
+	display: flex;
+	gap: 11px;
+	padding: 14px 5px;
+	border-bottom: 1px dashed #bdcdd1;
+}
+
+.survey-response-question__number {
+	display: inline-flex;
+	flex: 0 0 27px;
+	align-items: center;
+	justify-content: center;
+	width: 27px;
+	height: 27px;
+	border-radius: 50%;
+	color: #fff;
+	background: #087f8c;
+	font-weight: 700;
+}
+
+.survey-response-question__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.survey-response-question__label {
+	margin-bottom: 7px;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.45;
+}
+
+.survey-response-question__answer {
+	padding: 8px 11px;
+	border-left: 3px solid #8dcbd0;
+	background: #f5f9fa;
+	color: #284957;
+	font-size: 14px;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+	.survey-response-detail__meta {
+		grid-template-columns: 1fr;
+	}
+
+	.survey-response-detail__score {
+		gap: 5px;
+	}
+}
+
 @media (max-width: 767px) {
 	#modalNhapLieu .survey-entry-dialog {
 		width: calc(100% - 12px);

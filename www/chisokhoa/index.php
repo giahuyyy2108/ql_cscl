@@ -92,7 +92,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 				<button type="button" class="close" data-dismiss="modal">
 					<span>&times;</span>
 				</button>
-				<h4 class="modal-title">Xem Chi tieu</h4>
+				<h4 class="modal-title">Xem chỉ tiêu</h4>
 			</div>
 
 			<div class="modal-body">
@@ -213,8 +213,8 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 								width="100%">
 								<thead>
 									<tr>
+										<th>id</th>
 										<th>Khoa/Phòng</th>
-										<th>Năm</th>
 										<th>Kỳ</th>
 										<th>Tổng điểm</th>
 										<th>Điểm tối đa</th>

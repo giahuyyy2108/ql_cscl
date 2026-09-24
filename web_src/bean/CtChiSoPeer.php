@@ -115,10 +115,11 @@ class CtChiSoPeer
     {
         $maChiSo = (int) $maChiSo;
         $sql = "SELECT ct.id, ct.ma_chi_so, ct.id_khoaphong, ct.nam, ct.ky,
-                       ct.du_lieu, ct.created_at, ct.updated_at,
+                       ct.du_lieu, ct.created_at, ct.updated_at, cs.bieumau,
                        k.ten AS ten_khoaphong,
                        u.hoTen AS nguoi_nhap
                 FROM ct_chiso ct
+                LEFT JOIN chi_so_chat_luong cs ON cs.ma_chi_so = ct.ma_chi_so
                 LEFT JOIN khoa k ON k.id = ct.id_khoaphong
                 LEFT JOIN user u ON u.id = ct.id_user
                 WHERE ct.ma_chi_so = $maChiSo
@@ -129,6 +130,36 @@ class CtChiSoPeer
         while ($row = $this->dbsql->fetch_array($result)) {
             $duLieu = json_decode($row['du_lieu'], true);
             if (!is_array($duLieu)) $duLieu = array();
+            $giaTriTraLoi = isset($duLieu['cau_tra_loi']) && is_array($duLieu['cau_tra_loi'])
+                ? $duLieu['cau_tra_loi']
+                : array();
+            $bieuMau = json_decode($row['bieumau'], true);
+            $cauHoi = isset($bieuMau['cau_hoi']) && is_array($bieuMau['cau_hoi'])
+                ? $bieuMau['cau_hoi']
+                : array();
+            $chiTietCauTraLoi = array();
+            $idDaDung = array();
+
+            foreach ($cauHoi as $index => $noiDungCauHoi) {
+                $idCauHoi = isset($noiDungCauHoi['id']) && $noiDungCauHoi['id'] !== ''
+                    ? (string) $noiDungCauHoi['id']
+                    : 'q' . ($index + 1);
+                $idDaDung[$idCauHoi] = true;
+                $chiTietCauTraLoi[] = array(
+                    'id' => $idCauHoi,
+                    'noi_dung' => isset($noiDungCauHoi['noi_dung']) ? $noiDungCauHoi['noi_dung'] : 'Câu hỏi ' . ($index + 1),
+                    'gia_tri' => isset($giaTriTraLoi[$idCauHoi]) ? $giaTriTraLoi[$idCauHoi] : ''
+                );
+            }
+
+            foreach ($giaTriTraLoi as $idCauHoi => $giaTri) {
+                if (isset($idDaDung[$idCauHoi])) continue;
+                $chiTietCauTraLoi[] = array(
+                    'id' => (string) $idCauHoi,
+                    'noi_dung' => 'Câu hỏi ' . (count($chiTietCauTraLoi) + 1),
+                    'gia_tri' => $giaTri
+                );
+            }
 
             $items[] = array(
                 'id' => (int) $row['id'],
@@ -145,7 +176,8 @@ class CtChiSoPeer
                 'updated_at' => $row['updated_at'],
                 'cau_tra_loi' => isset($duLieu['cau_tra_loi']) && is_array($duLieu['cau_tra_loi'])
                     ? $duLieu['cau_tra_loi']
-                    : array()
+                    : array(),
+                'chi_tiet_cau_tra_loi' => $chiTietCauTraLoi
             );
         }
 

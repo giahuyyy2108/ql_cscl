@@ -138,6 +138,7 @@ function khoiTaoBangThongKe() {
                 data.ma_chi_so = maChiSoThongKe;
             },
             dataSrc: function (response) {
+                
                 return response && response.success && Array.isArray(response.data) ? response.data : [];
             },
             error: function () {
@@ -146,10 +147,13 @@ function khoiTaoBangThongKe() {
         },
         columns: [
             {
+                data: 'id',
+                render: function (data) { return data || '-'; }
+            },
+            {
                 data: 'ten_khoaphong',
                 render: function (data) { return data || '-'; }
             },
-            { data: 'nam' },
             {
                 data: 'ky',
                 render: function (data) { return tenKyThongKe(data); }
@@ -205,28 +209,59 @@ $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
     var row = tableCtChiSo.row(tr).data();
     if (!row) return;
 
-    var tableChiTiet = $('<table>', { 'class': 'table table-bordered text-left' });
-    var tbody = $('<tbody>').appendTo(tableChiTiet);
-    var soThuTu = 0;
+    var chiTiet = $('<div>', { 'class': 'survey-response-detail' });
+    var thongTin = $('<div>', { 'class': 'survey-response-detail__meta' }).appendTo(chiTiet);
 
-    Object.keys(row.cau_tra_loi || {}).forEach(function (idCauHoi) {
-        soThuTu++;
-        var giaTri = row.cau_tra_loi[idCauHoi];
-        if (Array.isArray(giaTri)) giaTri = giaTri.join(', ');
-        $('<tr>').append(
-            $('<th>', { text: 'Câu ' + soThuTu, css: { width: '25%' } }),
-            $('<td>', { text: giaTri === '' || giaTri === null ? '-' : giaTri })
-        ).appendTo(tbody);
+    [
+        ['Khoa/Phòng', row.ten_khoaphong || '-'],
+        ['Kỳ báo cáo', tenKyThongKe(row.ky) + ' / ' + row.nam],
+        ['Người nhập', row.nguoi_nhap || '-'],
+        ['Thời gian', dinhDangThoiGian(row.updated_at)]
+    ].forEach(function (item) {
+        $('<div>').append(
+            $('<span>', { text: item[0] }),
+            $('<strong>', { text: item[1] })
+        ).appendTo(thongTin);
     });
 
-    if (!soThuTu) {
-        $('<tr>').append($('<td>', { text: 'Phiếu không có câu trả lời.' })).appendTo(tbody);
+    var diem = $('<div>', { 'class': 'survey-response-detail__score' }).appendTo(chiTiet);
+    [
+        ['Tổng điểm', row.tong_diem],
+        ['Điểm tối đa', row.diem_toi_da],
+        ['Tỷ lệ', row.ty_le_phan_tram + '%']
+    ].forEach(function (item) {
+        $('<div>').append(
+            $('<span>', { text: item[0] }),
+            $('<strong>', { text: item[1] })
+        ).appendTo(diem);
+    });
+
+    var danhSachTraLoi = $('<div>', { 'class': 'survey-response-detail__answers' }).appendTo(chiTiet);
+    var cacCauTraLoi = Array.isArray(row.chi_tiet_cau_tra_loi) ? row.chi_tiet_cau_tra_loi : [];
+
+    cacCauTraLoi.forEach(function (item, index) {
+        var giaTri = item.gia_tri;
+        if (Array.isArray(giaTri)) giaTri = giaTri.join(', ');
+        if (giaTri === '' || giaTri === null || giaTri === undefined) giaTri = 'Chưa trả lời';
+
+        $('<div>', { 'class': 'survey-response-question' }).append(
+            $('<span>', { 'class': 'survey-response-question__number', text: index + 1 }),
+            $('<div>', { 'class': 'survey-response-question__content' }).append(
+                $('<div>', { 'class': 'survey-response-question__label', text: item.noi_dung || ('Câu hỏi ' + (index + 1)) }),
+                $('<div>', { 'class': 'survey-response-question__answer', text: giaTri })
+            )
+        ).appendTo(danhSachTraLoi);
+    });
+
+    if (!cacCauTraLoi.length) {
+        $('<div>', { 'class': 'text-muted text-center', text: 'Phiếu không có câu trả lời.' }).appendTo(danhSachTraLoi);
     }
 
     Swal.fire({
         title: 'Chi tiết phiếu #' + row.id,
-        html: tableChiTiet.prop('outerHTML'),
-        width: 720,
+        html: chiTiet.prop('outerHTML'),
+        width: 780,
+        showCloseButton: true,
         confirmButtonText: 'Đóng'
     });
 });
