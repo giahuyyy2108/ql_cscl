@@ -216,7 +216,7 @@ class chisochatluongAction
 		$id = $this->ChiSoPeer->Duyet($chiso);
 		$message = new Message();
 		$message->set("flag", true);
-		$message->set("successMessage", "Duyet chi tieu thanh cong");
+		$message->set("succesMessage", "Duyệt chỉ tiêu thành công");
 
 		return $this->request->json_response(json_encode(array(
 			"success" => true,

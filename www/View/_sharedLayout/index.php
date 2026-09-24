@@ -407,20 +407,61 @@ input[type=checkbox]{
             </div>
             <nav class="nav navbar-nav">
               <ul class=" navbar-right">
-                <li class="nav-item dropdown open" style="padding-left: 15px;">
-                  <a href="javascript:;" class="user-profile dropdown-toggle" aria-haspopup="true" id="navbarDropdown"
+                <li class="nav-item dropdown top-nav-user">
+                  <a href="javascript:;" class="user-profile dropdown-toggle top-nav-user__toggle" aria-haspopup="true" id="navbarDropdown"
                     data-toggle="dropdown" aria-expanded="false">
-                    <img src="<?=_DEFAULT_URL_?>images/profile.png" alt="">
-                    <?
-                          if($_SESSION["FullName"]!="") echo($_SESSION["FullName"]);
-                          else echo($_SESSION["sUserName"]);
-                      ?>
-                    <span class=" fa fa-angle-down"></span>
+                    <img src="<?=_DEFAULT_URL_?>images/profile.png" alt="Ảnh đại diện">
+                    <span class="top-nav-user__name">
+                      <?=htmlspecialchars($_SESSION["FullName"] != "" ? $_SESSION["FullName"] : $_SESSION["sUserName"], ENT_QUOTES, 'UTF-8')?>
+                    </span>
+                    <i class="fa fa-angle-down top-nav-user__chevron" aria-hidden="true"></i>
                   </a>
-                  <div class="dropdown-menu dropdown-usermenu pull-right" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="<?=_DEFAULT_URL_?>login/changePass/"> Đổi mật khẩu</a>
-                    <a class="dropdown-item" href="<?=_DEFAULT_URL_?>login/logout/"><i
-                        class="fa fa-sign-out pull-right"></i> Thoát khỏi hệ thống</a>
+                  <div class="dropdown-menu dropdown-usermenu pull-right top-nav-user__dropdown" aria-labelledby="navbarDropdown">
+                    <div class="top-nav-user__summary">
+                      <img src="<?=_DEFAULT_URL_?>images/profile.png" alt="">
+                      <div>
+                        <strong><?=htmlspecialchars($_SESSION["FullName"] != "" ? $_SESSION["FullName"] : $_SESSION["sUserName"], ENT_QUOTES, 'UTF-8')?></strong>
+                        <span>Tài khoản hệ thống</span>
+                      </div>
+                    </div>
+                    <a class="dropdown-item top-nav-user__item" href="<?=_DEFAULT_URL_?>login/changePass/">
+                      <i class="fa fa-key" aria-hidden="true"></i>
+                      <span>Đổi mật khẩu</span>
+                    </a>
+                    <a class="dropdown-item top-nav-user__item top-nav-user__item--logout" href="<?=_DEFAULT_URL_?>login/logout/">
+                      <i class="fa fa-sign-out" aria-hidden="true"></i>
+                      <span>Thoát khỏi hệ thống</span>
+                    </a>
+                  </div>
+                </li>
+
+                <li class="nav-item dropdown top-nav-notification">
+                  <a href="javascript:;" class="top-nav-notification__toggle dropdown-toggle"
+                    id="navbarNotificationDropdown" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false" title="Thông báo">
+                    <i class="fa fa-bell-o" aria-hidden="true"></i>
+                    <span id="navbarNotificationCount" class="top-nav-notification__badge">0</span>
+                    <span class="sr-only">Mở danh sách thông báo</span>
+                  </a>
+                  <div class="dropdown-menu pull-right top-nav-notification__dropdown"
+                    aria-labelledby="navbarNotificationDropdown">
+                    <div class="top-nav-notification__header">
+                      <div>
+                        <strong>Nhắc nhập liệu</strong>
+                        <small>Các chỉ số cần hoàn thành</small>
+                      </div>
+                      <span id="navbarNotificationSummary">0 chỉ số</span>
+                    </div>
+                    <div id="navbarNotificationList" class="top-nav-notification__list">
+                      <div class="top-nav-notification__empty">
+                        <i class="fa fa-bell-slash-o" aria-hidden="true"></i>
+                        <span>Chưa có thông báo</span>
+                      </div>
+                    </div>
+                    <!-- <a class="top-nav-notification__footer" href="<?=_DEFAULT_URL_?>NhapLieu/">
+                      <span>Mở trang nhập liệu</span>
+                      <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a> -->
                   </div>
                 </li>
   

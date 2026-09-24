@@ -613,14 +613,13 @@ $('#datatable-chiso').on('click', '.btn-duyet', function (e) {
         },
         success: function (response) {
             var message = response && response.message;
-
+            debugger;
             if (response && (response.success || (message && message.flag))) {
                 table.ajax.reload(null, false);
-                Swal.fire('Thành công', 'Duyệt chỉ tiêu thành công.', 'success');
+                hienThiToast('success', response.message.succesMessage);
+                // Swal.fire('Thành công', 'Duyệt chỉ tiêu thành công.', 'success');
             } else {
-                Swal.fire('Không thể duyệt',
-                    (message && message.errorMessage) || 'Không thể duyệt chỉ tiêu. Vui lòng thử lại.',
-                    'error');
+                hienThiToast('danger', response.message.errorMessage);
             }
         },
         error: function (xhr) {

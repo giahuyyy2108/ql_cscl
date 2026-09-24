@@ -46,6 +46,99 @@ jQuery(function($){
 		
 	});    
 });
+
+/* Notification menu in the top navigation. */
+(function ($) {
+	var thongBaoNavbar = [];
+
+	function veThongBaoNavbar() {
+		var danhSach = $('#navbarNotificationList');
+		var badge = $('#navbarNotificationCount');
+		var tongKet = $('#navbarNotificationSummary');
+		if (!danhSach.length) return;
+
+		danhSach.empty();
+		if (!thongBaoNavbar.length) {
+			danhSach.append(
+				$('<div>', { 'class': 'top-nav-notification__empty' }).append(
+					$('<i>', { 'class': 'fa fa-bell-slash-o', 'aria-hidden': 'true' }),
+					$('<span>', { text: 'Chưa có thông báo' })
+				)
+			);
+			badge.show().text('0');
+			tongKet.text('0 chỉ số');
+			return;
+		}
+
+		thongBaoNavbar.forEach(function (item) {
+			$('<a>', {
+				'class': 'top-nav-notification__item top-nav-notification__item--' + (item.loai || 'info'),
+				href: item.url || 'javascript:;',
+				'data-ma-chi-so': item.maChiSo || ''
+			}).append(
+				$('<span>', { 'class': 'top-nav-notification__item-icon' }).append(
+					$('<i>', { 'class': 'fa ' + (item.icon || 'fa-info-circle'), 'aria-hidden': 'true' })
+				),
+				$('<span>', { 'class': 'top-nav-notification__item-content' }).append(
+					$('<strong>', { text: item.tieuDe || 'Thông báo' }),
+					$('<span>', { text: item.noiDung || '' }),
+					$('<small>', { text: item.thoiGian || 'Vừa xong' })
+				),
+				$('<span>', { 'class': 'top-nav-notification__unread', title: 'Chưa hoàn thành' })
+			).appendTo(danhSach);
+		});
+
+		badge.text(thongBaoNavbar.length > 99 ? '99+' : thongBaoNavbar.length).show();
+		tongKet.text(thongBaoNavbar.length + ' chỉ số');
+	}
+
+	window.themThongBaoNavbar = function (thongBao) {
+		thongBaoNavbar.unshift(thongBao || {});
+		veThongBaoNavbar();
+	};
+
+	window.datThongBaoNavbar = function (danhSach) {
+		thongBaoNavbar = Array.isArray(danhSach) ? danhSach.slice() : [];
+		veThongBaoNavbar();
+	};
+
+	window.taiThongBaoChuaNhapNavbar = function () {
+		var baseUrl = $('#ULocal').val();
+		if (!baseUrl || !$('#navbarNotificationList').length) return;
+
+		$.ajax({
+			url: baseUrl + 'NhapLieu/getData/',
+			type: 'POST',
+			dataType: 'json',
+			cache: false,
+			success: function (response) {
+				var danhSachChiSo = response && Array.isArray(response.data) ? response.data : [];
+				var thongBaoChuaNhap = danhSachChiSo
+					.filter(function (item) {
+						return !item.da_nhap_ky_hien_tai;
+					})
+					.map(function (item) {
+						var maChiSo = item.ma_chi_so || '';
+						return {
+							tieuDe: item.ten_chi_so || 'Chỉ số chất lượng',
+							noiDung: maChiSo ? 'Mã chỉ số: ' + maChiSo : 'Chưa nhập liệu kỳ hiện tại',
+							thoiGian: 'Chưa nhập liệu kỳ hiện tại',
+							icon: 'fa-exclamation-triangle',
+							loai: 'warning',
+							maChiSo: maChiSo,
+							url: baseUrl + 'NhapLieu/?ma_chi_so=' + encodeURIComponent(maChiSo)
+						};
+					});
+				window.datThongBaoNavbar(thongBaoChuaNhap);
+			}
+		});
+	};
+
+	$(function () {
+		veThongBaoNavbar();
+		window.taiThongBaoChuaNhapNavbar();
+	});
+})(jQuery);
 /*
 window.onhashchange = function() {
 	alert("da back");
@@ -1022,5 +1115,29 @@ function CompareDate(date1, date2) {
 		return 2;
 	}
 	return 0;
+}
+
+function hienThiToast(icon, message) {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: icon,
+        title: message,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+
+        didOpen: function (toast) {
+            toast.addEventListener(
+                'mouseenter',
+                Swal.stopTimer
+            );
+
+            toast.addEventListener(
+                'mouseleave',
+                Swal.resumeTimer
+            );
+        }
+    });
 }
 
