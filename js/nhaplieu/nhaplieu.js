@@ -12,12 +12,41 @@ function hienThi(value) {
     return value === null || value === undefined || value === '' ? '-' : value;
 }
 
-function hienThiTrungBinhPhieu(container, thongKe) {
-    var trungBinh = Math.round((thongKe.tong / thongKe.so_phieu) * 100) / 100;
-    var ketQua = $('<div>', { 'class': 'survey-cycle-average' });
+function hienThiTrungBinhPhieu(container, thongKe, mucTieu, nguongCanhBao)
+{
+    var trungBinh =
+        Math.round(
+            (thongKe.tong / thongKe.so_phieu) * 100
+        ) / 100;
 
-    $('<strong>', { text: trungBinh + '%' }).appendTo(ketQua);
-    $('<small>', { text: 'Trung bình ' + thongKe.so_phieu + ' phiếu' }).appendTo(ketQua);
+    var mau = 'text-warning';
+    var trangThai = 'Cần theo dõi';
+
+    if (trungBinh >= mucTieu) {
+        mau = 'text-success';
+        trangThai = 'Đạt mục tiêu';
+    } else if (trungBinh <= nguongCanhBao) {
+        mau = 'text-danger';
+        trangThai = 'Dưới ngưỡng cảnh báo';
+    }
+    debugger;
+    var ketQua = $('<div>', {
+        'class': 'survey-cycle-average'
+    });
+
+    $('<strong>', {
+        'class': mau,
+        text: trungBinh + '%'
+    }).appendTo(ketQua);
+
+    $('<small>', {
+        text: trangThai
+    }).appendTo(ketQua);
+
+    $('<small>', {
+        text: 'Trung bình ' + thongKe.so_phieu + ' phiếu'
+    }).appendTo(ketQua);
+
     ketQua.appendTo(container);
 }
 
@@ -280,11 +309,15 @@ $('#datatable-nhaplieu').on('click', '.btn-xem', function () {
     $('#xem_thu_thap').text(hienThi(row.thu_thap));khoa_user
     $('#xem_tu_so').text(hienThi(row.ten_tu_so));
     $('#xem_mau_so').text(hienThi(row.ten_mau_so));
-    taiDuLieuChuKyXem(row.ma_chi_so);
+    taiDuLieuChuKyXem(
+    row.ma_chi_so,
+    parseFloat(row.muc_tieu),
+    parseFloat(row.nguong_canh_bao)
+    );
     $('#modalXemChiTieu').modal('show');
 });
 
-function taiDuLieuChuKyXem(maChiSo) {
+function taiDuLieuChuKyXem(maChiSo, mucTieu, nguongCanhBao){
     var tieuDe = $('#xem_tieu_de_chu_ky').empty();
     var noiDung = $('#xem_du_lieu_chu_ky').empty();
     var thongBaoLoi = $('#xem_loi_du_lieu_chu_ky').hide().text('');
@@ -340,11 +373,10 @@ function taiDuLieuChuKyXem(maChiSo) {
                     .css({ minWidth: '130px', textAlign: 'center' })
                     .text(tenKyTheoMoc(i, soChuKy, thangBatDau, namBatDau))
                     .appendTo(tieuDe);
-
                 var cell = $('<td>').css('vertical-align', 'middle');
                 var thongKe = thongKeTheoKy[String(i)];
                 if (thongKe && thongKe.so_phieu > 0) {
-                    hienThiTrungBinhPhieu(cell, thongKe);
+                    hienThiTrungBinhPhieu(cell, thongKe, mucTieu, nguongCanhBao);                
                 } else if (i > kyHienTai) {
                     $('<span>').addClass('label label-default').text('Chưa đến kỳ').appendTo(cell);
                 } else {
