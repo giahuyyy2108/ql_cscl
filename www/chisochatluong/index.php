@@ -362,13 +362,19 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 								<h4>Thiết kế biểu mẫu khảo sát</h4>
 								<p class="text-muted">Tạo các câu hỏi dùng để thu thập dữ liệu cho chỉ tiêu.</p>
 							</div>
-							<button type="button" class="btn btn-success btn-sm" id="btnThemCauHoi">
-								<i class="fa fa-plus"></i> Thêm câu hỏi
-							</button>
+							<div class="btn-group">
+								<button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="fa fa-plus"></i> Thêm câu hỏi <span class="caret"></span>
+								</button>
+								<ul class="dropdown-menu dropdown-menu-right">
+									<li><a href="#" id="btnThemCauHoi"><i class="fa fa-file-o"></i> Câu hỏi trống</a></li>
+									<li><a href="#" id="btnThemThongTinBenhNhan"><i class="fa fa-user"></i> Thông tin bệnh nhân</a></li>
+								</ul>
+							</div>
 						</div>
 						<div id="danhSachCauHoi"></div>
 						<div id="surveyBuilderEmpty" class="survey-builder__empty">
-							Chưa có câu hỏi. Nhấn “Thêm câu hỏi” để bắt đầu tạo biểu mẫu.
+							Chưa có câu hỏi. Chọn “Thêm câu hỏi” để bắt đầu tạo biểu mẫu.
 						</div>
 					</div>
 

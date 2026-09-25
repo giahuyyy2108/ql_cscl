@@ -958,12 +958,19 @@ function taoLuaChonCauHoi(noiDung, diem) {
     return luaChon;
 }
 
-function taoCauHoi() {
-    soThuTuCauHoi += 1;
+function taoCauHoi(idCauHoi) {
+    if (idCauHoi) {
+        soThuTuCauHoi += 1;
+    } else {
+        do {
+            soThuTuCauHoi += 1;
+            idCauHoi = 'q' + soThuTuCauHoi;
+        } while ($('#danhSachCauHoi .survey-question[data-question-id="' + idCauHoi + '"]').length);
+    }
 
     var cauHoi = $('<div>', {
         'class': 'survey-question',
-        'data-question-id': soThuTuCauHoi
+        'data-question-id': idCauHoi
     });
 
     cauHoi.html(
@@ -1012,6 +1019,32 @@ function themCauHoi() {
     capNhatTrangThaiBieuMau();
 }
 
+function themThongTinBenhNhan() {
+    var mauThongTinBenhNhan = [
+        { id: 'ma_benh_nhan', noi_dung: 'Mã bệnh nhân', loai: 'short_text' },
+        { id: 'ho_ten', noi_dung: 'Họ tên', loai: 'short_text' },
+        { id: 'nam_sinh', noi_dung: 'Năm sinh', loai: 'number' }
+    ];
+
+    mauThongTinBenhNhan.forEach(function (mauCauHoi) {
+        var daTonTai = $('#danhSachCauHoi .survey-question').filter(function () {
+            return $(this).attr('data-question-id') === mauCauHoi.id;
+        }).length > 0;
+
+        if (daTonTai) {
+            return;
+        }
+
+        var cauHoi = taoCauHoi(mauCauHoi.id);
+        cauHoi.find('.survey-question__title').val(mauCauHoi.noi_dung);
+        cauHoi.find('.survey-question__type').val(mauCauHoi.loai);
+        cauHoi.find('.survey-question__required').prop('checked', true);
+        $('#danhSachCauHoi').append(cauHoi);
+    });
+
+    capNhatTrangThaiBieuMau();
+}
+
 function khoiTaoBieuMauKhaoSat() {
     soThuTuCauHoi = 0;
     $('#danhSachCauHoi').empty();
@@ -1039,7 +1072,7 @@ function layDuLieuBieuMau() {
         }
 
         cauHoi.push({
-            id: 'q' + (index + 1),
+            id: item.attr('data-question-id') || ('q' + (index + 1)),
             noi_dung: $.trim(item.find('.survey-question__title').val()),
             loai: loai,
             bat_buoc: item.find('.survey-question__required').prop('checked'),
@@ -1072,7 +1105,7 @@ function napDuLieuBieuMau(duLieu) {
     }
 
     danhSach.forEach(function (duLieuCauHoi) {
-        var cauHoi = taoCauHoi();
+        var cauHoi = taoCauHoi(duLieuCauHoi.id);
         var loai = duLieuCauHoi.loai || 'short_text';
 
         cauHoi.find('.survey-question__title').val(duLieuCauHoi.noi_dung || '');
@@ -1097,7 +1130,15 @@ function napDuLieuBieuMau(duLieu) {
     capNhatTrangThaiBieuMau();
 }
 
-$('#btnThemCauHoi').on('click', themCauHoi);
+$('#btnThemCauHoi').on('click', function (event) {
+    event.preventDefault();
+    themCauHoi();
+});
+
+$('#btnThemThongTinBenhNhan').on('click', function (event) {
+    event.preventDefault();
+    themThongTinBenhNhan();
+});
 
 $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
     var cauHoi = $(this).closest('.survey-question');

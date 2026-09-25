@@ -160,7 +160,6 @@ function layCauTraLoiBieuMau() {
         var cauHoi = $(this);
         var id = String(cauHoi.data('question-id'));
         var loai = cauHoi.data('question-type');
-
         if (loai === 'checkbox') {
             ketQua[id] = cauHoi.find('.survey-entry-answer:checked').map(function () {
                 return this.value;
@@ -174,6 +173,56 @@ function layCauTraLoiBieuMau() {
 
     return ketQua;
 }
+
+$('#nhap_bieu_mau').on(
+    'input change',
+    '.survey-entry-question[data-question-id="ma_benh_nhan"] .survey-entry-answer',
+    function () {
+        $('.survey-entry-question[data-question-id="ho_ten"] .survey-entry-answer')
+                            .val('');
+
+        $('.survey-entry-question[data-question-id="nam_sinh"] .survey-entry-answer')
+            .val('');
+        this.value = this.value.slice(0, 8);
+        var maBenhNhan = $.trim($(this).val());
+        if(maBenhNhan.length === 8){
+            // console.log('Mã bệnh nhân:', maBenhNhan);
+            $.ajax({
+                url: 'http://192.168.0.131:7115/api/upd_hsoft_benhnhan/',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    ip: '192.168.0.75',
+                    mabn: maBenhNhan,
+                    idbv: '79025'
+                },
+                success: function (response) {
+                    if(Array.isArray(response) && response.length === 0){
+                        Swal.fire(
+                            'Lỗi',
+                            'Không thể tải thông tin bệnh nhân.',
+                            'error'
+                        );
+                        
+                    }else{
+                        $('.survey-entry-question[data-question-id="ho_ten"] .survey-entry-answer')
+                            .val(response[0].hoten || '');
+
+                        $('.survey-entry-question[data-question-id="nam_sinh"] .survey-entry-answer')
+                            .val(response[0].namsinh || '');
+                    }
+                },
+                error: function () {
+                    Swal.fire(
+                        'Lỗi',
+                        'Không thể tải thông tin bệnh nhân.',
+                        'error'
+                    );
+                }
+            });
+        }
+    }
+);
 
 function tinhPhanTramTamTinh() {
     var cauTraLoi = layCauTraLoiBieuMau();
@@ -242,7 +291,6 @@ tableNhapLieu = $('#datatable-nhaplieu').DataTable({
         if (!maChiSo) return;
         var danhSach = json && Array.isArray(json.data) ? json.data : [];
         var row = null;
-        debugger;
         for (var i = 0; i < danhSach.length; i++) {
             if (String(danhSach[i].ma_chi_so) === String(maChiSo)) {
                 row = danhSach[i];
