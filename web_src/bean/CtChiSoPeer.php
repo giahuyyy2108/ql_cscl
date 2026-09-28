@@ -184,6 +184,22 @@ class CtChiSoPeer
         return $items;
     }
 
+    public function xoaPhieu($id, $maChiSo)
+    {
+        $id = (int) $id;
+        $maChiSo = (int) $maChiSo;
+        if ($id <= 0 || $maChiSo <= 0) return false;
+
+        $result = $this->dbsql->query("SELECT 1 FROM ct_chiso
+            WHERE id = $id AND ma_chi_so = $maChiSo
+            LIMIT 1");
+        if ($this->dbsql->num_rows($result) === 0) return false;
+
+        $this->dbsql->query("DELETE FROM ct_chiso
+            WHERE id = $id AND ma_chi_so = $maChiSo");
+        return true;
+    }
+
     public function save($item)
     {
         $maChiSo = (int) $item->get('ma_chi_so');

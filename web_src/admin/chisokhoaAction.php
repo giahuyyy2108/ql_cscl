@@ -81,5 +81,30 @@ class chisokhoaAction
 			'data' => $this->CtChiSoPeer->getDanhSachPhieu($maChiSo)
 		)));
 	}
+
+	function xoaPhieu()
+	{
+		$id = (int) $this->request->getParameter('id');
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+
+		if ($id <= 0 || $maChiSo <= 0) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'message' => 'Thông tin phiếu không hợp lệ'
+			)));
+		}
+
+		if (!$this->CtChiSoPeer->xoaPhieu($id, $maChiSo)) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'message' => 'Phiếu không tồn tại hoặc đã được xóa'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'message' => 'Xóa phiếu thành công'
+		)));
+	}
 }
 ?>

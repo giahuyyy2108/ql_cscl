@@ -179,7 +179,9 @@ function khoiTaoBangThongKe() {
                 searchable: false,
                 render: function () {
                     return '<button type="button" class="btn btn-info btn-sm btn-xem-phieu" title="Xem câu trả lời">' +
-                        '<i class="fa fa-eye"></i></button>';
+                        '<i class="fa fa-eye"></i></button> ' +
+                        '<button type="button" class="btn btn-danger btn-sm btn-xoa-phieu" title="Xóa phiếu">' +
+                        '<i class="fa fa-trash"></i></button>';
                 }
             }
         ],
@@ -263,6 +265,65 @@ $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
         width: 780,
         showCloseButton: true,
         confirmButtonText: 'Đóng'
+    });
+});
+
+$('#datatable-ct-chiso').on('click', '.btn-xoa-phieu', function () {
+    var button = $(this);
+    var tr = button.closest('tr');
+    if (tr.hasClass('child')) tr = tr.prev();
+    var row = tableCtChiSo.row(tr).data();
+    if (!row || button.prop('disabled')) return;
+
+    Swal.fire({
+        title: 'Xóa phiếu #' + row.id + '?',
+        text: 'Dữ liệu đã xóa không thể khôi phục.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Xóa phiếu',
+        cancelButtonText: 'Hủy'
+    }).then(function (result) {
+        if (!result.isConfirmed) return;
+
+        var originalHtml = button.html();
+        button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: $('#ULocal').val() + 'chisokhoa/xoaPhieu/',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                id: row.id,
+                ma_chi_so: row.ma_chi_so
+            },
+            success: function (response) {
+                if (!response || !response.success) {
+                    Swal.fire('Không thể xóa', response && response.message ? response.message : 'Vui lòng thử lại.', 'error');
+                    return;
+                }
+
+                tableCtChiSo.ajax.reload(function () {
+                    tableCtChiSo.columns.adjust().responsive.recalc();
+                }, false);
+
+                if (bieuDoChuKy) {
+                    bieuDoChuKy.destroy();
+                    bieuDoChuKy = null;
+                }
+                yeuCauBieuDoChuKy = {
+                    maChiSo: row.ma_chi_so,
+                    soChuKy: soChuKyThongKe
+                };
+                Swal.fire('Thành công', response.message, 'success');
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi xóa phiếu. Vui lòng thử lại.', 'error');
+            },
+            complete: function () {
+                button.prop('disabled', false).html(originalHtml);
+            }
+        });
     });
 });
 
