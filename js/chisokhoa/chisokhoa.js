@@ -247,7 +247,7 @@ $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
         if (giaTri === '' || giaTri === null || giaTri === undefined) giaTri = 'Chưa trả lời';
 
         $('<div>', { 'class': 'survey-response-question' }).append(
-            $('<span>', { 'class': 'survey-response-question__number', text: index + 1 }),
+            $('<span>', { 'class': 'survey-response-question__number', text: item.ky_hieu || (index + 1) }),
             $('<div>', { 'class': 'survey-response-question__content' }).append(
                 $('<div>', { 'class': 'survey-response-question__label', text: item.noi_dung || ('Câu hỏi ' + (index + 1)) }),
                 $('<div>', { 'class': 'survey-response-question__answer', text: giaTri })

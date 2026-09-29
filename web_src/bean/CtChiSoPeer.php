@@ -141,13 +141,14 @@ class CtChiSoPeer
             $idDaDung = array();
 
             foreach ($cauHoi as $index => $noiDungCauHoi) {
-                if (isset($noiDungCauHoi['loai']) && $noiDungCauHoi['loai'] === 'category') continue;
+                if (isset($noiDungCauHoi['loai']) && in_array($noiDungCauHoi['loai'], array('category', 'subcategory'), true)) continue;
                 $idCauHoi = isset($noiDungCauHoi['id']) && $noiDungCauHoi['id'] !== ''
                     ? (string) $noiDungCauHoi['id']
                     : 'q' . ($index + 1);
                 $idDaDung[$idCauHoi] = true;
                 $chiTietCauTraLoi[] = array(
                     'id' => $idCauHoi,
+                    'ky_hieu' => isset($noiDungCauHoi['ky_hieu']) ? $noiDungCauHoi['ky_hieu'] : '',
                     'noi_dung' => isset($noiDungCauHoi['noi_dung']) ? $noiDungCauHoi['noi_dung'] : 'Câu hỏi ' . ($index + 1),
                     'gia_tri' => isset($giaTriTraLoi[$idCauHoi]) ? $giaTriTraLoi[$idCauHoi] : ''
                 );
@@ -157,6 +158,7 @@ class CtChiSoPeer
                 if (isset($idDaDung[$idCauHoi])) continue;
                 $chiTietCauTraLoi[] = array(
                     'id' => (string) $idCauHoi,
+                    'ky_hieu' => '',
                     'noi_dung' => 'Câu hỏi ' . (count($chiTietCauTraLoi) + 1),
                     'gia_tri' => $giaTri
                 );

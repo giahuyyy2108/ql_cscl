@@ -229,7 +229,7 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                             <div class="col-sm-5">
                                 <div class="form-group survey-cycle-select">
                                     <label for="nhap_ky">Chọn quý</label>
-                                    <select id="nhap_ky" class="form-control" required></select>
+                                    <select id="nhap_ky" name="ky" class="form-control" required></select>
                                 </div>
                             </div>
                             <div class="col-sm-7">

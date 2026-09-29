@@ -171,12 +171,13 @@ class NhapLieuAction
 
         foreach ($cauHoi as $index => $item) {
             $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
-            if ($loai === 'category') continue;
+            if (in_array($loai, array('category', 'subcategory'), true)) continue;
             $soCauHoiNhapLieu++;
 
             $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
             $noiDung = trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : '');
             $batBuoc = !empty($item['bat_buoc']);
+            $doDaiSo = isset($item['do_dai_so']) ? max(0, min(50, (int) $item['do_dai_so'])) : 0;
             $giaTri = isset($giaTriGui[$id]) ? $giaTriGui[$id] : null;
             $luaChonGoc = isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array();
             $luaChon = array();
@@ -206,6 +207,16 @@ class NhapLieuAction
             }
             if (!$rong && $loai === 'number' && !is_numeric($giaTri)) {
                 $this->lastErrorMessage = 'Câu trả lời phải là số: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && $loai === 'percentage'
+                && (!is_numeric($giaTri) || (float) $giaTri < 0 || (float) $giaTri > 100)) {
+                $this->lastErrorMessage = 'Tỷ lệ phải nằm trong khoảng từ 0 đến 100%: ' . $noiDung;
+                return false;
+            }
+            if (!$rong && $loai === 'number' && $doDaiSo > 0
+                && strlen(preg_replace('/\D/', '', $giaTri)) > $doDaiSo) {
+                $this->lastErrorMessage = 'Câu trả lời không được vượt quá ' . $doDaiSo . ' chữ số: ' . $noiDung;
                 return false;
             }
             if (!$rong && $loai === 'score' && (!is_numeric($giaTri) || (int) $giaTri < 1 || (int) $giaTri > 10)) {

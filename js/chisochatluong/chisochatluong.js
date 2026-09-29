@@ -423,9 +423,11 @@ function hienThiBieuMauKhaoSat(duLieu) {
         short_text: 'Trả lời ngắn',
         long_text: 'Đoạn văn',
         number: 'Số',
+        percentage: 'Tỷ lệ (%)',
         score: 'Chọn điểm (1–10)',
         date: 'Ngày tháng',
-        category: 'Danh mục',
+        category: 'Danh mục cha',
+        subcategory: 'Danh mục con',
         satisfaction: 'Độ hài lòng',
         radio: 'Một lựa chọn',
         checkbox: 'Nhiều lựa chọn',
@@ -446,21 +448,56 @@ function hienThiBieuMauKhaoSat(duLieu) {
         return;
     }
 
-    var soCauHoi = 0;
+    var soCauHoiNgoaiMuc = 0;
+    var soDanhMucCha = 0;
+    var soDanhMucCon = 0;
+    var soCauHoiTrongMuc = 0;
+    var kyHieuDanhMucCon = '';
+    var danhMucChaCoDanhMucCon = false;
+    var capDanhMuc = 0;
     danhSach.forEach(function (cauHoi, index) {
-        if (cauHoi.loai === 'category') {
+        if (laLoaiDanhMuc(cauHoi.loai)) {
+            capDanhMuc = cauHoi.loai === 'subcategory' ? 2 : 1;
+            var kyHieuDanhMuc;
+            if (cauHoi.loai === 'category') {
+                soDanhMucCha += 1;
+                soDanhMucCon = 0;
+                soCauHoiTrongMuc = 0;
+                kyHieuDanhMucCon = '';
+                danhMucChaCoDanhMucCon = coDanhMucConTrongNhom(danhSach, index);
+                kyHieuDanhMuc = doiSoLaMa(soDanhMucCha);
+            } else {
+                soDanhMucCon += 1;
+                soCauHoiTrongMuc = 0;
+                kyHieuDanhMucCon = doiSoChuCai(soDanhMucCon);
+                kyHieuDanhMuc = kyHieuDanhMucCon;
+            }
             khuVuc.append($('<div>', {
-                'class': 'survey-view-category',
-                text: cauHoi.noi_dung || 'Danh mục chưa có tên'
+                'class': 'survey-view-category' + (cauHoi.loai === 'subcategory' ? ' survey-view-category--child' : ''),
+                text: kyHieuDanhMuc + '. ' + (
+                    cauHoi.loai === 'category'
+                        ? String(cauHoi.noi_dung || 'Danh mục chưa có tên').toUpperCase()
+                        : vietHoaDauCau(cauHoi.noi_dung || 'Danh mục chưa có tên')
+                )
             }));
             return;
         }
 
-        var khoiCauHoi = $('<div>', { 'class': 'survey-view-question' });
+        var khoiCauHoi = $('<div>', {
+            'class': 'survey-view-question' + (capDanhMuc ? ' survey-view-question--level-' + capDanhMuc : '')
+        });
         var tieuDe = $('<div>', { 'class': 'survey-view-question__title' });
-        soCauHoi += 1;
+        var kyHieuCauHoi;
+        if (capDanhMuc) {
+            soCauHoiTrongMuc += 1;
+            kyHieuCauHoi = (
+                kyHieuDanhMucCon || (danhMucChaCoDanhMucCon ? doiSoLaMa(soDanhMucCha) : 'A')
+            ) + soCauHoiTrongMuc;
+        } else {
+            kyHieuCauHoi = String(++soCauHoiNgoaiMuc);
+        }
 
-        tieuDe.append(document.createTextNode(soCauHoi + '. ' + (cauHoi.noi_dung || 'Câu hỏi chưa có nội dung')));
+        tieuDe.append(document.createTextNode(kyHieuCauHoi + '. ' + vietHoaDauCau(cauHoi.noi_dung || 'Câu hỏi chưa có nội dung')));
         if (cauHoi.bat_buoc) {
             tieuDe.append($('<span>', { 'class': 'text-danger', text: ' *' }));
         }
@@ -470,12 +507,12 @@ function hienThiBieuMauKhaoSat(duLieu) {
             text: tenLoai[cauHoi.loai] || cauHoi.loai || 'Không xác định'
         }));
 
-        if (Array.isArray(cauHoi.lua_chon) && cauHoi.lua_chon.length) {
+        if (cauHoi.loai !== 'satisfaction' && Array.isArray(cauHoi.lua_chon) && cauHoi.lua_chon.length) {
             var luaChon = $('<ul>', { 'class': 'survey-view-question__options' });
             cauHoi.lua_chon.forEach(function (itemLuaChon) {
                 var noiDung = typeof itemLuaChon === 'object' ? itemLuaChon.noi_dung : itemLuaChon;
                 var diem = typeof itemLuaChon === 'object' ? itemLuaChon.diem : 0;
-                luaChon.append($('<li>').text(noiDung + ' (' + diem + ' điểm)'));
+                luaChon.append($('<li>').text(vietHoaDauCau(noiDung) + ' (' + diem + ' điểm)'));
             });
             khoiCauHoi.append(luaChon);
         }
@@ -931,27 +968,130 @@ function loaiCauHoiCanLuaChon(loai) {
     return ['radio', 'checkbox', 'select', 'satisfaction'].indexOf(loai) !== -1;
 }
 
+function laLoaiDanhMuc(loai) {
+    return ['category', 'subcategory'].indexOf(loai) !== -1;
+}
+
+function vietHoaDauCau(giaTri) {
+    giaTri = String(giaTri || '');
+    var viTriDau = giaTri.search(/\S/);
+    if (viTriDau === -1) return giaTri;
+    return giaTri.slice(0, viTriDau)
+        + giaTri.charAt(viTriDau).toUpperCase()
+        + giaTri.slice(viTriDau + 1);
+}
+
+function doiSoLaMa(so) {
+    var bangSo = [
+        [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+        [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+        [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+    ];
+    var ketQua = '';
+    bangSo.forEach(function (item) {
+        while (so >= item[0]) {
+            ketQua += item[1];
+            so -= item[0];
+        }
+    });
+    return ketQua;
+}
+
+function doiSoChuCai(so) {
+    var ketQua = '';
+    while (so > 0) {
+        so -= 1;
+        ketQua = String.fromCharCode(65 + (so % 26)) + ketQua;
+        so = Math.floor(so / 26);
+    }
+    return ketQua;
+}
+
+function coDanhMucConTrongNhom(danhSach, viTriDanhMucCha) {
+    for (var i = viTriDanhMucCha + 1; i < danhSach.length; i++) {
+        var item = danhSach[i];
+        var loai = typeof item === 'string' ? item : (item && item.loai);
+        if (loai === 'category') return false;
+        if (loai === 'subcategory') return true;
+    }
+    return false;
+}
+
 function capNhatTrangThaiBieuMau() {
     var danhSach = $('#danhSachCauHoi .survey-question');
-    var soCauHoi = 0;
-    var soDanhMuc = 0;
+    var soCauHoiNgoaiMuc = 0;
+    var soDanhMucCha = 0;
+    var soDanhMucCon = 0;
+    var soCauHoiTrongMuc = 0;
+    var kyHieuDanhMucCon = '';
+    var danhMucChaCoDanhMucCon = false;
+    var capDanhMuc = 0;
+    var danhSachLoai = danhSach.map(function () {
+        return $(this).find('.survey-question__type').val();
+    }).get();
 
     $('#surveyBuilderEmpty').toggle(danhSach.length === 0);
     danhSach.each(function (index) {
         var item = $(this);
-        var laDanhMuc = item.find('.survey-question__type').val() === 'category';
+        var loai = item.find('.survey-question__type').val();
+        var laDanhMuc = laLoaiDanhMuc(loai);
+        var laDanhMucCon = loai === 'subcategory';
         item.toggleClass('survey-question--category', laDanhMuc);
-        item.find('.survey-question__number').text(
-            laDanhMuc ? ('Danh mục ' + (++soDanhMuc)) : ('Câu hỏi ' + (++soCauHoi))
-        );
+        item.toggleClass('survey-question--subcategory', laDanhMucCon);
+        item.removeClass('survey-question--level-1 survey-question--level-2');
+
+        if (loai === 'category') {
+            capDanhMuc = 1;
+            item.find('.survey-question__title').val(function (_, giaTri) {
+                return String(giaTri || '').toUpperCase();
+            });
+            soDanhMucCha += 1;
+            soDanhMucCon = 0;
+            soCauHoiTrongMuc = 0;
+            kyHieuDanhMucCon = '';
+            danhMucChaCoDanhMucCon = coDanhMucConTrongNhom(danhSachLoai, index);
+            item.attr('data-tree-label', doiSoLaMa(soDanhMucCha));
+            item.find('.survey-question__number').text('Danh mục cha ' + doiSoLaMa(soDanhMucCha));
+        } else if (laDanhMucCon) {
+            capDanhMuc = 2;
+            soDanhMucCon += 1;
+            soCauHoiTrongMuc = 0;
+            kyHieuDanhMucCon = doiSoChuCai(soDanhMucCon);
+            item.attr('data-tree-label', kyHieuDanhMucCon);
+            item.find('.survey-question__number').text('Danh mục con ' + kyHieuDanhMucCon);
+        } else {
+            if (capDanhMuc) item.addClass('survey-question--level-' + capDanhMuc);
+            var kyHieuCauHoi;
+            if (capDanhMuc) {
+                soCauHoiTrongMuc += 1;
+                kyHieuCauHoi = (
+                    kyHieuDanhMucCon || (danhMucChaCoDanhMucCon ? doiSoLaMa(soDanhMucCha) : 'A')
+                ) + soCauHoiTrongMuc;
+            } else {
+                kyHieuCauHoi = String(++soCauHoiNgoaiMuc);
+            }
+            item.attr('data-tree-label', kyHieuCauHoi);
+            item.find('.survey-question__number').text('Câu hỏi ' + kyHieuCauHoi);
+        }
+
         item.find('.survey-question__title-label').html(
-            laDanhMuc ? 'Tên danh mục <span class="text-danger">*</span>' : 'Nội dung câu hỏi <span class="text-danger">*</span>'
+            laDanhMuc
+                ? ('Tên danh mục ' + (laDanhMucCon ? 'con' : 'cha') + ' <span class="text-danger">*</span>')
+                : 'Nội dung câu hỏi <span class="text-danger">*</span>'
         );
         item.find('.survey-question__title').attr(
             'placeholder',
-            laDanhMuc ? 'Nhập tên danh mục' : 'Nhập nội dung câu hỏi'
+            laDanhMuc ? ('Nhập tên danh mục ' + (laDanhMucCon ? 'con' : 'cha')) : 'Nhập nội dung câu hỏi'
         );
         item.find('.survey-question__footer').toggle(!laDanhMuc);
+        var hienThiCauHinhSo = loai === 'number';
+        item.find('.survey-question__number-settings')
+            .toggle(hienThiCauHinhSo)
+            .find(':input')
+            .prop('disabled', !hienThiCauHinhSo);
+
+        var hienThiPhuongAn = loaiCauHoiCanLuaChon(loai) && loai !== 'satisfaction';
+        item.find('.survey-question__options :input').prop('disabled', !hienThiPhuongAn);
         if (laDanhMuc) item.find('.survey-question__required').prop('checked', false);
         $(this).find('.btn-cau-hoi-len').prop('disabled', index === 0);
         $(this).find('.btn-cau-hoi-xuong').prop('disabled', index === danhSach.length - 1);
@@ -1041,9 +1181,11 @@ function taoCauHoi(idCauHoi) {
                     '<option value="short_text">Trả lời ngắn</option>' +
                     '<option value="long_text">Đoạn văn</option>' +
                     '<option value="number">Số</option>' +
+                    '<option value="percentage">Tỷ lệ (%)</option>' +
                     '<option value="score">Chọn điểm (1–10)</option>' +
                     '<option value="date">Ngày tháng</option>' +
-                    '<option value="category">Danh mục</option>' +
+                    '<option value="category">Danh mục cha</option>' +
+                    '<option value="subcategory">Danh mục con</option>' +
                     '<option value="satisfaction">Độ hài lòng</option>' +
                     '<option value="radio">Một lựa chọn</option>' +
                     '<option value="checkbox">Nhiều lựa chọn</option>' +
@@ -1055,6 +1197,13 @@ function taoCauHoi(idCauHoi) {
             '<label>Phương án trả lời <span class="text-muted">(điểm ở ô bên phải)</span></label>' +
             '<div class="survey-question__option-list"></div>' +
             '<button type="button" class="btn btn-default btn-sm btn-them-lua-chon"><i class="fa fa-plus"></i> Thêm phương án</button>' +
+        '</div>' +
+        '<div class="survey-question__number-settings" style="display:none">' +
+            '<div class="row"><div class="col-md-4"><div class="form-group">' +
+                '<label>Số chữ số tối đa</label>' +
+                '<input type="number" min="1" max="50" step="1" class="form-control survey-question__number-length" placeholder="Không giới hạn">' +
+                '<span class="help-block">Để trống nếu không giới hạn độ dài.</span>' +
+            '</div></div></div>' +
         '</div>' +
         '<div class="survey-question__footer">' +
             '<label><input type="checkbox" class="survey-question__required"> Bắt buộc trả lời</label>' +
@@ -1077,6 +1226,12 @@ function themCauHoi() {
     }, 350);
 }
 
+function focusNoiDungCauHoi(cauHoi) {
+    window.setTimeout(function () {
+        cauHoi.find('.survey-question__title').focus();
+    }, 0);
+}
+
 function khoiTaoBieuMauKhaoSat() {
     soThuTuCauHoi = 0;
     $('#danhSachCauHoi').empty();
@@ -1089,11 +1244,12 @@ function layDuLieuBieuMau() {
     $('#danhSachCauHoi .survey-question').each(function (index) {
         var item = $(this);
         var loai = item.find('.survey-question__type').val();
+        var doDaiSo = parseInt(item.find('.survey-question__number-length').val(), 10);
         var luaChon = [];
 
         if (loaiCauHoiCanLuaChon(loai)) {
             item.find('.survey-option').each(function () {
-                var noiDung = $.trim($(this).find('.survey-option__text').val());
+                var noiDung = vietHoaDauCau($.trim($(this).find('.survey-option__text').val()));
                 if (noiDung !== '') {
                     luaChon.push({
                         noi_dung: noiDung,
@@ -1103,11 +1259,16 @@ function layDuLieuBieuMau() {
             });
         }
 
+        var noiDung = $.trim(item.find('.survey-question__title').val());
+        noiDung = loai === 'category' ? noiDung.toUpperCase() : vietHoaDauCau(noiDung);
+
         cauHoi.push({
             id: item.attr('data-question-id') || ('q' + (index + 1)),
-            noi_dung: $.trim(item.find('.survey-question__title').val()),
+            noi_dung: noiDung,
             loai: loai,
-            bat_buoc: loai !== 'category' && item.find('.survey-question__required').prop('checked'),
+            ky_hieu: item.attr('data-tree-label') || '',
+            bat_buoc: !laLoaiDanhMuc(loai) && item.find('.survey-question__required').prop('checked'),
+            do_dai_so: loai === 'number' && doDaiSo > 0 ? Math.min(doDaiSo, 50) : 0,
             lua_chon: luaChon
         });
     });
@@ -1140,8 +1301,13 @@ function napDuLieuBieuMau(duLieu) {
         var cauHoi = taoCauHoi(duLieuCauHoi.id);
         var loai = duLieuCauHoi.loai || 'short_text';
 
-        cauHoi.find('.survey-question__title').val(duLieuCauHoi.noi_dung || '');
+        cauHoi.find('.survey-question__title').val(
+            loai === 'category'
+                ? String(duLieuCauHoi.noi_dung || '').toUpperCase()
+                : vietHoaDauCau(duLieuCauHoi.noi_dung || '')
+        );
         cauHoi.find('.survey-question__required').prop('checked', !!duLieuCauHoi.bat_buoc);
+        cauHoi.find('.survey-question__number-length').val(duLieuCauHoi.do_dai_so || '');
         cauHoi.find('.survey-question__type').val(loai);
 
         if (loaiCauHoiCanLuaChon(loai)) {
@@ -1155,10 +1321,10 @@ function napDuLieuBieuMau(duLieu) {
                 luaChon.forEach(function (luaChonItem) {
                     var noiDung = typeof luaChonItem === 'object' ? luaChonItem.noi_dung : luaChonItem;
                     var diem = typeof luaChonItem === 'object' ? luaChonItem.diem : 0;
-                    danhSachLuaChon.append(taoLuaChonCauHoi(noiDung, diem));
+                    danhSachLuaChon.append(taoLuaChonCauHoi(vietHoaDauCau(noiDung), diem));
                 });
             }
-            cauHoi.find('.survey-question__options').show();
+            cauHoi.find('.survey-question__options').toggle(loai !== 'satisfaction');
         }
 
         $('#danhSachCauHoi').append(cauHoi);
@@ -1180,6 +1346,7 @@ $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
     if (!loaiCauHoiCanLuaChon(loai)) {
         khuVucLuaChon.hide();
         capNhatTrangThaiBieuMau();
+        focusNoiDungCauHoi(cauHoi);
         return;
     }
 
@@ -1187,8 +1354,9 @@ $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
     if (loai === 'satisfaction') {
         themThangDiemHaiLong(danhSachLuaChon);
         cauHoi.find('.btn-them-lua-chon').hide();
-        khuVucLuaChon.show();
+        khuVucLuaChon.hide();
         capNhatTrangThaiBieuMau();
+        focusNoiDungCauHoi(cauHoi);
         return;
     }
 
@@ -1202,6 +1370,17 @@ $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
     }
     khuVucLuaChon.show();
     capNhatTrangThaiBieuMau();
+    focusNoiDungCauHoi(cauHoi);
+});
+
+$('#danhSachCauHoi').on('input', '.survey-question__title', function () {
+    var input = $(this);
+    var loai = input.closest('.survey-question').find('.survey-question__type').val();
+    input.val(loai === 'category' ? String(input.val()).toUpperCase() : vietHoaDauCau(input.val()));
+});
+
+$('#danhSachCauHoi').on('input', '.survey-option__text', function () {
+    $(this).val(vietHoaDauCau($(this).val()));
 });
 
 $('#danhSachCauHoi').on('click', '.btn-them-lua-chon', function () {
@@ -1210,6 +1389,10 @@ $('#danhSachCauHoi').on('click', '.btn-them-lua-chon', function () {
 
 $('#danhSachCauHoi').on('click', '.btn-xoa-lua-chon', function () {
     $(this).closest('.survey-option').remove();
+});
+
+$('#modalChiTieu').on('wheel', 'input[type="number"]', function (event) {
+    if (document.activeElement === this) event.preventDefault();
 });
 
 $('#danhSachCauHoi').on('click', '.btn-xoa-cau-hoi', function () {

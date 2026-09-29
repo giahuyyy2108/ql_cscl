@@ -700,6 +700,31 @@ div#datatable-user_length {
 	background: #f4fbfc;
 }
 
+.survey-question--subcategory {
+	margin-left: 30px;
+	border-color: #d5e7ea;
+	border-left-width: 3px;
+	background: #f8fcfc;
+}
+
+.survey-view-category--child,
+.survey-entry-category--child {
+	margin-left: 30px;
+	border-left-width: 3px;
+	background: #f7fbfc;
+	font-size: 14px;
+}
+
+.survey-question--level-1,
+.survey-view-question--level-1 {
+	margin-left: 30px;
+}
+
+.survey-question--level-2,
+.survey-view-question--level-2 {
+	margin-left: 60px;
+}
+
 .survey-option--locked .form-control[readonly] {
 	cursor: not-allowed;
 	background: #f3f6f8;
@@ -1678,5 +1703,30 @@ div#datatable-user_length {
 
 	#modalNhapLieu .survey-entry-modal__footer {
 		padding: 12px 16px;
+	}
+}
+
+#modalNhapLieu .survey-entry-question--level-1 {
+	margin-left: 30px;
+}
+
+#modalNhapLieu .survey-entry-question--level-2 {
+	margin-left: 60px;
+}
+
+@media (max-width: 767px) {
+	.survey-question--subcategory,
+	.survey-view-category--child,
+	.survey-entry-category--child,
+	.survey-question--level-1,
+	.survey-view-question--level-1,
+	#modalNhapLieu .survey-entry-question--level-1 {
+		margin-left: 12px;
+	}
+
+	.survey-question--level-2,
+	.survey-view-question--level-2,
+	#modalNhapLieu .survey-entry-question--level-2 {
+		margin-left: 24px;
 	}
 }
