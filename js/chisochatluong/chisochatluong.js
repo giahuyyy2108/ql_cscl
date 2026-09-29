@@ -1065,8 +1065,16 @@ function taoCauHoi(idCauHoi) {
 }
 
 function themCauHoi() {
-    $('#danhSachCauHoi').append(taoCauHoi());
+    var cauHoiMoi = taoCauHoi();
+    $('#danhSachCauHoi').append(cauHoiMoi);
     capNhatTrangThaiBieuMau();
+
+    if (cauHoiMoi[0] && typeof cauHoiMoi[0].scrollIntoView === 'function') {
+        cauHoiMoi[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    window.setTimeout(function () {
+        cauHoiMoi.find('.survey-question__title').focus();
+    }, 350);
 }
 
 function khoiTaoBieuMauKhaoSat() {
