@@ -79,11 +79,23 @@ function hienThiBieuMauNhap(duLieu) {
         return;
     }
 
-    $('#btnLuuNhapLieu').prop('disabled', false);
+    var soCauHoi = 0;
+    var coCauHoiNhapLieu = cauHoi.some(function (item) { return item.loai !== 'category'; });
+    $('#btnLuuNhapLieu').prop('disabled', !coCauHoiNhapLieu);
     cauHoi.forEach(function (item, index) {
         var id = String(item.id || ('q' + (index + 1)));
         var loai = item.loai || 'short_text';
         var giaTri = daNhap[id];
+
+        if (loai === 'category') {
+            khuVuc.append($('<div>', {
+                'class': 'survey-entry-category',
+                text: item.noi_dung || 'Danh mục chưa có tên'
+            }));
+            return;
+        }
+
+        soCauHoi += 1;
         var khoi = $('<div>', {
             'class': 'form-group survey-entry-question',
             'data-question-id': id,
@@ -94,7 +106,7 @@ function hienThiBieuMauNhap(duLieu) {
             text: item.noi_dung || 'Câu hỏi'
         });
         var nhan = $('<label>', { 'class': 'survey-entry-question__label' }).append(
-            $('<span>', { 'class': 'survey-entry-question__number', text: index + 1 }),
+            $('<span>', { 'class': 'survey-entry-question__number', text: soCauHoi }),
             noiDungCauHoi
         );
         if (item.bat_buoc) noiDungCauHoi.append($('<span>', { 'class': 'text-danger', text: ' *' }));
@@ -102,11 +114,11 @@ function hienThiBieuMauNhap(duLieu) {
 
         if (loai === 'long_text') {
             khoi.append($('<textarea>', { 'class': 'form-control survey-entry-answer', rows: 3 }).val(giaTri || ''));
-        } else if (loai === 'radio' || loai === 'checkbox') {
+        } else if (loai === 'radio' || loai === 'checkbox' || loai === 'satisfaction') {
             (item.lua_chon || []).forEach(function (luaChon, optionIndex) {
                 var noiDungLuaChon = typeof luaChon === 'object' ? luaChon.noi_dung : luaChon;
                 var input = $('<input>', {
-                    type: loai,
+                    type: loai === 'satisfaction' ? 'radio' : loai,
                     name: 'cau_hoi_' + index + (loai === 'checkbox' ? '[]' : ''),
                     value: noiDungLuaChon,
                     'class': 'survey-entry-answer'
@@ -116,7 +128,7 @@ function hienThiBieuMauNhap(duLieu) {
                 } else {
                     input.prop('checked', String(giaTri || '') === String(noiDungLuaChon));
                 }
-                khoi.append($('<div>', { 'class': loai }).append(
+                khoi.append($('<div>', { 'class': loai === 'satisfaction' ? 'radio' : loai }).append(
                     $('<label>').append(input, document.createTextNode(' ' + noiDungLuaChon))
                 ));
             });
@@ -164,7 +176,7 @@ function layCauTraLoiBieuMau() {
             ketQua[id] = cauHoi.find('.survey-entry-answer:checked').map(function () {
                 return this.value;
             }).get();
-        } else if (loai === 'radio') {
+        } else if (loai === 'radio' || loai === 'satisfaction') {
             ketQua[id] = cauHoi.find('.survey-entry-answer:checked').val() || '';
         } else {
             ketQua[id] = cauHoi.find('.survey-entry-answer').val() || '';
@@ -231,6 +243,7 @@ function tinhPhanTramTamTinh() {
     var diemToiDa = 0;
 
     cauHoi.forEach(function (item, index) {
+        if (item.loai === 'category') return;
         var id = String(item.id || ('q' + (index + 1)));
         var loai = item.loai || 'short_text';
         var giaTri = cauTraLoi[id];
@@ -242,7 +255,7 @@ function tinhPhanTramTamTinh() {
         });
 
         var cacMucDiem = Object.keys(bangDiem).map(function (key) { return bangDiem[key]; });
-        if (loai === 'radio' || loai === 'select') {
+        if (loai === 'radio' || loai === 'select' || loai === 'satisfaction') {
             tongDiem += bangDiem[giaTri] || 0;
             diemToiDa += cacMucDiem.length ? Math.max(0, Math.max.apply(Math, cacMucDiem)) : 0;
         } else if (loai === 'checkbox') {

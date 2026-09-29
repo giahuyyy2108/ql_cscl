@@ -162,6 +162,7 @@ class NhapLieuAction
         $ketQua = array();
         $tongDiem = 0;
         $diemToiDa = 0;
+        $soCauHoiNhapLieu = 0;
 
         if (empty($cauHoi)) {
             $this->lastErrorMessage = 'Chỉ tiêu chưa được thiết kế biểu mẫu nhập liệu';
@@ -169,9 +170,12 @@ class NhapLieuAction
         }
 
         foreach ($cauHoi as $index => $item) {
+            $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
+            if ($loai === 'category') continue;
+            $soCauHoiNhapLieu++;
+
             $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
             $noiDung = trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : '');
-            $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
             $batBuoc = !empty($item['bat_buoc']);
             $giaTri = isset($giaTriGui[$id]) ? $giaTriGui[$id] : null;
             $luaChonGoc = isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array();
@@ -208,7 +212,7 @@ class NhapLieuAction
                 $this->lastErrorMessage = 'Điểm phải nằm trong khoảng từ 1 đến 10: ' . $noiDung;
                 return false;
             }
-            if (!$rong && in_array($loai, array('radio', 'select'), true) && !in_array($giaTri, $luaChon, true)) {
+            if (!$rong && in_array($loai, array('radio', 'select', 'satisfaction'), true) && !in_array($giaTri, $luaChon, true)) {
                 $this->lastErrorMessage = 'Phương án trả lời không hợp lệ: ' . $noiDung;
                 return false;
             }
@@ -217,7 +221,7 @@ class NhapLieuAction
                 return false;
             }
 
-            if (!$rong && in_array($loai, array('radio', 'select'), true)) {
+            if (!$rong && in_array($loai, array('radio', 'select', 'satisfaction'), true)) {
                 $tongDiem += isset($diemLuaChon[$giaTri]) ? $diemLuaChon[$giaTri] : 0;
             } elseif (!$rong && $loai === 'checkbox') {
                 foreach ($giaTri as $phuongAnDaChon) {
@@ -227,7 +231,7 @@ class NhapLieuAction
                 $tongDiem += (float) $giaTri;
             }
 
-            if (in_array($loai, array('radio', 'select'), true) && !empty($diemLuaChon)) {
+            if (in_array($loai, array('radio', 'select', 'satisfaction'), true) && !empty($diemLuaChon)) {
                 $diemToiDa += max(0, max($diemLuaChon));
             } elseif ($loai === 'checkbox') {
                 foreach ($diemLuaChon as $diemPhuongAn) {
@@ -238,6 +242,11 @@ class NhapLieuAction
             }
 
             $ketQua[$id] = $giaTri;
+        }
+
+        if ($soCauHoiNhapLieu === 0) {
+            $this->lastErrorMessage = 'Biểu mẫu chưa có câu hỏi nhập liệu';
+            return false;
         }
 
         $tyLePhanTram = $diemToiDa > 0 ? round(($tongDiem / $diemToiDa) * 100, 2) : 0;

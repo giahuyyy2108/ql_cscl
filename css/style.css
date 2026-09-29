@@ -675,6 +675,28 @@ div#datatable-user_length {
 	padding-left: 14px;
 }
 
+.survey-view-category,
+.survey-entry-category {
+	margin: 18px 0 10px;
+	padding: 9px 12px;
+	border-left: 4px solid #087f8c;
+	color: #075e70;
+	background: #eff9fa;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.survey-question--category {
+	border-color: #b8dfe3;
+	border-left: 4px solid #087f8c;
+	background: #f4fbfc;
+}
+
+.survey-option--locked .form-control[readonly] {
+	cursor: not-allowed;
+	background: #f3f6f8;
+}
+
 .survey-entry {
 	margin-top: 18px;
 	padding-top: 12px;

@@ -141,6 +141,7 @@ class CtChiSoPeer
             $idDaDung = array();
 
             foreach ($cauHoi as $index => $noiDungCauHoi) {
+                if (isset($noiDungCauHoi['loai']) && $noiDungCauHoi['loai'] === 'category') continue;
                 $idCauHoi = isset($noiDungCauHoi['id']) && $noiDungCauHoi['id'] !== ''
                     ? (string) $noiDungCauHoi['id']
                     : 'q' . ($index + 1);
