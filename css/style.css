@@ -584,9 +584,17 @@ div#datatable-user_length {
 }
 
 .survey-builder__header {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	z-index: 20;
 	justify-content: space-between;
 	gap: 16px;
 	margin-bottom: 14px;
+	padding: 12px;
+	border-bottom: 1px solid #d9e2ec;
+	background: #fff;
+	box-shadow: 0 3px 8px rgba(0, 0, 0, .08);
 }
 
 .survey-builder__header h4,
