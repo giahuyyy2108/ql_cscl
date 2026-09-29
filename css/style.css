@@ -1629,6 +1629,32 @@ div#datatable-user_length {
 	font-weight: 700;
 }
 
+.survey-response-category {
+	margin: 18px 0 8px;
+	padding: 9px 12px;
+	border-left: 4px solid #087f8c;
+	color: #075e70;
+	background: #eff9fa;
+	font-size: 16px;
+	font-weight: 700;
+	text-align: left;
+}
+
+.survey-response-category--child {
+	margin-left: 30px;
+	border-left-width: 3px;
+	background: #f7fbfc;
+	font-size: 14px;
+}
+
+.survey-response-question--level-1 {
+	margin-left: 30px;
+}
+
+.survey-response-question--level-2 {
+	margin-left: 60px;
+}
+
 .survey-response-question__content {
 	flex: 1;
 	min-width: 0;
@@ -1718,14 +1744,17 @@ div#datatable-user_length {
 	.survey-question--subcategory,
 	.survey-view-category--child,
 	.survey-entry-category--child,
+	.survey-response-category--child,
 	.survey-question--level-1,
 	.survey-view-question--level-1,
+	.survey-response-question--level-1,
 	#modalNhapLieu .survey-entry-question--level-1 {
 		margin-left: 12px;
 	}
 
 	.survey-question--level-2,
 	.survey-view-question--level-2,
+	.survey-response-question--level-2,
 	#modalNhapLieu .survey-entry-question--level-2 {
 		margin-left: 24px;
 	}

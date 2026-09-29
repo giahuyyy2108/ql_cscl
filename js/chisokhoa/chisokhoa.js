@@ -205,6 +205,32 @@ $('#thongke-tab').on('shown.bs.tab', function () {
     canTaiThongKe = false;
 });
 
+function doiSoLaMaChiTiet(so) {
+    var bangSo = [
+        [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+        [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+        [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+    ];
+    var ketQua = '';
+    bangSo.forEach(function (item) {
+        while (so >= item[0]) {
+            ketQua += item[1];
+            so -= item[0];
+        }
+    });
+    return ketQua;
+}
+
+function doiSoChuCaiChiTiet(so) {
+    var ketQua = '';
+    while (so > 0) {
+        so -= 1;
+        ketQua = String.fromCharCode(65 + (so % 26)) + ketQua;
+        so = Math.floor(so / 26);
+    }
+    return ketQua;
+}
+
 $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
     var tr = $(this).closest('tr');
     if (tr.hasClass('child')) tr = tr.prev();
@@ -240,22 +266,51 @@ $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
 
     var danhSachTraLoi = $('<div>', { 'class': 'survey-response-detail__answers' }).appendTo(chiTiet);
     var cacCauTraLoi = Array.isArray(row.chi_tiet_cau_tra_loi) ? row.chi_tiet_cau_tra_loi : [];
+    var capDanhMuc = 0;
+    var soDanhMucCha = 0;
+    var soDanhMucCon = 0;
+    var soCauHoi = 0;
 
     cacCauTraLoi.forEach(function (item, index) {
+        if (item.loai === 'category' || item.loai === 'subcategory') {
+            var laDanhMucCon = item.loai === 'subcategory';
+            capDanhMuc = laDanhMucCon ? 2 : 1;
+            if (laDanhMucCon) {
+                soDanhMucCon += 1;
+            } else {
+                soDanhMucCha += 1;
+                soDanhMucCon = 0;
+            }
+            var kyHieuDanhMuc = item.ky_hieu || (laDanhMucCon
+                ? doiSoChuCaiChiTiet(soDanhMucCon)
+                : doiSoLaMaChiTiet(soDanhMucCha));
+            var tenDanhMuc = item.noi_dung || 'Danh mục chưa có tên';
+            if (!laDanhMucCon) tenDanhMuc = String(tenDanhMuc).toUpperCase();
+
+            $('<div>', {
+                'class': 'survey-response-category' + (laDanhMucCon ? ' survey-response-category--child' : ''),
+                text: kyHieuDanhMuc + '. ' + tenDanhMuc
+            }).appendTo(danhSachTraLoi);
+            return;
+        }
+
+        soCauHoi += 1;
         var giaTri = item.gia_tri;
         if (Array.isArray(giaTri)) giaTri = giaTri.join(', ');
         if (giaTri === '' || giaTri === null || giaTri === undefined) giaTri = 'Chưa trả lời';
 
-        $('<div>', { 'class': 'survey-response-question' }).append(
-            $('<span>', { 'class': 'survey-response-question__number', text: item.ky_hieu || (index + 1) }),
+        $('<div>', {
+            'class': 'survey-response-question' + (capDanhMuc ? ' survey-response-question--level-' + capDanhMuc : '')
+        }).append(
+            $('<span>', { 'class': 'survey-response-question__number', text: item.ky_hieu || soCauHoi }),
             $('<div>', { 'class': 'survey-response-question__content' }).append(
-                $('<div>', { 'class': 'survey-response-question__label', text: item.noi_dung || ('Câu hỏi ' + (index + 1)) }),
+                $('<div>', { 'class': 'survey-response-question__label', text: item.noi_dung || ('Câu hỏi ' + soCauHoi) }),
                 $('<div>', { 'class': 'survey-response-question__answer', text: giaTri })
             )
         ).appendTo(danhSachTraLoi);
     });
 
-    if (!cacCauTraLoi.length) {
+    if (!soCauHoi) {
         $('<div>', { 'class': 'text-muted text-center', text: 'Phiếu không có câu trả lời.' }).appendTo(danhSachTraLoi);
     }
 

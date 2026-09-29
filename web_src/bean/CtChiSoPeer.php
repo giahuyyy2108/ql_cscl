@@ -141,13 +141,24 @@ class CtChiSoPeer
             $idDaDung = array();
 
             foreach ($cauHoi as $index => $noiDungCauHoi) {
-                if (isset($noiDungCauHoi['loai']) && in_array($noiDungCauHoi['loai'], array('category', 'subcategory'), true)) continue;
+                $loaiCauHoi = isset($noiDungCauHoi['loai']) ? $noiDungCauHoi['loai'] : 'short_text';
+                if (in_array($loaiCauHoi, array('category', 'subcategory'), true)) {
+                    $chiTietCauTraLoi[] = array(
+                        'id' => isset($noiDungCauHoi['id']) ? (string) $noiDungCauHoi['id'] : '',
+                        'loai' => $loaiCauHoi,
+                        'ky_hieu' => isset($noiDungCauHoi['ky_hieu']) ? $noiDungCauHoi['ky_hieu'] : '',
+                        'noi_dung' => isset($noiDungCauHoi['noi_dung']) ? $noiDungCauHoi['noi_dung'] : 'Danh mục chưa có tên',
+                        'gia_tri' => null
+                    );
+                    continue;
+                }
                 $idCauHoi = isset($noiDungCauHoi['id']) && $noiDungCauHoi['id'] !== ''
                     ? (string) $noiDungCauHoi['id']
                     : 'q' . ($index + 1);
                 $idDaDung[$idCauHoi] = true;
                 $chiTietCauTraLoi[] = array(
                     'id' => $idCauHoi,
+                    'loai' => $loaiCauHoi,
                     'ky_hieu' => isset($noiDungCauHoi['ky_hieu']) ? $noiDungCauHoi['ky_hieu'] : '',
                     'noi_dung' => isset($noiDungCauHoi['noi_dung']) ? $noiDungCauHoi['noi_dung'] : 'Câu hỏi ' . ($index + 1),
                     'gia_tri' => isset($giaTriTraLoi[$idCauHoi]) ? $giaTriTraLoi[$idCauHoi] : ''
@@ -158,6 +169,7 @@ class CtChiSoPeer
                 if (isset($idDaDung[$idCauHoi])) continue;
                 $chiTietCauTraLoi[] = array(
                     'id' => (string) $idCauHoi,
+                    'loai' => 'short_text',
                     'ky_hieu' => '',
                     'noi_dung' => 'Câu hỏi ' . (count($chiTietCauTraLoi) + 1),
                     'gia_tri' => $giaTri
