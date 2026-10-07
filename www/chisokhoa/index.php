@@ -45,7 +45,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 	<div class="x_content">
 		<div class="row" style="margin-bottom: 12px;">
 			<div class="col-md-4">
-				<label>Khoi</label>
+				<label>Khối</label>
 				<select class="form-control" id="filter_khoi">
 					<option value="">Tất cả khối</option>
 					<?php foreach ($listKhoi as $khoi): ?>
@@ -54,7 +54,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 				</select>
 			</div>
 			<div class="col-md-4">
-				<label>Khoa/Phong</label>
+				<label>Khoa/Phòng</label>
 				<select class="form-control" id="filter_khoaphong">
 					<option value="">Tất cả Khoa/Phòng</option>
 					<?php foreach ($listKhoaPhong as $khoaPhong): ?>
@@ -92,7 +92,7 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 				<button type="button" class="close" data-dismiss="modal">
 					<span>&times;</span>
 				</button>
-				<h4 class="modal-title">Xem chỉ tiêu</h4>
+				<h4 class="modal-title">Xem chỉ số</h4>
 			</div>
 
 			<div class="modal-body">

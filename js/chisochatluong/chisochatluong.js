@@ -21,7 +21,7 @@ table = $('#datatable-chiso').DataTable({
 
     buttons: [
         {
-            text: '<i class="fa fa-plus"></i> Thêm Chỉ tiêu',
+            text: '<i class="fa fa-plus"></i> Thêm chỉ số',
             className: 'btn btn-primary btn-them-chitieu',
 
             action: function () {
