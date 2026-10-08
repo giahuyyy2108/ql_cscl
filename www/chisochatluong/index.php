@@ -533,6 +533,9 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="btnXuatExcelChiSo">
+                    <i class="fa fa-file-excel-o"></i> Xuất Excel
+                </button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>
             </div>
         </div>

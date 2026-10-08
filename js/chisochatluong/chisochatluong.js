@@ -196,6 +196,11 @@ $('#chiso-thongke-tab').on('shown.bs.tab', function () {
     else chisoThongKeTable.ajax.reload(function () { chisoThongKeTable.columns.adjust().responsive.recalc(); }, false);
 });
 
+$('#btnXuatExcelChiSo').on('click', function () {
+    if (!chisoDangXem.maChiSo) return;
+    window.location.href = $('#ULocal').val() + 'chisochatluong/xuatExcel/?ma_chi_so=' + encodeURIComponent(chisoDangXem.maChiSo);
+});
+
 function getOptionText(selectId, value) {
     var text = $('#' + selectId + ' option').filter(function () {
         return String($(this).val()) === String(value);

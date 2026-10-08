@@ -1759,3 +1759,56 @@ div#datatable-user_length {
 		margin-left: 24px;
 	}
 }
+
+/* Popup xem chỉ số: cố định header, tab và footer; chỉ cuộn nội dung tab. */
+#modalXemChiTieu .modal-dialog {
+	height: calc(100vh - 40px);
+	height: calc(100dvh - 40px);
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+#modalXemChiTieu .modal-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	max-height: 100%;
+	overflow: hidden;
+}
+
+#modalXemChiTieu .modal-header,
+#modalXemChiTieu .modal-footer,
+#modalXemChiTieu #chisoXemTabs {
+	flex: 0 0 auto;
+}
+
+#modalXemChiTieu .modal-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+#modalXemChiTieu #chisoXemTabContent {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding-top: 15px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+	#modalXemChiTieu .modal-dialog {
+		width: calc(100% - 12px);
+		height: calc(100vh - 12px);
+		height: calc(100dvh - 12px);
+		margin: 6px auto;
+	}
+
+	#modalXemChiTieu .modal-body {
+		padding-right: 10px;
+		padding-left: 10px;
+	}
+}
