@@ -2,11 +2,95 @@
 var table;
 var allKhoaOptions = [];
 var bieuDoChuKy = null;
+var khoaBieuDoCauHoi = null;
+var khoaDuLieuCauHoi = [];
 var yeuCauBieuDoChuKy = null;
 var tableCtChiSo = null;
 var maChiSoThongKe = 0;
 var soChuKyThongKe = 0;
 var canTaiThongKe = false;
+
+function khoaChiaDongTooltip(value, doDaiToiDa) {
+    var cacTu = String(value || '').trim().split(/\s+/), cacDong = [], dong = '';
+    cacTu.forEach(function (tu) {
+        if (dong && (dong + ' ' + tu).length > doDaiToiDa) {
+            cacDong.push(dong); dong = tu;
+        } else dong += (dong ? ' ' : '') + tu;
+    });
+    if (dong) cacDong.push(dong);
+    return cacDong;
+}
+
+function veKhoaBieuDoCauHoi() {
+    var cauHoi = khoaDuLieuCauHoi;
+    var canvas = $('#khoa_bieu_do_cau_hoi');
+    var empty = $('#khoa_bieu_do_cau_hoi_empty').hide();
+    if (khoaBieuDoCauHoi) khoaBieuDoCauHoi.destroy();
+    if (!cauHoi.length) { canvas.hide(); empty.show(); return; }
+
+    var theoKhoaPhong = $('#khoa_kieu_thong_ke_cau_hoi').val() === 'khoa_phong';
+    var danhSachKhoa = {};
+    var datasets;
+    if (theoKhoaPhong) {
+        cauHoi.forEach(function (item) {
+            (item.theo_khoa_phong || []).forEach(function (khoa) {
+                danhSachKhoa[String(khoa.id_khoaphong)] = khoa.ten_khoaphong;
+            });
+        });
+        var mauSac = ['#337ab7', '#26b99a', '#f0ad4e', '#d9534f', '#5bc0de', '#8e44ad', '#7f8c8d', '#2c3e50'];
+        datasets = Object.keys(danhSachKhoa).map(function (idKhoa, index) {
+            var mau = mauSac[index % mauSac.length];
+            return {
+                label: danhSachKhoa[idKhoa],
+                data: cauHoi.map(function (item) {
+                    var thongKe = (item.theo_khoa_phong || []).filter(function (khoa) {
+                        return String(khoa.id_khoaphong) === idKhoa;
+                    })[0];
+                    return thongKe ? parseFloat(thongKe.trung_binh) : null;
+                }),
+                backgroundColor: mau, borderColor: mau, borderWidth: 1
+            };
+        });
+    } else {
+        datasets = [{
+            label: 'Tỷ lệ trung bình (%)',
+            data: cauHoi.map(function (item) { return parseFloat(item.trung_binh); }),
+            backgroundColor: 'rgba(38,185,154,.65)', borderColor: '#26b99a', borderWidth: 1
+        }];
+    }
+
+    canvas.show();
+    khoaBieuDoCauHoi = new Chart(canvas[0].getContext('2d'), {
+        type: 'bar',
+        data: { labels: cauHoi.map(function (item) { return item.ky_hieu; }), datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            tooltips: { callbacks: {
+                title: function (items) {
+                    if (!items || !items.length) return '';
+                    var thongKe = cauHoi[items[0].index];
+                    return thongKe.noi_dung
+                        ? [thongKe.ky_hieu].concat(khoaChiaDongTooltip(thongKe.noi_dung, 55))
+                        : [thongKe.ky_hieu];
+                },
+                label: function (item, data) {
+                    return data.datasets[item.datasetIndex].label + ': ' + item.yLabel + '%';
+                },
+                afterLabel: function (item) {
+                    if (!theoKhoaPhong) return 'Số phiếu: ' + cauHoi[item.index].so_phieu;
+                    var idKhoa = Object.keys(danhSachKhoa)[item.datasetIndex];
+                    var thongKe = (cauHoi[item.index].theo_khoa_phong || []).filter(function (khoa) {
+                        return String(khoa.id_khoaphong) === idKhoa;
+                    })[0];
+                    return 'Số phiếu: ' + (thongKe ? thongKe.so_phieu : 0);
+                }
+            } },
+            scales: { yAxes: [{ ticks: { beginAtZero: true, max: 100 }, scaleLabel: { display: true, labelString: 'Tỷ lệ trung bình (%)' } }] }
+        }
+    });
+}
+
+$('#khoa_kieu_thong_ke_cau_hoi').on('change', veKhoaBieuDoCauHoi);
 
 function taiBieuDoChuKy(maChiSo, soChuKy) {
     var loading = $('#bieu_do_chu_ky_loading').show();
@@ -29,6 +113,9 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
                     return isFinite(parseFloat(item.trung_binh)) && parseInt(item.so_phieu, 10) > 0;
                 })
                 : [];
+            khoaDuLieuCauHoi = response && Array.isArray(response.cau_hoi) ? response.cau_hoi : [];
+            $('#khoa_bieu_do_cau_hoi_loading').hide();
+            veKhoaBieuDoCauHoi();
             loading.hide();
             if (!data.length) {
                 canvas.hide();
@@ -90,6 +177,9 @@ function taiBieuDoChuKy(maChiSo, soChuKy) {
             loading.hide();
             canvas.hide();
             empty.text('Không tải được dữ liệu biểu đồ.').show();
+            $('#khoa_bieu_do_cau_hoi_loading').hide();
+            $('#khoa_bieu_do_cau_hoi').hide();
+            $('#khoa_bieu_do_cau_hoi_empty').text('Không tải được dữ liệu biểu đồ câu hỏi.').show();
         }
     });
 }
@@ -638,9 +728,17 @@ $('#datatable-chisokhoa').on('click', '.btn-xem', function () {
         bieuDoChuKy.destroy();
         bieuDoChuKy = null;
     }
+    if (khoaBieuDoCauHoi) {
+        khoaBieuDoCauHoi.destroy();
+        khoaBieuDoCauHoi = null;
+    }
+    khoaDuLieuCauHoi = [];
     $('#bieu_do_chu_ky_loading').show();
     $('#bieu_do_chu_ky_empty').hide();
     $('#bieu_do_chu_ky').hide();
+    $('#khoa_bieu_do_cau_hoi_loading').show();
+    $('#khoa_bieu_do_cau_hoi_empty').hide();
+    $('#khoa_bieu_do_cau_hoi').hide();
     $('#thongtin-tab').tab('show');
     $('#modalChiTieu').modal('show');
 });

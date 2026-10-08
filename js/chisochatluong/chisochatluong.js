@@ -1,5 +1,200 @@
 /* DATA TABLES */
 var table;
+var chisoBieuDo = null;
+var chisoBieuDoCauHoi = null;
+var chisoDuLieuCauHoi = [];
+var chisoThongKeTable = null;
+var chisoDangXem = { maChiSo: 0, soChuKy: 0 };
+
+function chisoTenKy(ky) {
+    if (chisoDangXem.soChuKy === 12) return 'Tháng ' + ky;
+    if (chisoDangXem.soChuKy === 4) return 'Quý ' + ky;
+    if (chisoDangXem.soChuKy === 2) return '6 tháng ' + ky;
+    if (chisoDangXem.soChuKy === 1) return 'Năm';
+    return 'Kỳ ' + ky;
+}
+
+function chisoDinhDangThoiGian(value) {
+    if (!value) return '-';
+    var parts = String(value).split(' ');
+    var dateParts = parts[0].split('-');
+    if (dateParts.length !== 3) return value;
+    return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + (parts[1] ? ' ' + parts[1].slice(0, 5) : '');
+}
+
+function chisoChiaDongTooltip(value, doDaiToiDa) {
+    var cacTu = String(value || '').trim().split(/\s+/);
+    var cacDong = [];
+    var dong = '';
+    cacTu.forEach(function (tu) {
+        if (dong && (dong + ' ' + tu).length > doDaiToiDa) {
+            cacDong.push(dong);
+            dong = tu;
+        } else {
+            dong += (dong ? ' ' : '') + tu;
+        }
+    });
+    if (dong) cacDong.push(dong);
+    return cacDong;
+}
+
+function veChisoBieuDoCauHoi() {
+    var cauHoi = chisoDuLieuCauHoi;
+    var canvas = $('#chiso_bieu_do_cau_hoi');
+    var empty = $('#chiso_bieu_do_cau_hoi_empty').hide();
+    if (chisoBieuDoCauHoi) chisoBieuDoCauHoi.destroy();
+    if (!cauHoi.length) {
+        canvas.hide();
+        empty.show();
+        return;
+    }
+
+    var theoKhoaPhong = $('#chiso_kieu_thong_ke_cau_hoi').val() === 'khoa_phong';
+    var datasets;
+    if (theoKhoaPhong) {
+        var danhSachKhoa = {};
+        cauHoi.forEach(function (item) {
+            (item.theo_khoa_phong || []).forEach(function (khoa) {
+                danhSachKhoa[String(khoa.id_khoaphong)] = khoa.ten_khoaphong;
+            });
+        });
+        var mauSac = ['#337ab7', '#26b99a', '#f0ad4e', '#d9534f', '#5bc0de', '#8e44ad', '#7f8c8d', '#2c3e50'];
+        datasets = Object.keys(danhSachKhoa).map(function (idKhoa, index) {
+            var mau = mauSac[index % mauSac.length];
+            return {
+                label: danhSachKhoa[idKhoa],
+                data: cauHoi.map(function (item) {
+                    var thongKe = (item.theo_khoa_phong || []).filter(function (khoa) {
+                        return String(khoa.id_khoaphong) === idKhoa;
+                    })[0];
+                    return thongKe ? parseFloat(thongKe.trung_binh) : null;
+                }),
+                backgroundColor: mau, borderColor: mau, borderWidth: 1
+            };
+        });
+    } else {
+        datasets = [{
+            label: 'Tỷ lệ trung bình (%)',
+            data: cauHoi.map(function (item) { return parseFloat(item.trung_binh); }),
+            backgroundColor: 'rgba(38,185,154,.65)', borderColor: '#26b99a', borderWidth: 1
+        }];
+    }
+
+    canvas.show();
+    chisoBieuDoCauHoi = new Chart(canvas[0].getContext('2d'), {
+        type: 'bar',
+        data: { labels: cauHoi.map(function (item) { return item.ky_hieu; }), datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            tooltips: { callbacks: {
+                title: function (items) {
+                    if (!items || !items.length) return '';
+                    var thongKe = cauHoi[items[0].index];
+                    return thongKe.noi_dung
+                        ? [thongKe.ky_hieu].concat(chisoChiaDongTooltip(thongKe.noi_dung, 55))
+                        : [thongKe.ky_hieu];
+                },
+                label: function (item, data) {
+                    return data.datasets[item.datasetIndex].label + ': ' + item.yLabel + '%';
+                },
+                afterLabel: function (item) {
+                    if (!theoKhoaPhong) return 'Số phiếu: ' + cauHoi[item.index].so_phieu;
+                    var idKhoa = Object.keys(danhSachKhoa)[item.datasetIndex];
+                    var thongKe = (cauHoi[item.index].theo_khoa_phong || []).filter(function (khoa) {
+                        return String(khoa.id_khoaphong) === idKhoa;
+                    })[0];
+                    return 'Số phiếu: ' + (thongKe ? thongKe.so_phieu : 0);
+                }
+            } },
+            scales: { yAxes: [{ ticks: { beginAtZero: true, max: 100 }, scaleLabel: { display: true, labelString: 'Tỷ lệ trung bình (%)' } }] }
+        }
+    });
+}
+
+$('#chiso_kieu_thong_ke_cau_hoi').on('change', veChisoBieuDoCauHoi);
+
+function taiChisoBieuDo() {
+    var loading = $('#chiso_bieu_do_loading').show();
+    var empty = $('#chiso_bieu_do_empty').hide();
+    var canvas = $('#chiso_bieu_do_chu_ky').show();
+    var loadingCauHoi = $('#chiso_bieu_do_cau_hoi_loading').show();
+    var emptyCauHoi = $('#chiso_bieu_do_cau_hoi_empty').hide();
+    var canvasCauHoi = $('#chiso_bieu_do_cau_hoi').show();
+    if (chisoBieuDo) chisoBieuDo.destroy();
+    if (chisoBieuDoCauHoi) chisoBieuDoCauHoi.destroy();
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/getBieuDoChuKy/',
+        type: 'POST', dataType: 'json',
+        data: { ma_chi_so: chisoDangXem.maChiSo },
+        success: function (response) {
+            var data = response && response.success && Array.isArray(response.data)
+                ? response.data.filter(function (item) { return isFinite(parseFloat(item.trung_binh)) && parseInt(item.so_phieu, 10) > 0; })
+                : [];
+            loading.hide();
+            loadingCauHoi.hide();
+            if (!data.length) {
+                canvas.hide();
+                empty.text(response && response.message ? response.message : 'Chưa có dữ liệu nhập liệu để hiển thị.').show();
+            } else {
+                chisoBieuDo = new Chart(canvas[0].getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: data.map(function (item) { return chisoTenKy(item.ky) + '/' + item.nam; }),
+                        datasets: [{
+                            label: 'Trung bình toàn bộ phiếu',
+                            data: data.map(function (item) { return parseFloat(item.trung_binh); }),
+                            borderColor: '#337ab7', backgroundColor: 'rgba(51,122,183,.12)',
+                            pointBackgroundColor: '#337ab7', borderWidth: 2, pointRadius: 4, fill: true, lineTension: 0.2
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        tooltips: { callbacks: { label: function (item) { return 'Trung bình: ' + item.yLabel + '%'; } } },
+                        scales: { yAxes: [{ ticks: { beginAtZero: true, max: 100 }, scaleLabel: { display: true, labelString: 'Tỷ lệ trung bình (%)' } }] }
+                    }
+                });
+            }
+
+            chisoDuLieuCauHoi = response && Array.isArray(response.cau_hoi) ? response.cau_hoi : [];
+            veChisoBieuDoCauHoi();
+        },
+        error: function () {
+            loading.hide(); canvas.hide(); empty.text('Không tải được dữ liệu biểu đồ.').show();
+            loadingCauHoi.hide(); canvasCauHoi.hide(); emptyCauHoi.text('Không tải được dữ liệu biểu đồ câu hỏi.').show();
+        }
+    });
+}
+
+function khoiTaoChisoThongKe() {
+    if (chisoThongKeTable) return;
+    chisoThongKeTable = $('#datatable-chiso-thongke').DataTable({
+        ordering: false, responsive: true, autoWidth: false, processing: true,
+        lengthChange: false, paging: false, scrollY: '50vh', scrollCollapse: true,
+        ajax: {
+            url: $('#ULocal').val() + 'chisochatluong/getDanhSachPhieu/',
+            type: 'POST',
+            data: function (data) { data.ma_chi_so = chisoDangXem.maChiSo; },
+            dataSrc: function (response) { return response && response.success && Array.isArray(response.data) ? response.data : []; }
+        },
+        columns: [
+            { data: 'id' },
+            { data: 'ten_khoaphong', render: function (data) { return data || '-'; } },
+            { data: 'ky', render: function (data) { return chisoTenKy(data); } },
+            { data: 'tong_diem' }, { data: 'diem_toi_da' },
+            { data: 'ty_le_phan_tram', render: function (data) { return '<strong class="text-success">' + data + '%</strong>'; } },
+            { data: 'nguoi_nhap', render: function (data) { return data || '-'; } },
+            { data: 'updated_at', render: function (data) { return chisoDinhDangThoiGian(data); } }
+        ],
+        language: { emptyTable: 'Chưa có phiếu nhập liệu', processing: 'Đang tải dữ liệu...' }
+    });
+}
+
+$('#chiso-bieudo-tab').on('shown.bs.tab', taiChisoBieuDo);
+$('#chiso-thongke-tab').on('shown.bs.tab', function () {
+    if (!chisoThongKeTable) khoiTaoChisoThongKe();
+    else chisoThongKeTable.ajax.reload(function () { chisoThongKeTable.columns.adjust().responsive.recalc(); }, false);
+});
 
 function getOptionText(selectId, value) {
     var text = $('#' + selectId + ' option').filter(function () {
@@ -530,6 +725,25 @@ $('#datatable-chiso').on('click', '.btn-xem', function () {
     if (!row) {
         return;
     }
+
+    var soChuKy = parseInt($('#id_chuky option[value="' + row.id_chuky + '"]').data('so-ky'), 10) || 0;
+    chisoDangXem = { maChiSo: row.ma_chi_so, soChuKy: soChuKy };
+    if (chisoBieuDo) {
+        chisoBieuDo.destroy();
+        chisoBieuDo = null;
+    }
+    if (chisoBieuDoCauHoi) {
+        chisoBieuDoCauHoi.destroy();
+        chisoBieuDoCauHoi = null;
+    }
+    if (chisoThongKeTable) chisoThongKeTable.clear().draw();
+    $('#chiso_bieu_do_loading').show();
+    $('#chiso_bieu_do_empty').hide();
+    $('#chiso_bieu_do_chu_ky').hide();
+    $('#chiso_bieu_do_cau_hoi_loading').show();
+    $('#chiso_bieu_do_cau_hoi_empty').hide();
+    $('#chiso_bieu_do_cau_hoi').hide();
+    $('#chiso-thongtin-tab').tab('show');
 
     var maPhong = row.phong || [String(row.id_khoaphong)];
     function hienThi(value,text="") {

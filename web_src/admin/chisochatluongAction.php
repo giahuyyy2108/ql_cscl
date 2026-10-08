@@ -7,17 +7,20 @@ require_once ("web_src/bean/PhamViPeer.php");
 require_once ("web_src/bean/ChuKyPeer.php");
 require_once ("web_src/bean/DonviTinhPeer.php");
 require_once ("web_src/bean/TinhTrangPeer.php");
+require_once ("web_src/bean/CtChiSoPeer.php");
 
 class chisochatluongAction
 {
 	var $request;
 	var $ChiSoPeer;
+	var $CtChiSoPeer;
 	var $lastErrorMessage;
   	public static $listRole ="chisochatluong,save,update,gui,duyet,xoa,tuchoi,khoaA,khoaB";
 	public function __construct()
 	{
 		$this->request = new Request;
 		$this->ChiSoPeer = new ChiSoChatLuongPeer();
+		$this->CtChiSoPeer = new CtChiSoPeer();
 		$this->request->setTitle("Danh sach chi so");
 	}
 
@@ -71,6 +74,55 @@ class chisochatluongAction
 		return $this->request->json_response(
 			json_encode($data)
 		);
+	}
+
+	public function getBieuDoChuKy()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		if ($maChiSo <= 0 || !$this->coQuyenXemChiSo($maChiSo)) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'message' => 'Mã chỉ số không hợp lệ'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'data' => $this->CtChiSoPeer->getTrungBinhTheoKy($maChiSo),
+			'cau_hoi' => $this->CtChiSoPeer->getTrungBinhTheoCauHoi($maChiSo)
+		)));
+	}
+
+	public function getDanhSachPhieu()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		if ($maChiSo <= 0 || !$this->coQuyenXemChiSo($maChiSo)) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'data' => array(),
+				'message' => 'Mã chỉ số không hợp lệ'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'data' => $this->CtChiSoPeer->getDanhSachPhieu($maChiSo)
+		)));
+	}
+
+	private function coQuyenXemChiSo($maChiSo)
+	{
+		$userId = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+		$coQuyenDuyet = $this->request->checkRole('chisochatluong.duyet');
+		$idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($userId);
+		$danhSach = $this->ChiSoPeer->getList($coQuyenDuyet, $idKhoaPhong, $userId);
+
+		foreach ($danhSach as $chiSo) {
+			if ((int) $chiSo->get('ma_chi_so') === (int) $maChiSo) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	function save()

@@ -201,6 +201,20 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 							<div class="indicator-cycle-chart__canvas">
 								<canvas id="bieu_do_chu_ky"></canvas>
 							</div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+							<hr>
+							<h4>Tỷ lệ trung bình theo câu hỏi</h4>
+							<div class="form-group" style="max-width: 360px;">
+								<label for="khoa_kieu_thong_ke_cau_hoi">Kiểu thống kê</label>
+								<select id="khoa_kieu_thong_ke_cau_hoi" class="form-control">
+									<option value="khoa_phong">Thống kê từng câu hỏi theo khoa phòng</option>
+									<option value="tong_phieu" selected>Thống kê từng câu hỏi trên tổng số phiếu</option>
+								</select>
+							</div>
+							<div id="khoa_bieu_do_cau_hoi_loading" class="text-muted">Đang tải dữ liệu...</div>
+							<div id="khoa_bieu_do_cau_hoi_empty" class="alert alert-info" style="display:none;">Chưa có câu hỏi tính điểm hoặc dữ liệu trả lời.</div>
+							<div class="indicator-cycle-chart__canvas">
+								<canvas id="khoa_bieu_do_cau_hoi"></canvas>
+							</div>
 						</div>
 					</div>
 

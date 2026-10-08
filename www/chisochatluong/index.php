@@ -297,8 +297,8 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 										id="id_chuky"
 										name="id_chuky">
 
-								<?php foreach ($listCky as $item): ?>
-									<option value="<?= $item->id ?>">
+					<?php foreach ($listCky as $item): ?>
+						<option value="<?= $item->id ?>" data-so-ky="<?= (int) $item->chuky ?>">
 										<?= $item->ten ?>
 									</option>
 								<?php endforeach; ?>
@@ -408,6 +408,19 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                 <h4 class="modal-title"></i> Xem chỉ số</h4>
             </div>
             <div class="modal-body">
+                <ul class="nav nav-tabs" id="chisoXemTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="chiso-thongtin-tab" data-toggle="tab" href="#chiso-thongtin" role="tab">Thông tin</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="chiso-bieudo-tab" data-toggle="tab" href="#chiso-bieudo" role="tab">Biểu đồ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="chiso-thongke-tab" data-toggle="tab" href="#chiso-thongke" role="tab">Thống kê</a>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="chisoXemTabContent">
+                <div class="tab-pane fade show active" id="chiso-thongtin" role="tabpanel">
                 <table class="table table-bordered table-striped" style="margin-bottom: 0;">
                     <tbody>
                         <tr>
@@ -481,6 +494,43 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                         </tr>
                     </tbody>
                 </table>
+                </div>
+                <div class="tab-pane fade" id="chiso-bieudo" role="tabpanel">
+                    <div class="indicator-cycle-chart">
+                        <h4 id="chiso_tieu_de_bieu_do">Trung bình toàn bộ phiếu theo chu kỳ</h4>
+                        <div id="chiso_bieu_do_loading" class="text-muted">Đang tải dữ liệu...</div>
+                        <div id="chiso_bieu_do_empty" class="alert alert-info" style="display:none;">Chưa có dữ liệu nhập liệu để hiển thị.</div>
+                        <div class="indicator-cycle-chart__canvas">
+                            <canvas id="chiso_bieu_do_chu_ky"></canvas>
+                        </div>
+                        <hr>
+                        <h4>Tỷ lệ trung bình theo câu hỏi</h4>
+                        <div class="form-group" style="max-width: 360px;">
+                            <label for="chiso_kieu_thong_ke_cau_hoi">Kiểu thống kê</label>
+                            <select id="chiso_kieu_thong_ke_cau_hoi" class="form-control">
+                                <option value="khoa_phong">Thống kê từng câu hỏi theo khoa phòng</option>
+                                <option value="tong_phieu" selected>Thống kê từng câu hỏi trên tổng số phiếu</option>
+                            </select>
+                        </div>
+                        <div id="chiso_bieu_do_cau_hoi_loading" class="text-muted">Đang tải dữ liệu...</div>
+                        <div id="chiso_bieu_do_cau_hoi_empty" class="alert alert-info" style="display:none;">Chưa có câu hỏi tính điểm hoặc dữ liệu trả lời.</div>
+                        <div class="indicator-cycle-chart__canvas">
+                            <canvas id="chiso_bieu_do_cau_hoi"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="chiso-thongke" role="tabpanel">
+                    <div class="table-responsive">
+                        <table id="datatable-chiso-thongke" class="table table-striped table-bordered" width="100%">
+                            <thead><tr>
+                                <th>id</th><th>Khoa/Phòng</th><th>Kỳ</th><th>Tổng điểm</th>
+                                <th>Điểm tối đa</th><th>Tỷ lệ</th><th>Người nhập</th><th>Cập nhật lúc</th>
+                            </tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>

@@ -100,19 +100,9 @@ class ChiSoChatLuongPeer
                 WHERE cs.nguoi_gui = $userId
                 OR cs.trang_thai IN (1, 2, 3)
             ";
-        } elseif ($idKhoaPhong <= 0) {
-            $sqlSelect .= " WHERE 1 = 0";
         } else {
             $sqlSelect .= "
-                WHERE CASE
-                    WHEN JSON_VALID(cs.phong) = 1
-                    THEN JSON_CONTAINS(
-                        cs.phong,
-                        '" . $idKhoaPhong . "',
-                        '$'
-                    )
-                    ELSE cs.id_khoaphong = $idKhoaPhong
-                END = 1
+                WHERE cs.nguoi_gui = $userId
             ";
         }
 

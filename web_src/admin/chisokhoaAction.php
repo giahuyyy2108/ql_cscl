@@ -61,7 +61,8 @@ class chisokhoaAction
 		}
 		return $this->request->json_response(json_encode(array(
 			'success' => true,
-			'data' => $this->CtChiSoPeer->getTrungBinhTheoKy($maChiSo)
+			'data' => $this->CtChiSoPeer->getTrungBinhTheoKy($maChiSo),
+			'cau_hoi' => $this->CtChiSoPeer->getTrungBinhTheoCauHoi($maChiSo)
 		)));
 	}
 

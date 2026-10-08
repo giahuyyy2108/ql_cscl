@@ -111,6 +111,117 @@ class CtChiSoPeer
         return $ketQua;
     }
 
+    public function getTrungBinhTheoCauHoi($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        $resultChiSo = $this->dbsql->query("SELECT bieumau FROM chi_so_chat_luong WHERE ma_chi_so = $maChiSo LIMIT 1");
+        if ($this->dbsql->num_rows($resultChiSo) === 0) return array();
+
+        $rowChiSo = $this->dbsql->fetch_array($resultChiSo);
+        $bieuMau = json_decode($rowChiSo['bieumau'], true);
+        $cauHoi = isset($bieuMau['cau_hoi']) && is_array($bieuMau['cau_hoi']) ? $bieuMau['cau_hoi'] : array();
+        $cauHoiTinhDiem = array();
+
+        foreach ($cauHoi as $index => $item) {
+            $loai = isset($item['loai']) ? $item['loai'] : '';
+            $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+            $bangDiem = array();
+            $diemToiDa = 0;
+
+            if (isset($item['lua_chon']) && is_array($item['lua_chon'])) {
+                foreach ($item['lua_chon'] as $luaChon) {
+                    $noiDung = is_array($luaChon) && isset($luaChon['noi_dung']) ? (string) $luaChon['noi_dung'] : (string) $luaChon;
+                    $diem = is_array($luaChon) && isset($luaChon['diem']) && is_numeric($luaChon['diem']) ? (float) $luaChon['diem'] : 0;
+                    $bangDiem[$noiDung] = $diem;
+                }
+            }
+
+            if ($loai === 'checkbox') {
+                foreach ($bangDiem as $diem) if ($diem > 0) $diemToiDa += $diem;
+            } elseif (in_array($loai, array('radio', 'select', 'satisfaction'), true) && !empty($bangDiem)) {
+                $diemToiDa = max(0, max($bangDiem));
+            } elseif ($loai === 'score') {
+                $diemToiDa = 10;
+            }
+
+            if ($diemToiDa <= 0) continue;
+            $cauHoiTinhDiem[$id] = array(
+                'ky_hieu' => isset($item['ky_hieu']) && trim($item['ky_hieu']) !== '' ? trim($item['ky_hieu']) : $id,
+                'noi_dung' => isset($item['noi_dung']) ? trim((string) $item['noi_dung']) : '',
+                'loai' => $loai,
+                'bang_diem' => $bangDiem,
+                'diem_toi_da' => $diemToiDa,
+                'tong' => 0,
+                'so_phieu' => 0,
+                'theo_khoa_phong' => array()
+            );
+        }
+
+        if (empty($cauHoiTinhDiem)) return array();
+        $resultPhieu = $this->dbsql->query("SELECT ct.du_lieu, ct.id_khoaphong, k.ten AS ten_khoaphong
+            FROM ct_chiso ct
+            LEFT JOIN khoa k ON k.id = ct.id_khoaphong
+            WHERE ct.ma_chi_so = $maChiSo
+            ORDER BY ct.id ASC");
+        while ($row = $this->dbsql->fetch_array($resultPhieu)) {
+            $duLieu = json_decode($row['du_lieu'], true);
+            $traLoi = isset($duLieu['cau_tra_loi']) && is_array($duLieu['cau_tra_loi']) ? $duLieu['cau_tra_loi'] : array();
+
+            foreach ($cauHoiTinhDiem as $id => &$thongKe) {
+                if (!array_key_exists($id, $traLoi) || $traLoi[$id] === '' || $traLoi[$id] === null) continue;
+                $giaTri = $traLoi[$id];
+                $diem = 0;
+                if ($thongKe['loai'] === 'score' && is_numeric($giaTri)) {
+                    $diem = (float) $giaTri;
+                } elseif ($thongKe['loai'] === 'checkbox') {
+                    $cacLuaChon = is_array($giaTri) ? $giaTri : array($giaTri);
+                    foreach ($cacLuaChon as $luaChon) $diem += isset($thongKe['bang_diem'][$luaChon]) ? $thongKe['bang_diem'][$luaChon] : 0;
+                } else {
+                    $diem = isset($thongKe['bang_diem'][$giaTri]) ? $thongKe['bang_diem'][$giaTri] : 0;
+                }
+                $tyLe = ($diem / $thongKe['diem_toi_da']) * 100;
+                $thongKe['tong'] += $tyLe;
+                $thongKe['so_phieu']++;
+
+                $idKhoaPhong = (int) $row['id_khoaphong'];
+                if (!isset($thongKe['theo_khoa_phong'][$idKhoaPhong])) {
+                    $thongKe['theo_khoa_phong'][$idKhoaPhong] = array(
+                        'id_khoaphong' => $idKhoaPhong,
+                        'ten_khoaphong' => $row['ten_khoaphong'] !== null ? $row['ten_khoaphong'] : 'Chưa xác định',
+                        'tong' => 0,
+                        'so_phieu' => 0
+                    );
+                }
+                $thongKe['theo_khoa_phong'][$idKhoaPhong]['tong'] += $tyLe;
+                $thongKe['theo_khoa_phong'][$idKhoaPhong]['so_phieu']++;
+            }
+            unset($thongKe);
+        }
+
+        $ketQua = array();
+        foreach ($cauHoiTinhDiem as $item) {
+            if ($item['so_phieu'] <= 0) continue;
+            $theoKhoaPhong = array();
+            foreach ($item['theo_khoa_phong'] as $khoaPhong) {
+                $theoKhoaPhong[] = array(
+                    'id_khoaphong' => $khoaPhong['id_khoaphong'],
+                    'ten_khoaphong' => $khoaPhong['ten_khoaphong'],
+                    'trung_binh' => round($khoaPhong['tong'] / $khoaPhong['so_phieu'], 2),
+                    'so_phieu' => $khoaPhong['so_phieu']
+                );
+            }
+            $ketQua[] = array(
+                'ky_hieu' => $item['ky_hieu'],
+                'noi_dung' => $item['noi_dung'],
+                'trung_binh' => round($item['tong'] / $item['so_phieu'], 2),
+                'diem_toi_da' => $item['diem_toi_da'],
+                'so_phieu' => $item['so_phieu'],
+                'theo_khoa_phong' => $theoKhoaPhong
+            );
+        }
+        return $ketQua;
+    }
+
     public function getDanhSachPhieu($maChiSo)
     {
         $maChiSo = (int) $maChiSo;
