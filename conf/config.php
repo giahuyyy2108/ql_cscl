@@ -38,10 +38,12 @@ $domain = $_SERVER['HTTP_HOST'];
 // Cấu hình URL mặc định động
 define('_DEFAULT_URL_', $protocol . $domain . '/ql_cscl/');
 
+define('_DEFAULT_VERSION_','v1.0');
+
 // define('_DEFAULT_URL_', 'http://192.168.31.2:80/vpdt/');
 // define('_DEFAULT_URL_', 'http://localhost/vpdt/');
 define('_DEFAULT_LOGO_', _DEFAULT_URL_ . 'images/favicon.png');
-define('_DEFAULT_TITLE_', 'QLCL - BỆNH VIỆN THỐNG NHẤT');
+define('_DEFAULT_TITLE_', 'QLCL - BỆNH VIỆN THỐNG NHẤT'. ' ' . _DEFAULT_VERSION_);
 define('_DEFAULT_LOGIN_', 'login');
 define('_DEFAULT_LIBS_', _DEFAULT_URL_ . 'libs/');
 // san pham
