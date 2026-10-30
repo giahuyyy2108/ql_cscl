@@ -4,6 +4,7 @@ var chisoBieuDo = null;
 var chisoBieuDoCauHoi = null;
 var chisoDuLieuCauHoi = [];
 var chisoThongKeTable = null;
+var chisoDuLieuTheoThang = [];
 var chisoDangXem = { maChiSo: 0, soChuKy: 0 };
 
 function chisoTenKy(ky) {
@@ -191,7 +192,126 @@ function khoiTaoChisoThongKe() {
 }
 
 $('#chiso-bieudo-tab').on('shown.bs.tab', taiChisoBieuDo);
+function hienThiChisoTheoThang() {
+    var body = $('#chiso_theo_thang_body').empty();
+    var thangDaChon = $('#chiso_chon_thang').val().split('/');
+    var maThang = thangDaChon.length === 2 ? thangDaChon[1] + '-' + thangDaChon[0] : '';
+    var data = chisoDuLieuTheoThang.filter(function (item) {
+        return !maThang || item.thang === maThang;
+    });
+    if (!data.length) {
+        body.append($('<tr>').append($('<td>', { colspan: 3, class: 'text-center' })
+            .text(maThang ? 'Không có phiếu trong tháng đã chọn.' : 'Chưa có phiếu để thống kê.')));
+        return;
+    }
+    data.forEach(function (item) {
+        var thang = String(item.thang || '').split('-');
+        body.append($('<tr>')
+            .append($('<td>').text(thang.length === 2 ? thang[1] + '/' + thang[0] : item.thang))
+            .append($('<td>').text(item.so_phieu))
+            .append($('<td>').text(item.trung_binh)));
+    });
+}
+
+$('#chiso_chon_thang').datepicker({
+    format: 'mm/yyyy', startView: 1, minViewMode: 1,
+    autoclose: true, forceParse: false, container: '#modalXemChiTieu'
+}).datepicker('setDate', new Date()).on('changeDate', hienThiChisoTheoThang);
+$('#chiso_xoa_chon_thang').on('click', function () {
+    $('#chiso_chon_thang').datepicker('update', '');
+    hienThiChisoTheoThang();
+});
+
+$('#chiso-theo-thang-tab').on('shown.bs.tab', function () {
+    var maChiSo = chisoDangXem.maChiSo;
+    $('#chiso_theo_thang_body').empty();
+    var loading = $('#chiso_theo_thang_loading').show();
+    var error = $('#chiso_theo_thang_error').hide();
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/getThongKeTheoThang/',
+        type: 'POST', dataType: 'json',
+        data: { ma_chi_so: maChiSo },
+        success: function (response) {
+            if (maChiSo !== chisoDangXem.maChiSo) return;
+            if (!response || !response.success) {
+                error.text(response && response.message ? response.message : 'Không tải được dữ liệu theo tháng.').show();
+                return;
+            }
+            chisoDuLieuTheoThang = Array.isArray(response.data) ? response.data : [];
+            hienThiChisoTheoThang();
+        },
+        error: function () {
+            if (maChiSo === chisoDangXem.maChiSo) error.text('Không tải được dữ liệu theo tháng.').show();
+        },
+        complete: function () {
+            if (maChiSo === chisoDangXem.maChiSo) loading.hide();
+        }
+    });
+});
+
+function taiChisoThongKeNhapThem() {
+    var maChiSo = chisoDangXem.maChiSo;
+    var khuVuc = $('#chiso_thong_ke_nhap_them').empty();
+    var loading = $('#chiso_thong_ke_nhap_them_loading').show();
+    var loi = $('#chiso_thong_ke_nhap_them_error').hide();
+    var rong = $('#chiso_thong_ke_nhap_them_empty').hide();
+    if (!maChiSo) { loading.hide(); return; }
+
+    $.ajax({
+        url: $('#ULocal').val() + 'chisochatluong/getThongKeNhapThem/',
+        type: 'POST', dataType: 'json', data: { ma_chi_so: maChiSo },
+        success: function (response) {
+            if (maChiSo !== chisoDangXem.maChiSo) return;
+            if (!response || !response.success) {
+                loi.text(response && response.message ? response.message : 'Không tải được thống kê nội dung nhập thêm.').show();
+                return;
+            }
+            var danhSach = Array.isArray(response.data) ? response.data : [];
+            if (!danhSach.length) {
+                rong.text('Biểu mẫu chưa có phương án cho nhập thêm và chưa có câu trả lời tương ứng.').show();
+                return;
+            }
+
+            var tongLuot = danhSach.reduce(function (tong, item) {
+                return tong + (parseInt(item.so_luot, 10) || 0);
+            }, 0);
+            khuVuc.append($('<p>').append(
+                $('<strong>').text('Tổng lượt chọn phương án có ô nhập: ' + tongLuot)
+            ));
+            var bang = $('<table>', { 'class': 'table table-striped table-bordered', width: '100%' });
+            var thead = $('<thead>').append($('<tr>').append(
+                $('<th>').text('Câu hỏi'), $('<th>').text('Phương án'),
+                $('<th>').text('Tổng lượt chọn'), $('<th>').text('Nội dung nhập thêm'),
+                $('<th>').text('Số lượt cùng nội dung')
+            ));
+            var tbody = $('<tbody>');
+            danhSach.forEach(function (item) {
+                var noiDung = Array.isArray(item.noi_dung_nhap) && item.noi_dung_nhap.length
+                    ? item.noi_dung_nhap : [{ noi_dung: '-', so_luot: 0 }];
+                noiDung.forEach(function (chiTiet) {
+                    tbody.append($('<tr>').append(
+                        $('<td>').text((item.ky_hieu || '') + ' - ' + (item.cau_hoi || '')),
+                        $('<td>').text(item.phuong_an || ''),
+                        $('<td>').text(item.so_luot || 0),
+                        $('<td>').text(chiTiet.noi_dung || '-'),
+                        $('<td>').text(chiTiet.so_luot || 0)
+                    ));
+                });
+            });
+            khuVuc.append(bang.append(thead, tbody));
+        },
+        error: function () {
+            if (maChiSo === chisoDangXem.maChiSo) loi.text('Không tải được thống kê nội dung nhập thêm.').show();
+        },
+        complete: function () {
+            if (maChiSo === chisoDangXem.maChiSo) loading.hide();
+        }
+    });
+}
+
 $('#chiso-thongke-tab').on('shown.bs.tab', function () {
+    taiChisoThongKeNhapThem();
     if (!chisoThongKeTable) khoiTaoChisoThongKe();
     else chisoThongKeTable.ajax.reload(function () { chisoThongKeTable.columns.adjust().responsive.recalc(); }, false);
 });
@@ -208,6 +328,11 @@ function getOptionText(selectId, value) {
 
     return text || value || '';
 }
+
+$('#chiso_loc_thang').datepicker({
+    format: 'mm/yyyy', startView: 1, minViewMode: 1,
+    autoclose: true, forceParse: false
+}).datepicker('setDate', new Date());
 
 table = $('#datatable-chiso').DataTable({
     destroy: true,
@@ -259,7 +384,13 @@ table = $('#datatable-chiso').DataTable({
             }
 
             // The current backend can return one object instead of an array.
-            return Array.isArray(json.data) ? json.data : [json.data];
+            var danhSach = Array.isArray(json.data) ? json.data : [json.data];
+            var thangDaChon = $('#chiso_loc_thang').val().split('/');
+            if (thangDaChon.length !== 2) return danhSach;
+            var maThang = thangDaChon[1] + '-' + thangDaChon[0];
+            return danhSach.filter(function (item) {
+                return String(item.created_at || '').slice(0, 7) === maThang;
+            });
         }
     },
     responsive: true,
@@ -416,6 +547,14 @@ table = $('#datatable-chiso').DataTable({
         $('[data-toggle="tooltip"]').tooltip();
         hiddenChiSoChatLuongButtons();
     }
+});
+
+$('#chiso_loc_thang').on('changeDate', function () {
+    table.ajax.reload();
+});
+$('#chiso_xoa_loc_thang').on('click', function () {
+    $('#chiso_loc_thang').datepicker('update', '');
+    table.ajax.reload();
 });
 
 function coQuyenChiSo(tenQuyen) {
@@ -712,7 +851,16 @@ function hienThiBieuMauKhaoSat(duLieu) {
             cauHoi.lua_chon.forEach(function (itemLuaChon) {
                 var noiDung = typeof itemLuaChon === 'object' ? itemLuaChon.noi_dung : itemLuaChon;
                 var diem = typeof itemLuaChon === 'object' ? itemLuaChon.diem : 0;
-                luaChon.append($('<li>').text(vietHoaDauCau(noiDung) + ' (' + diem + ' điểm)'));
+                var phuongAn = $('<li>').text(vietHoaDauCau(noiDung) + ' (' + diem + ' điểm)');
+                if (cauHoi.loai === 'radio' && itemLuaChon && itemLuaChon.cho_nhap_them) {
+                    phuongAn.append($('<input>', {
+                        type: 'text',
+                        'class': 'form-control input-sm survey-view-option__other',
+                        placeholder: 'Người trả lời nhập nội dung khác tại đây',
+                        disabled: true
+                    }));
+                }
+                luaChon.append(phuongAn);
             });
             khoiCauHoi.append(luaChon);
         }
@@ -742,6 +890,12 @@ $('#datatable-chiso').on('click', '.btn-xem', function () {
         chisoBieuDoCauHoi = null;
     }
     if (chisoThongKeTable) chisoThongKeTable.clear().draw();
+    $('#chiso_thong_ke_nhap_them').empty();
+    $('#chiso_thong_ke_nhap_them_loading, #chiso_thong_ke_nhap_them_error, #chiso_thong_ke_nhap_them_empty').hide();
+    chisoDuLieuTheoThang = [];
+    $('#chiso_chon_thang').datepicker('setDate', new Date());
+    $('#chiso_theo_thang_body').empty();
+    $('#chiso_theo_thang_error').hide();
     $('#chiso_bieu_do_loading').show();
     $('#chiso_bieu_do_empty').hide();
     $('#chiso_bieu_do_chu_ky').hide();
@@ -1311,13 +1465,15 @@ function capNhatTrangThaiBieuMau() {
 
         var hienThiPhuongAn = loaiCauHoiCanLuaChon(loai) && loai !== 'satisfaction';
         item.find('.survey-question__options :input').prop('disabled', !hienThiPhuongAn);
+        item.find('.survey-option__other-toggle').toggle(loai === 'radio');
+        item.find('.survey-option__allow-other').prop('disabled', loai !== 'radio');
         if (laDanhMuc) item.find('.survey-question__required').prop('checked', false);
         $(this).find('.btn-cau-hoi-len').prop('disabled', index === 0);
         $(this).find('.btn-cau-hoi-xuong').prop('disabled', index === danhSach.length - 1);
     });
 }
 
-function taoLuaChonCauHoi(noiDung, diem) {
+function taoLuaChonCauHoi(noiDung, diem, choNhapThem) {
     var luaChon = $('<div>', { 'class': 'survey-option' });
     luaChon.append($('<i>', { 'class': 'fa fa-circle-o text-muted' }));
     luaChon.append($('<input>', {
@@ -1335,6 +1491,16 @@ function taoLuaChonCauHoi(noiDung, diem) {
         title: 'Điểm của phương án này',
         value: diem === undefined || diem === null ? 0 : diem
     }));
+    luaChon.append($('<label>', {
+        'class': 'survey-option__other-toggle',
+        title: 'Khi chọn phương án này, người trả lời phải nhập nội dung bổ sung'
+    }).append(
+        $('<input>', {
+            type: 'checkbox',
+            'class': 'survey-option__allow-other'
+        }).prop('checked', !!choNhapThem),
+        document.createTextNode(' Có ô nhập')
+    ));
     luaChon.append(
         $('<button>', {
             type: 'button',
@@ -1472,7 +1638,8 @@ function layDuLieuBieuMau() {
                 if (noiDung !== '') {
                     luaChon.push({
                         noi_dung: noiDung,
-                        diem: parseFloat($(this).find('.survey-option__score').val()) || 0
+                        diem: parseFloat($(this).find('.survey-option__score').val()) || 0,
+                        cho_nhap_them: loai === 'radio' && $(this).find('.survey-option__allow-other').prop('checked')
                     });
                 }
             });
@@ -1540,7 +1707,8 @@ function napDuLieuBieuMau(duLieu) {
                 luaChon.forEach(function (luaChonItem) {
                     var noiDung = typeof luaChonItem === 'object' ? luaChonItem.noi_dung : luaChonItem;
                     var diem = typeof luaChonItem === 'object' ? luaChonItem.diem : 0;
-                    danhSachLuaChon.append(taoLuaChonCauHoi(vietHoaDauCau(noiDung), diem));
+                    var choNhapThem = luaChonItem && typeof luaChonItem === 'object' && !!luaChonItem.cho_nhap_them;
+                    danhSachLuaChon.append(taoLuaChonCauHoi(vietHoaDauCau(noiDung), diem, choNhapThem));
                 });
             }
             cauHoi.find('.survey-question__options').toggle(loai !== 'satisfaction');
@@ -1604,6 +1772,7 @@ $('#danhSachCauHoi').on('input', '.survey-option__text', function () {
 
 $('#danhSachCauHoi').on('click', '.btn-them-lua-chon', function () {
     $(this).siblings('.survey-question__option-list').append(taoLuaChonCauHoi());
+    capNhatTrangThaiBieuMau();
 });
 
 $('#danhSachCauHoi').on('click', '.btn-xoa-lua-chon', function () {

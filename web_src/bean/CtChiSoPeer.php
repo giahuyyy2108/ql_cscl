@@ -111,6 +111,128 @@ class CtChiSoPeer
         return $ketQua;
     }
 
+    public function getThongKeTheoThang($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        $result = $this->dbsql->query("SELECT created_at, du_lieu
+            FROM ct_chiso
+            WHERE ma_chi_so = $maChiSo
+            ORDER BY created_at DESC, id DESC");
+        $theoThang = array();
+
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $thang = substr((string) $row['created_at'], 0, 7);
+            if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $thang)) continue;
+
+            $duLieu = json_decode($row['du_lieu'], true);
+            if (!is_array($duLieu) || !isset($duLieu['ty_le_phan_tram'])
+                || !is_numeric($duLieu['ty_le_phan_tram'])) continue;
+
+            if (!isset($theoThang[$thang])) {
+                $theoThang[$thang] = array(
+                    'thang' => $thang,
+                    'so_phieu' => 0,
+                    'tong' => 0
+                );
+            }
+            $theoThang[$thang]['so_phieu']++;
+            $theoThang[$thang]['tong'] += (float) $duLieu['ty_le_phan_tram'];
+        }
+
+        foreach ($theoThang as &$item) {
+            $item['trung_binh'] = round($item['tong'] / $item['so_phieu'], 2);
+            unset($item['tong']);
+        }
+        unset($item);
+        return array_values($theoThang);
+    }
+
+    /** Tổng hợp nội dung nhập thêm của các phương án radio (ví dụ: Khác). */
+    public function getThongKeNhapThem($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        $resultChiSo = $this->dbsql->query("SELECT bieumau FROM chi_so_chat_luong WHERE ma_chi_so = $maChiSo LIMIT 1");
+        if ($this->dbsql->num_rows($resultChiSo) === 0) return array();
+
+        $rowChiSo = $this->dbsql->fetch_array($resultChiSo);
+        $bieuMau = json_decode($rowChiSo['bieumau'], true);
+        $cauHoi = isset($bieuMau['cau_hoi']) && is_array($bieuMau['cau_hoi'])
+            ? $bieuMau['cau_hoi'] : (is_array($bieuMau) ? $bieuMau : array());
+        $thongTinCauHoi = array();
+        $thongKe = array();
+
+        foreach ($cauHoi as $index => $item) {
+            if (!is_array($item) || !isset($item['loai']) || $item['loai'] !== 'radio') continue;
+            $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+            $thongTinCauHoi[$id] = array(
+                'ky_hieu' => isset($item['ky_hieu']) && trim((string) $item['ky_hieu']) !== ''
+                    ? trim((string) $item['ky_hieu']) : $id,
+                'cau_hoi' => isset($item['noi_dung']) ? (string) $item['noi_dung'] : ''
+            );
+            foreach (isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array() as $luaChon) {
+                if (!is_array($luaChon) || empty($luaChon['cho_nhap_them'])) continue;
+                $phuongAn = isset($luaChon['noi_dung']) ? trim((string) $luaChon['noi_dung']) : '';
+                if ($phuongAn === '') continue;
+                $khoa = $id . "\0" . $phuongAn;
+                if (!isset($thongKe[$khoa])) {
+                    $thongKe[$khoa] = array(
+                        'ky_hieu' => $thongTinCauHoi[$id]['ky_hieu'],
+                        'cau_hoi' => $thongTinCauHoi[$id]['cau_hoi'],
+                        'phuong_an' => $phuongAn,
+                        'so_luot' => 0,
+                        'noi_dung_nhap' => array()
+                    );
+                }
+            }
+        }
+
+        $resultPhieu = $this->dbsql->query("SELECT du_lieu FROM ct_chiso
+            WHERE ma_chi_so = $maChiSo ORDER BY id ASC");
+        while ($row = $this->dbsql->fetch_array($resultPhieu)) {
+            $duLieu = json_decode($row['du_lieu'], true);
+            $traLoi = isset($duLieu['cau_tra_loi']) && is_array($duLieu['cau_tra_loi'])
+                ? $duLieu['cau_tra_loi'] : array();
+            foreach ($traLoi as $id => $giaTri) {
+                if (!is_array($giaTri) || !isset($giaTri['lua_chon'], $giaTri['noi_dung_khac'])
+                    || !is_scalar($giaTri['lua_chon']) || !is_scalar($giaTri['noi_dung_khac'])) continue;
+                $phuongAn = trim((string) $giaTri['lua_chon']);
+                $noiDung = trim(preg_replace('/\s+/u', ' ', (string) $giaTri['noi_dung_khac']));
+                if ($phuongAn === '' || $noiDung === '') continue;
+
+                $id = (string) $id;
+                $khoa = $id . "\0" . $phuongAn;
+                // Giữ cả câu trả lời cũ nếu phương án đã bị sửa/xóa khỏi biểu mẫu hiện hành.
+                if (!isset($thongKe[$khoa])) {
+                    $thongTin = isset($thongTinCauHoi[$id]) ? $thongTinCauHoi[$id] : array('ky_hieu' => $id, 'cau_hoi' => '');
+                    $thongKe[$khoa] = array(
+                        'ky_hieu' => $thongTin['ky_hieu'],
+                        'cau_hoi' => $thongTin['cau_hoi'],
+                        'phuong_an' => $phuongAn,
+                        'so_luot' => 0,
+                        'noi_dung_nhap' => array()
+                    );
+                }
+                $thongKe[$khoa]['so_luot']++;
+                $khoaNoiDung = function_exists('mb_strtolower') ? mb_strtolower($noiDung, 'UTF-8') : strtolower($noiDung);
+                $khoaNoiDung = sha1($khoaNoiDung);
+                if (!isset($thongKe[$khoa]['noi_dung_nhap'][$khoaNoiDung])) {
+                    $thongKe[$khoa]['noi_dung_nhap'][$khoaNoiDung] = array('noi_dung' => $noiDung, 'so_luot' => 0);
+                }
+                $thongKe[$khoa]['noi_dung_nhap'][$khoaNoiDung]['so_luot']++;
+            }
+        }
+
+        foreach ($thongKe as &$item) {
+            $item['noi_dung_nhap'] = array_values($item['noi_dung_nhap']);
+            usort($item['noi_dung_nhap'], function ($a, $b) {
+                return $a['so_luot'] === $b['so_luot']
+                    ? strcmp($a['noi_dung'], $b['noi_dung']) : $b['so_luot'] - $a['so_luot'];
+            });
+        }
+        unset($item);
+        return array_values($thongKe);
+    }
+
     public function getTrungBinhTheoCauHoi($maChiSo)
     {
         $maChiSo = (int) $maChiSo;
@@ -170,6 +292,10 @@ class CtChiSoPeer
             foreach ($cauHoiTinhDiem as $id => &$thongKe) {
                 if (!array_key_exists($id, $traLoi) || $traLoi[$id] === '' || $traLoi[$id] === null) continue;
                 $giaTri = $traLoi[$id];
+                if ($thongKe['loai'] === 'radio' && is_array($giaTri)) {
+                    $giaTri = isset($giaTri['lua_chon']) && is_scalar($giaTri['lua_chon'])
+                        ? (string) $giaTri['lua_chon'] : '';
+                }
                 $diem = 0;
                 if ($thongKe['loai'] === 'score' && is_numeric($giaTri)) {
                     $diem = (float) $giaTri;
@@ -222,9 +348,13 @@ class CtChiSoPeer
         return $ketQua;
     }
 
-    public function getDanhSachPhieu($maChiSo)
+    public function getDanhSachPhieu($maChiSo, $idKhoaPhong = 0)
     {
         $maChiSo = (int) $maChiSo;
+        $idKhoaPhong = (int) $idKhoaPhong;
+        $dieuKienKhoaPhong = $idKhoaPhong > 0
+            ? " AND ct.id_khoaphong = $idKhoaPhong"
+            : '';
         $sql = "SELECT ct.id, ct.ma_chi_so, ct.id_khoaphong, ct.nam, ct.ky,
                        ct.du_lieu, ct.created_at, ct.updated_at, cs.bieumau,
                        k.ten AS ten_khoaphong,
@@ -233,7 +363,7 @@ class CtChiSoPeer
                 LEFT JOIN chi_so_chat_luong cs ON cs.ma_chi_so = ct.ma_chi_so
                 LEFT JOIN khoa k ON k.id = ct.id_khoaphong
                 LEFT JOIN user u ON u.id = ct.id_user
-                WHERE ct.ma_chi_so = $maChiSo
+                WHERE ct.ma_chi_so = $maChiSo$dieuKienKhoaPhong
                 ORDER BY ct.nam DESC, ct.ky DESC, ct.created_at DESC, ct.id DESC";
         $result = $this->dbsql->query($sql);
         $items = array();

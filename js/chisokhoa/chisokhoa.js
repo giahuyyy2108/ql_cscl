@@ -295,6 +295,13 @@ $('#thongke-tab').on('shown.bs.tab', function () {
     canTaiThongKe = false;
 });
 
+$('#btn-xuat-thong-ke').on('click', function () {
+    if (!maChiSoThongKe) return;
+
+    window.location.href = $('#ULocal').val() + 'chisokhoa/xuatThongKe/?ma_chi_so=' +
+        encodeURIComponent(maChiSoThongKe);
+});
+
 function doiSoLaMaChiTiet(so) {
     var bangSo = [
         [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
@@ -386,6 +393,9 @@ $('#datatable-ct-chiso').on('click', '.btn-xem-phieu', function () {
 
         soCauHoi += 1;
         var giaTri = item.gia_tri;
+        if (giaTri && !Array.isArray(giaTri) && typeof giaTri === 'object' && giaTri.lua_chon !== undefined) {
+            giaTri = giaTri.lua_chon + ': ' + (giaTri.noi_dung_khac || '');
+        }
         if (Array.isArray(giaTri)) giaTri = giaTri.join(', ');
         if (giaTri === '' || giaTri === null || giaTri === undefined) giaTri = 'Chưa trả lời';
 

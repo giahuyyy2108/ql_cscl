@@ -93,6 +93,40 @@ class chisochatluongAction
 		)));
 	}
 
+	public function getThongKeTheoThang()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		if ($maChiSo <= 0 || !$this->coQuyenXemChiSo($maChiSo)) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'data' => array(),
+				'message' => 'Bạn không có quyền xem chỉ số này'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'data' => $this->CtChiSoPeer->getThongKeTheoThang($maChiSo)
+		)));
+	}
+
+	public function getThongKeNhapThem()
+	{
+		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
+		if ($maChiSo <= 0 || !$this->coQuyenXemChiSo($maChiSo)) {
+			return $this->request->json_response(json_encode(array(
+				'success' => false,
+				'data' => array(),
+				'message' => 'Bạn không có quyền xem chỉ số này'
+			)));
+		}
+
+		return $this->request->json_response(json_encode(array(
+			'success' => true,
+			'data' => $this->CtChiSoPeer->getThongKeNhapThem($maChiSo)
+		)));
+	}
+
 	public function getDanhSachPhieu()
 	{
 		$maChiSo = (int) $this->request->getParameter('ma_chi_so');
@@ -144,6 +178,7 @@ class chisochatluongAction
 			return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 		};
 		$thongKe = $this->CtChiSoPeer->getTrungBinhTheoCauHoi($maChiSo);
+		$thongKeNhapThem = $this->CtChiSoPeer->getThongKeNhapThem($maChiSo);
 		$tenFile = trim((string) $chiSo->get('ten_chi_so'));
 		$tenFile = preg_replace('/[\\\\\/:*?"<>|\x00-\x1F]+/u', '_', $tenFile);
 		$tenFile = trim($tenFile, " ._\t\n\r\0\x0B");
@@ -176,7 +211,23 @@ class chisochatluongAction
 			echo '<tr><td>' . $escape($item['ky_hieu']) . '</td><td>' . $escape($item['noi_dung']) . '</td><td>Tổng số phiếu</td><td>' . $escape($item['trung_binh']) . '</td><td>' . $escape($item['so_phieu']) . '</td></tr>';
 			foreach ($item['theo_khoa_phong'] as $khoaPhong) echo '<tr><td>' . $escape($item['ky_hieu']) . '</td><td>' . $escape($item['noi_dung']) . '</td><td>' . $escape($khoaPhong['ten_khoaphong']) . '</td><td>' . $escape($khoaPhong['trung_binh']) . '</td><td>' . $escape($khoaPhong['so_phieu']) . '</td></tr>';
 		}
-		echo '</table></body></html>';
+		echo '</table>';
+		if (!empty($thongKeNhapThem)) {
+			echo '<br><table><tr><th colspan="5">THỐNG KÊ PHƯƠNG ÁN CÓ Ô NHẬP (KHÁC)</th></tr>';
+			echo '<tr><th>Câu hỏi</th><th>Phương án</th><th>Tổng lượt chọn</th><th>Nội dung nhập thêm</th><th>Số lượt cùng nội dung</th></tr>';
+			foreach ($thongKeNhapThem as $item) {
+				$cauHoi = $item['ky_hieu'] . ' - ' . $item['cau_hoi'];
+				if (empty($item['noi_dung_nhap'])) {
+					echo '<tr><td>' . $escape($cauHoi) . '</td><td>' . $escape($item['phuong_an']) . '</td><td>0</td><td>-</td><td>0</td></tr>';
+					continue;
+				}
+				foreach ($item['noi_dung_nhap'] as $noiDung) {
+					echo '<tr><td>' . $escape($cauHoi) . '</td><td>' . $escape($item['phuong_an']) . '</td><td>' . $escape($item['so_luot']) . '</td><td>' . $escape($noiDung['noi_dung']) . '</td><td>' . $escape($noiDung['so_luot']) . '</td></tr>';
+				}
+			}
+			echo '</table>';
+		}
+		echo '</body></html>';
 		exit;
 	}
 

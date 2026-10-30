@@ -102,6 +102,216 @@ class NhapLieuAction
         )));
     }
 
+    public function xuatThongKe()
+    {
+        $maChiSo = (int) $this->request->getParameter('ma_chi_so');
+        $userId = isset($_SESSION['sUserID']) ? (int) $_SESSION['sUserID'] : 0;
+        $idKhoaPhong = $this->ChiSoPeer->getKhoaPhongIdByUserId($userId);
+        $cauHinh = $this->CtChiSoPeer->getCauHinhNhap($maChiSo, $idKhoaPhong);
+
+        if ($userId <= 0 || $idKhoaPhong <= 0 || $maChiSo <= 0 || !$cauHinh) {
+            header('HTTP/1.1 403 Forbidden');
+            echo 'Bạn không có quyền xuất thống kê chỉ số này.';
+            exit;
+        }
+
+        $tenChiSo = 'Chỉ số ' . $maChiSo;
+        foreach ($this->ChiSoPeer->getListDaDuyetByKhoa($idKhoaPhong) as $chiSo) {
+            if ((int) $chiSo->get('ma_chi_so') === $maChiSo) {
+                $tenChiSo = trim((string) $chiSo->get('ten_chi_so'));
+                break;
+            }
+        }
+
+        $tenKhoaPhong = 'Khoa/Phòng ' . $idKhoaPhong;
+        foreach ($this->ChiSoPeer->getListKhoaPhongByKhoi() as $khoaPhong) {
+            if ((int) $khoaPhong['id'] === $idKhoaPhong) {
+                $tenKhoaPhong = trim((string) $khoaPhong['ten']);
+                break;
+            }
+        }
+
+        $bieuMau = $this->docBieuMau($cauHinh['bieumau']);
+        $cauHoi = array();
+        foreach ($bieuMau['cau_hoi'] as $index => $item) {
+            $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
+            if (in_array($loai, array('category', 'subcategory'), true)) continue;
+            $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+            $cauHoi[$id] = array(
+                'id' => $id,
+                'noi_dung' => trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : 'Câu hỏi ' . ($index + 1)),
+                'loai' => $loai
+            );
+        }
+
+        $danhSachPhieu = $this->CtChiSoPeer->getDanhSachPhieu($maChiSo, $idKhoaPhong);
+
+        $escape = function ($value) {
+            return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        };
+        $hienThiTraLoi = function ($value) {
+            if (!is_array($value)) return (string) $value;
+            if (isset($value['lua_chon']) && isset($value['noi_dung_khac'])) {
+                return (string) $value['lua_chon'] . ': ' . (string) $value['noi_dung_khac'];
+            }
+            $items = array();
+            foreach ($value as $item) {
+                if (is_scalar($item) && trim((string) $item) !== '') $items[] = trim((string) $item);
+            }
+            return implode('; ', $items);
+        };
+        $soPhieu = count($danhSachPhieu);
+        $tenKhoaTrongFile = preg_replace('/[\\\/:*?"<>|\x00-\x1F]+/u', '_', $tenKhoaPhong);
+        $tenKhoaTrongFile = trim($tenKhoaTrongFile, " ._\t\n\r\0\x0B");
+        if ($tenKhoaTrongFile === '') $tenKhoaTrongFile = 'Khoa phong ' . $idKhoaPhong;
+        $tenFileDayDu = 'Thong ke chi so ' . $maChiSo . ' - ' . $tenKhoaTrongFile . '.xlsx';
+        $tenKhoaKhongDau = function_exists('iconv')
+            ? iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $tenKhoaTrongFile)
+            : $tenKhoaTrongFile;
+        $tenKhoaKhongDau = strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', (string) $tenKhoaKhongDau));
+        $tenKhoaKhongDau = trim($tenKhoaKhongDau, '-');
+        if ($tenKhoaKhongDau === '') $tenKhoaKhongDau = 'khoa-phong-' . $idKhoaPhong;
+        $tenFileDuPhong = 'thong-ke-chi-so-' . $maChiSo . '-' . $tenKhoaKhongDau . '.xlsx';
+        $tenSheet = preg_replace('/[\\\\\/:*?\[\]]+/u', ' ', $tenKhoaPhong);
+        $tenSheet = trim(preg_replace('/\s+/u', ' ', $tenSheet), " '\t\n\r\0\x0B");
+        if ($tenSheet === '') $tenSheet = 'Khoa phong ' . $idKhoaPhong;
+        $tenSheet = function_exists('mb_substr')
+            ? mb_substr($tenSheet, 0, 31, 'UTF-8')
+            : substr($tenSheet, 0, 31);
+
+        $tenCot = function ($soCot) {
+            $ketQua = '';
+            while ($soCot > 0) {
+                $soCot--;
+                $ketQua = chr(65 + ($soCot % 26)) . $ketQua;
+                $soCot = (int) floor($soCot / 26);
+            }
+            return $ketQua;
+        };
+        $xml = function ($value) {
+            $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', (string) $value);
+            return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        };
+        $oChu = function ($toaDo, $giaTri, $kieu = 4, $laSo = false) use ($xml) {
+            if ($laSo && is_numeric($giaTri)) {
+                return '<c r="' . $toaDo . '" s="' . $kieu . '"><v>' . (0 + $giaTri) . '</v></c>';
+            }
+            return '<c r="' . $toaDo . '" s="' . $kieu . '" t="inlineStr"><is><t xml:space="preserve">'
+                . $xml($giaTri) . '</t></is></c>';
+        };
+
+        $soCot = 6 + count($cauHoi);
+        $cotCuoi = $tenCot($soCot);
+        $cacDong = array();
+        $cacDong[] = '<row r="1" ht="24" customHeight="1">' . $oChu('A1', 'THỐNG KÊ PHIẾU THEO CHỈ SỐ CỦA KHOA/PHÒNG', 1) . '</row>';
+        $cacDong[] = '<row r="2">' . $oChu('A2', 'Mã chỉ số', 3) . $oChu('B2', $maChiSo, 4) . '</row>';
+        $cacDong[] = '<row r="3">' . $oChu('A3', 'Tên chỉ số', 3) . $oChu('B3', $tenChiSo, 4) . '</row>';
+        $cacDong[] = '<row r="4">' . $oChu('A4', 'Khoa/Phòng', 3) . $oChu('B4', $tenKhoaPhong, 4) . '</row>';
+        $cacDong[] = '<row r="5">' . $oChu('A5', 'Tổng số phiếu', 3) . $oChu('B5', $soPhieu, 4, true) . '</row>';
+        $cacDong[] = '<row r="7" ht="22" customHeight="1">' . $oChu('A7', 'CHI TIẾT CÂU TRẢ LỜI CỦA TỪNG PHIẾU', 2) . '</row>';
+
+        $tieuDe = array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
+        foreach ($cauHoi as $item) $tieuDe[] = $item['noi_dung'];
+        $dongTieuDe = '';
+        foreach ($tieuDe as $index => $noiDung) {
+            $dongTieuDe .= $oChu($tenCot($index + 1) . '8', $noiDung, 2);
+        }
+        $cacDong[] = '<row r="8" ht="36" customHeight="1">' . $dongTieuDe . '</row>';
+
+        $soDong = 8;
+        foreach ($danhSachPhieu as $index => $phieu) {
+            $soDong++;
+            $giaTriDong = array(
+                $index + 1,
+                $phieu['id'],
+                $phieu['nam'],
+                $phieu['ky'],
+                $phieu['nguoi_nhap'],
+                $phieu['created_at']
+            );
+            foreach ($cauHoi as $id => $item) {
+                $giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
+                $giaTriDong[] = $hienThiTraLoi($giaTri);
+            }
+            $noiDungDong = '';
+            foreach ($giaTriDong as $cot => $giaTri) {
+                $laSo = in_array($cot, array(0, 2, 3), true);
+                $noiDungDong .= $oChu($tenCot($cot + 1) . $soDong, $giaTri, 4, $laSo);
+            }
+            $cacDong[] = '<row r="' . $soDong . '">' . $noiDungDong . '</row>';
+        }
+        if ($soPhieu === 0) {
+            $soDong++;
+            $cacDong[] = '<row r="' . $soDong . '">' . $oChu('A' . $soDong, 'Chưa có phiếu nào của Khoa/Phòng cho chỉ số này.', 4) . '</row>';
+        }
+
+        $merge = array('A1:' . $cotCuoi . '1', 'B2:' . $cotCuoi . '2', 'B3:' . $cotCuoi . '3', 'B4:' . $cotCuoi . '4', 'B5:' . $cotCuoi . '5', 'A7:' . $cotCuoi . '7');
+        if ($soPhieu === 0) $merge[] = 'A' . $soDong . ':' . $cotCuoi . $soDong;
+        $mergeXml = '';
+        foreach ($merge as $vung) $mergeXml .= '<mergeCell ref="' . $vung . '"/>';
+
+        $cotXml = '<col min="1" max="1" width="7" customWidth="1"/>'
+            . '<col min="2" max="2" width="12" customWidth="1"/>'
+            . '<col min="3" max="4" width="10" customWidth="1"/>'
+            . '<col min="5" max="5" width="22" customWidth="1"/>'
+            . '<col min="6" max="6" width="20" customWidth="1"/>';
+        if ($soCot > 6) $cotXml .= '<col min="7" max="' . $soCot . '" width="32" customWidth="1"/>';
+
+        $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<sheetViews><sheetView workbookViewId="0"><pane ySplit="8" topLeftCell="A9" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+            . '<sheetFormatPr defaultRowHeight="18"/><cols>' . $cotXml . '</cols><sheetData>' . implode('', $cacDong) . '</sheetData>'
+            . '<mergeCells count="' . count($merge) . '">' . $mergeXml . '</mergeCells>'
+            . '<autoFilter ref="A8:' . $cotCuoi . max(8, $soDong) . '"/>'
+            . '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
+
+        $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<fonts count="3"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="14"/><name val="Arial"/><color rgb="FF1F2937"/></font><font><b/><sz val="10"/><name val="Arial"/><color rgb="FFFFFFFF"/></font></fonts>'
+            . '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9EAF7"/><bgColor indexed="64"/></patternFill></fill></fills>'
+            . '<borders count="2"><border/><border><left style="thin"><color rgb="FFB8C2CC"/></left><right style="thin"><color rgb="FFB8C2CC"/></right><top style="thin"><color rgb="FFB8C2CC"/></top><bottom style="thin"><color rgb="FFB8C2CC"/></bottom><diagonal/></border></borders>'
+            . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+            . '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs>'
+            . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+        $rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+        $workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' . $xml($tenSheet) . '" sheetId="1" r:id="rId1"/></sheets></workbook>';
+        $workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+
+        $duongDanTam = tempnam(sys_get_temp_dir(), 'qlcscl_');
+        if ($duongDanTam === false) {
+            header('HTTP/1.1 500 Internal Server Error');
+            echo 'Không thể tạo file Excel tạm.';
+            exit;
+        }
+        @unlink($duongDanTam);
+        $duongDanTam .= '.zip';
+
+        try {
+            $goiExcel = new PharData($duongDanTam, 0, null, Phar::ZIP);
+            $goiExcel->addFromString('[Content_Types].xml', $contentTypes);
+            $goiExcel->addFromString('_rels/.rels', $rels);
+            $goiExcel->addFromString('xl/workbook.xml', $workbookXml);
+            $goiExcel->addFromString('xl/_rels/workbook.xml.rels', $workbookRels);
+            $goiExcel->addFromString('xl/styles.xml', $stylesXml);
+            $goiExcel->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+            unset($goiExcel);
+
+            if (ob_get_length()) ob_end_clean();
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="' . $tenFileDuPhong . '"; filename*=UTF-8\'\'' . rawurlencode($tenFileDayDu));
+            header('Content-Length: ' . filesize($duongDanTam));
+            header('Cache-Control: max-age=0');
+            readfile($duongDanTam);
+        } catch (Throwable $exception) {
+            if (!headers_sent()) header('HTTP/1.1 500 Internal Server Error');
+            echo 'Không thể tạo file Excel.';
+        }
+        @unlink($duongDanTam);
+        exit;
+    }
+
     public function save()
     {
         $maChiSo = (int) $this->request->getParameter('ma_chi_so');
@@ -176,12 +386,12 @@ class NhapLieuAction
 
             $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
             $noiDung = trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : '');
-            $batBuoc = !empty($item['bat_buoc']);
             $doDaiSo = isset($item['do_dai_so']) ? max(0, min(50, (int) $item['do_dai_so'])) : 0;
             $giaTri = isset($giaTriGui[$id]) ? $giaTriGui[$id] : null;
             $luaChonGoc = isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array();
             $luaChon = array();
             $diemLuaChon = array();
+            $phuongAnNhapThem = array();
             foreach ($luaChonGoc as $phuongAn) {
                 $tenPhuongAn = is_array($phuongAn)
                     ? trim(isset($phuongAn['noi_dung']) ? (string) $phuongAn['noi_dung'] : '')
@@ -191,17 +401,46 @@ class NhapLieuAction
                 $diemLuaChon[$tenPhuongAn] = is_array($phuongAn) && isset($phuongAn['diem'])
                     ? (float) $phuongAn['diem']
                     : 0;
+                if ($loai === 'radio' && is_array($phuongAn) && !empty($phuongAn['cho_nhap_them'])) {
+                    $phuongAnNhapThem[$tenPhuongAn] = true;
+                }
             }
 
             if ($loai === 'checkbox') {
                 $giaTri = is_array($giaTri) ? array_values(array_filter(array_map('strval', $giaTri), 'strlen')) : array();
                 $rong = empty($giaTri);
+            } elseif ($loai === 'radio') {
+                $giaTriCoNhapThem = is_array($giaTri);
+                $giaTriLuaChon = $giaTriCoNhapThem
+                    ? (isset($giaTri['lua_chon']) && is_scalar($giaTri['lua_chon']) ? trim((string) $giaTri['lua_chon']) : '')
+                    : (is_scalar($giaTri) ? trim((string) $giaTri) : '');
+                $noiDungNhapThem = $giaTriCoNhapThem && isset($giaTri['noi_dung_khac']) && is_scalar($giaTri['noi_dung_khac'])
+                    ? trim((string) $giaTri['noi_dung_khac']) : '';
+                $rong = $giaTriLuaChon === '';
+
+                if (!$rong && isset($phuongAnNhapThem[$giaTriLuaChon])) {
+                    if (!$giaTriCoNhapThem || $noiDungNhapThem === '') {
+                        $this->lastErrorMessage = 'Vui lòng ghi rõ nội dung cho lựa chọn khác: ' . $noiDung;
+                        return false;
+                    }
+                    if ((function_exists('mb_strlen') ? mb_strlen($noiDungNhapThem, 'UTF-8') : strlen($noiDungNhapThem)) > 500) {
+                        $this->lastErrorMessage = 'Nội dung nhập thêm không được quá 500 ký tự: ' . $noiDung;
+                        return false;
+                    }
+                    $giaTri = array('lua_chon' => $giaTriLuaChon, 'noi_dung_khac' => $noiDungNhapThem);
+                } else {
+                    if ($giaTriCoNhapThem) {
+                        $this->lastErrorMessage = 'Phương án nhập thêm không hợp lệ: ' . $noiDung;
+                        return false;
+                    }
+                    $giaTri = $giaTriLuaChon;
+                }
             } else {
                 $giaTri = is_scalar($giaTri) ? trim((string) $giaTri) : '';
                 $rong = $giaTri === '';
             }
 
-            if ($batBuoc && $rong) {
+            if ($rong) {
                 $this->lastErrorMessage = 'Vui lòng trả lời câu hỏi: ' . $noiDung;
                 return false;
             }
@@ -223,7 +462,8 @@ class NhapLieuAction
                 $this->lastErrorMessage = 'Điểm phải nằm trong khoảng từ 1 đến 10: ' . $noiDung;
                 return false;
             }
-            if (!$rong && in_array($loai, array('radio', 'select', 'satisfaction'), true) && !in_array($giaTri, $luaChon, true)) {
+            if (!$rong && in_array($loai, array('radio', 'select', 'satisfaction'), true)
+                && !in_array($loai === 'radio' ? $giaTriLuaChon : $giaTri, $luaChon, true)) {
                 $this->lastErrorMessage = 'Phương án trả lời không hợp lệ: ' . $noiDung;
                 return false;
             }
@@ -233,7 +473,8 @@ class NhapLieuAction
             }
 
             if (!$rong && in_array($loai, array('radio', 'select', 'satisfaction'), true)) {
-                $tongDiem += isset($diemLuaChon[$giaTri]) ? $diemLuaChon[$giaTri] : 0;
+                $giaTriDiem = $loai === 'radio' ? $giaTriLuaChon : $giaTri;
+                $tongDiem += isset($diemLuaChon[$giaTriDiem]) ? $diemLuaChon[$giaTriDiem] : 0;
             } elseif (!$rong && $loai === 'checkbox') {
                 foreach ($giaTri as $phuongAnDaChon) {
                     $tongDiem += isset($diemLuaChon[$phuongAnDaChon]) ? $diemLuaChon[$phuongAnDaChon] : 0;

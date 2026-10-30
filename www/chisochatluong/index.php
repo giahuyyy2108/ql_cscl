@@ -47,6 +47,15 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 	</form> -->
 	<!-- Ket thuc Form tim kiem -->
 	<div class="x_content">
+		<div class="form-group" style="max-width: 300px;">
+			<label for="chiso_loc_thang">Lọc theo tháng tạo chỉ tiêu</label>
+			<div class="input-group">
+				<input id="chiso_loc_thang" type="text" class="form-control" placeholder="Tất cả các tháng" readonly autocomplete="off">
+				<span class="input-group-btn">
+					<button id="chiso_xoa_loc_thang" type="button" class="btn btn-default">Xóa lọc</button>
+				</span>
+			</div>
+		</div>
 		<?php
 			// print_r($listKCCT); 	
 
@@ -418,6 +427,9 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                     <li class="nav-item">
                         <a class="nav-link" id="chiso-thongke-tab" data-toggle="tab" href="#chiso-thongke" role="tab">Thống kê</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="chiso-theo-thang-tab" data-toggle="tab" href="#chiso-theo-thang" role="tab">Theo tháng</a>
+                    </li>
                 </ul>
                 <div class="tab-content mt-3" id="chisoXemTabContent">
                 <div class="tab-pane fade show active" id="chiso-thongtin" role="tabpanel">
@@ -520,6 +532,14 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                     </div>
                 </div>
                 <div class="tab-pane fade" id="chiso-thongke" role="tabpanel">
+                    <h4>Thống kê phương án có ô nhập (Khác)</h4>
+                    <p class="text-muted">Tổng lượt chọn theo từng câu hỏi và các nội dung nhập thêm giống nhau được gộp số lượt.</p>
+                    <div id="chiso_thong_ke_nhap_them_loading" class="text-muted" style="display:none;">Đang tải nội dung nhập thêm...</div>
+                    <div id="chiso_thong_ke_nhap_them_error" class="alert alert-danger" style="display:none;"></div>
+                    <div id="chiso_thong_ke_nhap_them_empty" class="alert alert-info" style="display:none;"></div>
+                    <div id="chiso_thong_ke_nhap_them" class="table-responsive"></div>
+                    <hr>
+                    <h4>Danh sách phiếu</h4>
                     <div class="table-responsive">
                         <table id="datatable-chiso-thongke" class="table table-striped table-bordered" width="100%">
                             <thead><tr>
@@ -527,6 +547,26 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                                 <th>Điểm tối đa</th><th>Tỷ lệ</th><th>Người nhập</th><th>Cập nhật lúc</th>
                             </tr></thead>
                             <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="chiso-theo-thang" role="tabpanel">
+                    <p class="text-muted">Tháng được tính theo ngày tạo phiếu. Tỷ lệ trung bình tính trên các phiếu có tỷ lệ hợp lệ.</p>
+                    <div class="form-group" style="max-width: 300px;">
+                        <label for="chiso_chon_thang">Chọn tháng/năm</label>
+                        <div class="input-group">
+                            <input id="chiso_chon_thang" type="text" class="form-control" placeholder="Tất cả các tháng" readonly autocomplete="off">
+                            <span class="input-group-btn">
+                                <button id="chiso_xoa_chon_thang" type="button" class="btn btn-default" title="Xem tất cả các tháng">Xóa lọc</button>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="chiso_theo_thang_loading" class="text-muted" style="display:none;">Đang tải dữ liệu...</div>
+                    <div id="chiso_theo_thang_error" class="alert alert-danger" style="display:none;"></div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered" width="100%">
+                            <thead><tr><th>Tháng</th><th>Số phiếu</th><th>Tỷ lệ trung bình (%)</th></tr></thead>
+                            <tbody id="chiso_theo_thang_body"></tbody>
                         </table>
                     </div>
                 </div>

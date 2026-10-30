@@ -631,15 +631,34 @@ div#datatable-user_length {
 .survey-option {
 	gap: 8px;
 	margin-bottom: 8px;
+	flex-wrap: wrap;
 }
 
 .survey-option .form-control {
 	flex: 1;
 }
 
+.survey-option .survey-option__text {
+	min-width: 180px;
+}
+
 .survey-option .survey-option__score {
 	flex: 0 0 95px;
 	width: 95px;
+}
+
+.survey-option__other-toggle {
+	flex: 0 0 auto;
+	margin: 0;
+	font-size: 12px;
+	font-weight: normal;
+	white-space: nowrap;
+}
+
+.survey-view-option__other {
+	display: block;
+	max-width: 360px;
+	margin: 5px 0 8px;
 }
 
 .survey-builder__empty {
@@ -875,6 +894,20 @@ div#datatable-user_length {
 #modalNhapLieu .form-control:focus {
 	border-color: #337ab7;
 	box-shadow: 0 0 0 3px rgba(51, 122, 183, .14);
+}
+
+#modalNhapLieu .survey-entry-question.has-error {
+	padding: 12px;
+	border-left: 3px solid #a94442;
+	background: #fff7f7;
+}
+
+#modalNhapLieu .survey-entry-question.has-error .survey-entry-question__label {
+	color: #a94442;
+}
+
+#modalNhapLieu .survey-entry-question.has-error .form-control {
+	border-color: #a94442;
 }
 
 #modalNhapLieu .radio label,
@@ -1460,6 +1493,15 @@ div#datatable-user_length {
 	border-radius: 2px;
 	background: #fff;
 	font-weight: 400;
+}
+
+#modalNhapLieu .survey-entry-question .survey-entry-option--other {
+	display: block;
+}
+
+#modalNhapLieu .survey-entry-option--other .survey-entry-other {
+	max-width: 480px;
+	margin: 7px 0 10px 29px;
 }
 
 #modalNhapLieu #nhap_ket_qua_diem {

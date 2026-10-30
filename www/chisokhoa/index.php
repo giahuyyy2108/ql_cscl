@@ -221,6 +221,11 @@ $listKhoaPhong = $request->getAttribute("listKhoaPhong");
 					<div class="tab-pane fade"
 						id="thongke"
 						role="tabpanel">
+						<div class="text-right" style="margin-bottom: 10px;">
+							<button type="button" class="btn btn-success" id="btn-xuat-thong-ke">
+								<i class="fa fa-file-excel-o"></i> Xuất thống kê
+							</button>
+						</div>
 						<div class="table-responsive">
 							<table id="datatable-ct-chiso"
 								class="table table-striped table-bordered"

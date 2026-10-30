@@ -134,7 +134,8 @@ function hienThiBieuMauNhap(duLieu) {
         var khoi = $('<div>', {
             'class': 'form-group survey-entry-question' + (capDanhMuc ? ' survey-entry-question--level-' + capDanhMuc : ''),
             'data-question-id': id,
-            'data-question-type': loai
+            'data-question-type': loai,
+            'aria-required': 'true'
         });
         var noiDungCauHoi = $('<span>', {
             'class': 'survey-entry-question__text',
@@ -144,7 +145,8 @@ function hienThiBieuMauNhap(duLieu) {
             $('<span>', { 'class': 'survey-entry-question__number', text: kyHieuCauHoi }),
             noiDungCauHoi
         );
-        if (item.bat_buoc) noiDungCauHoi.append($('<span>', { 'class': 'text-danger', text: ' *' }));
+        // Trang nhập liệu yêu cầu hoàn thành toàn bộ câu hỏi trước khi lưu.
+        noiDungCauHoi.append($('<span>', { 'class': 'text-danger', text: ' *' }));
         khoi.append(nhan);
 
         if (loai === 'long_text') {
@@ -152,20 +154,36 @@ function hienThiBieuMauNhap(duLieu) {
         } else if (loai === 'radio' || loai === 'checkbox' || loai === 'satisfaction') {
             (item.lua_chon || []).forEach(function (luaChon, optionIndex) {
                 var noiDungLuaChon = typeof luaChon === 'object' ? luaChon.noi_dung : luaChon;
+                var choNhapThem = loai === 'radio' && luaChon && typeof luaChon === 'object' && !!luaChon.cho_nhap_them;
+                var giaTriDaChon = giaTri && typeof giaTri === 'object' && !Array.isArray(giaTri)
+                    ? giaTri.lua_chon : giaTri;
                 var input = $('<input>', {
                     type: loai === 'satisfaction' ? 'radio' : loai,
                     name: 'cau_hoi_' + index + (loai === 'checkbox' ? '[]' : ''),
                     value: noiDungLuaChon,
                     'class': 'survey-entry-answer'
                 });
+                if (choNhapThem) input.attr('data-cho-nhap-them', '1');
                 if (loai === 'checkbox') {
                     input.prop('checked', Array.isArray(giaTri) && giaTri.indexOf(noiDungLuaChon) !== -1);
                 } else {
-                    input.prop('checked', String(giaTri || '') === String(noiDungLuaChon));
+                    input.prop('checked', String(giaTriDaChon || '') === String(noiDungLuaChon));
                 }
-                khoi.append($('<div>', { 'class': loai === 'satisfaction' ? 'radio' : loai }).append(
+                var phuongAn = $('<div>', { 'class': loai === 'satisfaction' ? 'radio' : loai }).append(
                     $('<label>').append(input, document.createTextNode(' ' + vietHoaDauCauNhapLieu(noiDungLuaChon)))
-                ));
+                );
+                if (choNhapThem) {
+                    var dangChon = input.prop('checked');
+                    phuongAn.addClass('survey-entry-option--other').append($('<input>', {
+                        type: 'text',
+                        'class': 'form-control survey-entry-other',
+                        placeholder: 'Vui lòng ghi rõ nội dung khác...',
+                        maxlength: 500,
+                        'aria-label': 'Nội dung cho lựa chọn khác'
+                    }).val(dangChon && giaTri && typeof giaTri === 'object' ? (giaTri.noi_dung_khac || '') : '')
+                        .prop('disabled', !dangChon).toggle(dangChon));
+                }
+                khoi.append(phuongAn);
             });
         } else if (loai === 'select' || loai === 'score') {
             var select = $('<select>', { 'class': 'form-control survey-entry-answer' })
@@ -275,7 +293,15 @@ function layCauTraLoiBieuMau() {
                 return this.value;
             }).get();
         } else if (loai === 'radio' || loai === 'satisfaction') {
-            ketQua[id] = cauHoi.find('.survey-entry-answer:checked').val() || '';
+            var luaChonDaChon = cauHoi.find('.survey-entry-answer:checked');
+            if (loai === 'radio' && luaChonDaChon.attr('data-cho-nhap-them') === '1') {
+                ketQua[id] = {
+                    lua_chon: luaChonDaChon.val(),
+                    noi_dung_khac: $.trim(luaChonDaChon.closest('.radio').find('.survey-entry-other').val() || '')
+                };
+            } else {
+                ketQua[id] = luaChonDaChon.val() || '';
+            }
         } else {
             ketQua[id] = cauHoi.find('.survey-entry-answer').val() || '';
         }
@@ -283,6 +309,66 @@ function layCauTraLoiBieuMau() {
 
     return ketQua;
 }
+
+function capNhatONhapKhac(cauHoi) {
+    cauHoi.find('.survey-entry-option--other').each(function () {
+        var phuongAn = $(this);
+        var dangChon = phuongAn.find('.survey-entry-answer').prop('checked');
+        phuongAn.find('.survey-entry-other').prop('disabled', !dangChon).toggle(dangChon);
+    });
+}
+
+function cauHoiDaNhapDayDu(cauHoi) {
+    var loai = cauHoi.data('question-type');
+    if (loai === 'checkbox' || loai === 'radio' || loai === 'satisfaction') {
+        var daChon = cauHoi.find('.survey-entry-answer:checked');
+        if (!daChon.length) return false;
+        if (loai === 'radio' && daChon.attr('data-cho-nhap-them') === '1') {
+            return $.trim(daChon.closest('.radio').find('.survey-entry-other').val() || '') !== '';
+        }
+        return true;
+    }
+    return $.trim(String(cauHoi.find('.survey-entry-answer').val() || '')) !== '';
+}
+
+function kiemTraDayDuBieuMau() {
+    var cauHoiThieu = null;
+
+    $('#nhap_bieu_mau .survey-entry-question').each(function () {
+        var cauHoi = $(this);
+        var daNhap = cauHoiDaNhapDayDu(cauHoi);
+
+        cauHoi.toggleClass('has-error', !daNhap);
+        cauHoi.find('.survey-entry-answer, .survey-entry-other').attr('aria-invalid', daNhap ? 'false' : 'true');
+        if (!daNhap && !cauHoiThieu) cauHoiThieu = cauHoi;
+    });
+
+    if (!cauHoiThieu) return true;
+
+    var noiDung = $.trim(cauHoiThieu.find('.survey-entry-question__text').clone().children().remove().end().text());
+    var input = cauHoiThieu.find('.survey-entry-answer:checked[data-cho-nhap-them="1"]')
+        .closest('.radio').find('.survey-entry-other');
+    if (!input.length) input = cauHoiThieu.find('.survey-entry-answer').first();
+    if (input.length) input.focus();
+
+    Swal.fire(
+        'Chưa nhập đủ thông tin',
+        'Vui lòng nhập đầy đủ tất cả các trường' + (noiDung ? ': ' + noiDung : '.') ,
+        'warning'
+    );
+    return false;
+}
+
+$('#nhap_bieu_mau').on('input change', '.survey-entry-answer, .survey-entry-other', function () {
+    var cauHoi = $(this).closest('.survey-entry-question');
+    if (cauHoi.data('question-type') === 'radio') capNhatONhapKhac(cauHoi);
+    var daNhap = cauHoiDaNhapDayDu(cauHoi);
+
+    if (daNhap) {
+        cauHoi.removeClass('has-error');
+        cauHoi.find('.survey-entry-answer, .survey-entry-other').attr('aria-invalid', 'false');
+    }
+});
 
 $('#nhap_bieu_mau').on(
     'input change',
@@ -354,7 +440,9 @@ function tinhPhanTramTamTinh() {
 
         var cacMucDiem = Object.keys(bangDiem).map(function (key) { return bangDiem[key]; });
         if (loai === 'radio' || loai === 'select' || loai === 'satisfaction') {
-            tongDiem += bangDiem[giaTri] || 0;
+            var giaTriLuaChon = loai === 'radio' && giaTri && typeof giaTri === 'object'
+                ? giaTri.lua_chon : giaTri;
+            tongDiem += bangDiem[giaTriLuaChon] || 0;
             diemToiDa += cacMucDiem.length ? Math.max(0, Math.max.apply(Math, cacMucDiem)) : 0;
         } else if (loai === 'checkbox') {
             (Array.isArray(giaTri) ? giaTri : []).forEach(function (daChon) {
@@ -455,7 +543,8 @@ tableNhapLieu = $('#datatable-nhaplieu').DataTable({
         } },
         { data: null, searchable: false, render: function () {
             return '<button type="button" class="btn btn-info btn-sm btn-xem" title="Xem"><i class="fa fa-eye"></i></button> ' +
-                '<button type="button" class="btn btn-primary btn-sm btn-nhaplieu" title="Nhập biểu mẫu"><i class="fa fa-list-alt"></i> Nhập biểu mẫu</button>';
+                '<button type="button" class="btn btn-primary btn-sm btn-nhaplieu" title="Nhập biểu mẫu"><i class="fa fa-list-alt"></i> Nhập biểu mẫu</button> ' +
+                '<button type="button" class="btn btn-success btn-sm btn-xuat-thongke" title="Xuất thống kê phiếu của khoa"><i class="fa fa-file-excel-o"></i> Xuất thống kê</button>';
         } }
     ]
 });
@@ -625,6 +714,13 @@ $('#datatable-nhaplieu').on('click', '.btn-nhaplieu', function () {
     moModalNhapLieu(row);
 });
 
+$('#datatable-nhaplieu').on('click', '.btn-xuat-thongke', function () {
+    var row = layDong(this);
+    if (!row || !row.ma_chi_so) return;
+    window.location.href = $('#ULocal').val() + 'NhapLieu/xuatThongKe/?ma_chi_so=' +
+        encodeURIComponent(row.ma_chi_so);
+});
+
 function tenKy(ky, soChuKy) {
     if (soChuKy === 12 && namBatDauChuKy) {
         var ngayKy = new Date(namBatDauChuKy, thangBatDauChuKy - 1 + ky - 1, 1);
@@ -723,6 +819,8 @@ $('#nhap_ky').on('change', hienThiDuLieuKy);
 $('#formNhapLieu').on('submit', function (event) {
     event.preventDefault();
     var button = $('#btnLuuNhapLieu');
+
+    if (!kiemTraDayDuBieuMau()) return;
 
     $.ajax({
         url: $('#ULocal').val() + 'NhapLieu/save/',
