@@ -7,6 +7,7 @@ require_once ("web_src/bean/ChuKyPeer.php");
 require_once ("web_src/bean/DonviTinhPeer.php");
 require_once ("web_src/bean/TinhTrangPeer.php");
 require_once ("web_src/bean/CtChiSoPeer.php");
+require_once ("web_src/common/SimpleXLSXGen/SimpleXLSXGen.php");
 class NhapLieuAction
 {
 	var $request;
@@ -146,25 +147,35 @@ class NhapLieuAction
 
         $danhSachPhieu = $this->CtChiSoPeer->getDanhSachPhieu($maChiSo, $idKhoaPhong);
 
-        $escape = function ($value) {
-            return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-        };
         $hienThiTraLoi = function ($value) {
             if (!is_array($value)) return (string) $value;
             if (isset($value['lua_chon']) && isset($value['noi_dung_khac'])) {
                 return (string) $value['lua_chon'] . ': ' . (string) $value['noi_dung_khac'];
             }
             $items = array();
-            foreach ($value as $item) {
-                if (is_scalar($item) && trim((string) $item) !== '') $items[] = trim((string) $item);
-            }
+            array_walk_recursive($value, function ($item) use (&$items) {
+                if (is_scalar($item) && trim((string) $item) !== '') {
+                    $items[] = trim((string) $item);
+                }
+            });
             return implode('; ', $items);
         };
+        $giaTriExcel = function ($value, $dinhDang = '') {
+            return $dinhDang . '<raw>'
+                . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8')
+                . '</raw>';
+        };
+
         $soPhieu = count($danhSachPhieu);
-        $tenKhoaTrongFile = preg_replace('/[\\\/:*?"<>|\x00-\x1F]+/u', '_', $tenKhoaPhong);
+        $tenKhoaTrongFile = str_replace(
+            array('\\', '/', ':', '*', '?', '"', '<', '>', '|'),
+            '_',
+            preg_replace('/[\x00-\x1F]+/u', '', $tenKhoaPhong)
+        );
         $tenKhoaTrongFile = trim($tenKhoaTrongFile, " ._\t\n\r\0\x0B");
         if ($tenKhoaTrongFile === '') $tenKhoaTrongFile = 'Khoa phong ' . $idKhoaPhong;
         $tenFileDayDu = 'Thong ke chi so ' . $maChiSo . ' - ' . $tenKhoaTrongFile . '.xlsx';
+
         $tenKhoaKhongDau = function_exists('iconv')
             ? iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $tenKhoaTrongFile)
             : $tenKhoaTrongFile;
@@ -172,13 +183,54 @@ class NhapLieuAction
         $tenKhoaKhongDau = trim($tenKhoaKhongDau, '-');
         if ($tenKhoaKhongDau === '') $tenKhoaKhongDau = 'khoa-phong-' . $idKhoaPhong;
         $tenFileDuPhong = 'thong-ke-chi-so-' . $maChiSo . '-' . $tenKhoaKhongDau . '.xlsx';
-        $tenSheet = preg_replace('/[\\\\\/:*?\[\]]+/u', ' ', $tenKhoaPhong);
+
+        $tenSheet = str_replace(array('\\', '/', ':', '*', '?', '[', ']'), ' ', $tenKhoaPhong);
         $tenSheet = trim(preg_replace('/\s+/u', ' ', $tenSheet), " '\t\n\r\0\x0B");
         if ($tenSheet === '') $tenSheet = 'Khoa phong ' . $idKhoaPhong;
         $tenSheet = function_exists('mb_substr')
             ? mb_substr($tenSheet, 0, 31, 'UTF-8')
             : substr($tenSheet, 0, 31);
 
+        $nhanThongTin = '<b><middle><style border="thin">';
+        $giaTriThongTin = '<right><middle><style border="thin">';
+        $tieuDeBang = '<b><center><bottom><wraptext><style height="72" color="#FFFFFF" bgcolor="#1F4E78" border="thin">';
+        $duLieuBang = '<top><wraptext><style border="thin">';
+        $oTrongThongTin = $giaTriExcel('', $giaTriThongTin);
+
+        $duLieuSheet = array(
+            array($giaTriExcel('Mã chỉ số', $nhanThongTin), $giaTriExcel($maChiSo, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
+            array($giaTriExcel('Tên chỉ số', $nhanThongTin), $giaTriExcel($tenChiSo, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
+            array($giaTriExcel('Khoa/Phòng', $nhanThongTin), $giaTriExcel($tenKhoaPhong, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
+            array($giaTriExcel('Tổng số phiếu', $nhanThongTin), $giaTriExcel($soPhieu > 0 ? $soPhieu : '', $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
+            array(),
+            array()
+        );
+
+        $tieuDe = array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
+        foreach ($cauHoi as $item) $tieuDe[] = $item['noi_dung'];
+        foreach ($tieuDe as &$noiDungTieuDe) {
+            $noiDungTieuDe = $giaTriExcel($noiDungTieuDe, $tieuDeBang);
+        }
+        unset($noiDungTieuDe);
+        $duLieuSheet[] = $tieuDe;
+
+        foreach ($danhSachPhieu as $index => $phieu) {
+            $dongExcel = array(
+                $giaTriExcel($index + 1, $duLieuBang),
+                $giaTriExcel($phieu['id'], $duLieuBang),
+                $giaTriExcel($phieu['nam'], $duLieuBang),
+                $giaTriExcel($phieu['ky'], $duLieuBang),
+                $giaTriExcel($phieu['nguoi_nhap'], $duLieuBang),
+                $giaTriExcel($phieu['created_at'], $duLieuBang)
+            );
+            foreach ($cauHoi as $id => $item) {
+                $giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
+                $dongExcel[] = $giaTriExcel($hienThiTraLoi($giaTri), $duLieuBang);
+            }
+            $duLieuSheet[] = $dongExcel;
+        }
+
+        $soCot = 6 + count($cauHoi);
         $tenCot = function ($soCot) {
             $ketQua = '';
             while ($soCot > 0) {
@@ -188,127 +240,44 @@ class NhapLieuAction
             }
             return $ketQua;
         };
-        $xml = function ($value) {
-            $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', (string) $value);
-            return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
-        };
-        $oChu = function ($toaDo, $giaTri, $kieu = 4, $laSo = false) use ($xml) {
-            if ($laSo && is_numeric($giaTri)) {
-                return '<c r="' . $toaDo . '" s="' . $kieu . '"><v>' . (0 + $giaTri) . '</v></c>';
-            }
-            return '<c r="' . $toaDo . '" s="' . $kieu . '" t="inlineStr"><is><t xml:space="preserve">'
-                . $xml($giaTri) . '</t></is></c>';
-        };
-
-        $soCot = 6 + count($cauHoi);
         $cotCuoi = $tenCot($soCot);
-        $cacDong = array();
-        $cacDong[] = '<row r="1" ht="24" customHeight="1">' . $oChu('A1', 'THỐNG KÊ PHIẾU THEO CHỈ SỐ CỦA KHOA/PHÒNG', 1) . '</row>';
-        $cacDong[] = '<row r="2">' . $oChu('A2', 'Mã chỉ số', 3) . $oChu('B2', $maChiSo, 4) . '</row>';
-        $cacDong[] = '<row r="3">' . $oChu('A3', 'Tên chỉ số', 3) . $oChu('B3', $tenChiSo, 4) . '</row>';
-        $cacDong[] = '<row r="4">' . $oChu('A4', 'Khoa/Phòng', 3) . $oChu('B4', $tenKhoaPhong, 4) . '</row>';
-        $cacDong[] = '<row r="5">' . $oChu('A5', 'Tổng số phiếu', 3) . $oChu('B5', $soPhieu, 4, true) . '</row>';
-        $cacDong[] = '<row r="7" ht="22" customHeight="1">' . $oChu('A7', 'CHI TIẾT CÂU TRẢ LỜI CỦA TỪNG PHIẾU', 2) . '</row>';
 
-        $tieuDe = array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
-        foreach ($cauHoi as $item) $tieuDe[] = $item['noi_dung'];
-        $dongTieuDe = '';
-        foreach ($tieuDe as $index => $noiDung) {
-            $dongTieuDe .= $oChu($tenCot($index + 1) . '8', $noiDung, 2);
+        $xlsx = new \Shuchkin\SimpleXLSXGen();
+        $xlsx->setDefaultFont('Arial')
+            ->setDefaultFontSize(10)
+            ->setTitle('Thống kê phiếu theo chỉ số')
+            ->addSheet($duLieuSheet, $tenSheet)
+            ->mergeCells('B1:E1')
+            ->mergeCells('B2:E2')
+            ->mergeCells('B3:E3')
+            ->mergeCells('B4:E4')
+            ->freezePanes('A8')
+            ->autoFilter('A7:' . $cotCuoi . max(7, count($duLieuSheet)));
+
+        $xlsx->setColWidth(1, 14)
+            ->setColWidth(2, 12)
+            ->setColWidth(3, 10)
+            ->setColWidth(4, 10)
+            ->setColWidth(5, 22)
+            ->setColWidth(6, 20);
+        for ($cot = 7; $cot <= $soCot; $cot++) {
+            $xlsx->setColWidth($cot, 32);
         }
-        $cacDong[] = '<row r="8" ht="36" customHeight="1">' . $dongTieuDe . '</row>';
-
-        $soDong = 8;
-        foreach ($danhSachPhieu as $index => $phieu) {
-            $soDong++;
-            $giaTriDong = array(
-                $index + 1,
-                $phieu['id'],
-                $phieu['nam'],
-                $phieu['ky'],
-                $phieu['nguoi_nhap'],
-                $phieu['created_at']
-            );
-            foreach ($cauHoi as $id => $item) {
-                $giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
-                $giaTriDong[] = $hienThiTraLoi($giaTri);
-            }
-            $noiDungDong = '';
-            foreach ($giaTriDong as $cot => $giaTri) {
-                $laSo = in_array($cot, array(0, 2, 3), true);
-                $noiDungDong .= $oChu($tenCot($cot + 1) . $soDong, $giaTri, 4, $laSo);
-            }
-            $cacDong[] = '<row r="' . $soDong . '">' . $noiDungDong . '</row>';
-        }
-        if ($soPhieu === 0) {
-            $soDong++;
-            $cacDong[] = '<row r="' . $soDong . '">' . $oChu('A' . $soDong, 'Chưa có phiếu nào của Khoa/Phòng cho chỉ số này.', 4) . '</row>';
-        }
-
-        $merge = array('A1:' . $cotCuoi . '1', 'B2:' . $cotCuoi . '2', 'B3:' . $cotCuoi . '3', 'B4:' . $cotCuoi . '4', 'B5:' . $cotCuoi . '5', 'A7:' . $cotCuoi . '7');
-        if ($soPhieu === 0) $merge[] = 'A' . $soDong . ':' . $cotCuoi . $soDong;
-        $mergeXml = '';
-        foreach ($merge as $vung) $mergeXml .= '<mergeCell ref="' . $vung . '"/>';
-
-        $cotXml = '<col min="1" max="1" width="7" customWidth="1"/>'
-            . '<col min="2" max="2" width="12" customWidth="1"/>'
-            . '<col min="3" max="4" width="10" customWidth="1"/>'
-            . '<col min="5" max="5" width="22" customWidth="1"/>'
-            . '<col min="6" max="6" width="20" customWidth="1"/>';
-        if ($soCot > 6) $cotXml .= '<col min="7" max="' . $soCot . '" width="32" customWidth="1"/>';
-
-        $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            . '<sheetViews><sheetView workbookViewId="0"><pane ySplit="8" topLeftCell="A9" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
-            . '<sheetFormatPr defaultRowHeight="18"/><cols>' . $cotXml . '</cols><sheetData>' . implode('', $cacDong) . '</sheetData>'
-            . '<mergeCells count="' . count($merge) . '">' . $mergeXml . '</mergeCells>'
-            . '<autoFilter ref="A8:' . $cotCuoi . max(8, $soDong) . '"/>'
-            . '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
-
-        $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            . '<fonts count="3"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="14"/><name val="Arial"/><color rgb="FF1F2937"/></font><font><b/><sz val="10"/><name val="Arial"/><color rgb="FFFFFFFF"/></font></fonts>'
-            . '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9EAF7"/><bgColor indexed="64"/></patternFill></fill></fills>'
-            . '<borders count="2"><border/><border><left style="thin"><color rgb="FFB8C2CC"/></left><right style="thin"><color rgb="FFB8C2CC"/></right><top style="thin"><color rgb="FFB8C2CC"/></top><bottom style="thin"><color rgb="FFB8C2CC"/></bottom><diagonal/></border></borders>'
-            . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            . '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs>'
-            . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
-
-        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
-        $rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
-        $workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' . $xml($tenSheet) . '" sheetId="1" r:id="rId1"/></sheets></workbook>';
-        $workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
-
-        $duongDanTam = tempnam(sys_get_temp_dir(), 'qlcscl_');
-        if ($duongDanTam === false) {
-            header('HTTP/1.1 500 Internal Server Error');
-            echo 'Không thể tạo file Excel tạm.';
-            exit;
-        }
-        @unlink($duongDanTam);
-        $duongDanTam .= '.zip';
 
         try {
-            $goiExcel = new PharData($duongDanTam, 0, null, Phar::ZIP);
-            $goiExcel->addFromString('[Content_Types].xml', $contentTypes);
-            $goiExcel->addFromString('_rels/.rels', $rels);
-            $goiExcel->addFromString('xl/workbook.xml', $workbookXml);
-            $goiExcel->addFromString('xl/_rels/workbook.xml.rels', $workbookRels);
-            $goiExcel->addFromString('xl/styles.xml', $stylesXml);
-            $goiExcel->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
-            unset($goiExcel);
-
-            if (ob_get_length()) ob_end_clean();
+            $noiDungExcel = (string) $xlsx;
+            if ($noiDungExcel === '') throw new Exception('Không tạo được nội dung XLSX');
+            while (ob_get_level()) ob_end_clean();
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment; filename="' . $tenFileDuPhong . '"; filename*=UTF-8\'\'' . rawurlencode($tenFileDayDu));
-            header('Content-Length: ' . filesize($duongDanTam));
+            header('Content-Length: ' . strlen($noiDungExcel));
             header('Cache-Control: max-age=0');
-            readfile($duongDanTam);
+            echo $noiDungExcel;
         } catch (Throwable $exception) {
+            error_log('NhapLieuAction::xuatThongKe - ' . $exception->getMessage());
             if (!headers_sent()) header('HTTP/1.1 500 Internal Server Error');
             echo 'Không thể tạo file Excel.';
         }
-        @unlink($duongDanTam);
         exit;
     }
 
