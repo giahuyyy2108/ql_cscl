@@ -206,6 +206,18 @@ button:disabled { cursor: not-allowed; }
 
 .login-alert > .fa { margin-top: 3px; font-size: 16px; }
 .login-alert + #login-form { margin-top: 22px; }
+.login-alert + .password-change-form { margin-top: 22px; }
+.password-change-form { margin-top: 30px; }
+.password-strength { margin-top: 8px; color: var(--login-muted); font-size: 12px; }
+.password-strength__bar { display: block; height: 6px; margin-top: 6px; overflow: hidden; background: #e5e7eb; border-radius: 4px; }
+.password-strength__bar span { display: block; width: 0; height: 100%; background: #dc3545; transition: width .2s ease, background-color .2s ease; }
+.password-requirements { margin: 8px 0 0; padding-left: 20px; color: #a03f32; font-size: 12px; line-height: 1.7; }
+.password-requirements li::marker { content: "✕  "; }
+.password-requirements li.is-valid { color: #198754; }
+.password-requirements li.is-valid::marker { content: "✓  "; }
+.password-match-message { min-height: 19px; margin-top: 7px; font-size: 12px; }
+.password-match-message.is-valid { color: #198754; }
+.password-match-message.is-invalid { color: #a03f32; }
 .login-support { display: flex; align-items: flex-start; gap: 12px; margin-top: 30px; padding-top: 23px; border-top: 1px solid #e8eef0; }
 .support-icon { padding-top: 2px; color: #7c969f; font-size: 19px; }
 .login-support p { margin: 0; font-size: 12px; line-height: 1.7; }

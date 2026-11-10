@@ -5,6 +5,7 @@ Bộ tài liệu được tạo ngày 29/10/2026 cho source `C:\xampp\htdocs\ql_
 | Tài liệu | Markdown | Word |
 | --- | --- | --- |
 | Hướng dẫn sử dụng | `01_HUONG_DAN_SU_DUNG.md` | `01_HUONG_DAN_SU_DUNG.docx` |
+| Sổ tay thao tác theo vai trò (cập nhật luồng mật khẩu 09/11/2026) | `05_SO_TAY_THUC_HANH_NGUOI_DUNG.md` | Xem bản Markdown hiện hành |
 | Mô tả chức năng | `02_MO_TA_CHUC_NANG.md` | `02_MO_TA_CHUC_NANG.docx` |
 | Tài liệu bảo trì | `03_TAI_LIEU_BAO_TRI.md` | `03_TAI_LIEU_BAO_TRI.docx` |
 | Tài liệu source code | `04_TAI_LIEU_SOURCE_CODE.md` | `04_TAI_LIEU_SOURCE_CODE.docx` |

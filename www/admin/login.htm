@@ -6,6 +6,8 @@ $loginMessage = (string) $request->getAttribute('msg');
 $loginUsername = (string) $request->getAttribute('username');
 $loginPasswordName = (string) $request->getAttribute('pass');
 $loginDisabled = (string) $request->getAttribute('login-disabled') !== '';
+$forcePasswordChange = (bool) $request->getAttribute('forcePasswordChange');
+$passwordChangeToken = (string) $request->getAttribute('passwordChangeToken');
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -45,9 +47,11 @@ $loginDisabled = (string) $request->getAttribute('login-disabled') !== '';
 
         <section class="login-panel" aria-labelledby="login-heading">
             <div class="login-intro">
-                <span class="login-eyebrow">CHÀO MỪNG TRỞ LẠI</span>
-                <h1 id="login-heading">Đăng nhập</h1>
-                <p id="login-description">Sử dụng tài khoản được cấp để truy cập hệ thống quản lý chất lượng.</p>
+                <span class="login-eyebrow"><?= $forcePasswordChange ? 'BẢO MẬT TÀI KHOẢN' : 'CHÀO MỪNG TRỞ LẠI' ?></span>
+                <h1 id="login-heading"><?= $forcePasswordChange ? 'Đổi mật khẩu' : 'Đăng nhập' ?></h1>
+                <p id="login-description"><?= $forcePasswordChange
+                    ? 'Tạo mật khẩu mới đủ mạnh cho tài khoản ' . $escapeLogin($loginUsername) . '.'
+                    : 'Sử dụng tài khoản được cấp để truy cập hệ thống quản lý chất lượng.' ?></p>
             </div>
 
             <?php if ($loginMessage !== ''): ?>
@@ -57,6 +61,7 @@ $loginDisabled = (string) $request->getAttribute('login-disabled') !== '';
                 </div>
             <?php endif; ?>
 
+            <?php if (!$forcePasswordChange): ?>
             <form id="login-form" name="frmLogin" action="<?= $escapeLogin(_DEFAULT_URL_) ?>login/login/" method="post"
                   aria-describedby="login-description<?= $loginMessage !== '' ? ' login-message' : '' ?>">
                 <div class="login-field">
@@ -89,6 +94,49 @@ $loginDisabled = (string) $request->getAttribute('login-disabled') !== '';
                 </button>
                 <input type="hidden" name="cmd" value="30">
             </form>
+            <?php else: ?>
+            <form id="password-change-form" class="password-change-form"
+                  action="<?= $escapeLogin(_DEFAULT_URL_) ?>login/saveWeakPass/" method="post"
+                  aria-describedby="login-description<?= $loginMessage !== '' ? ' login-message' : '' ?>">
+                <div class="login-field">
+                    <label for="new-password">Mật khẩu mới</label>
+                    <div class="login-input">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                        <input type="password" id="new-password" name="newpass" placeholder="Nhập mật khẩu mới"
+                               autocomplete="new-password" minlength="9"
+                               pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{9,}" required
+                               aria-describedby="password-strength password-requirements">
+                    </div>
+                    <div id="password-strength" class="password-strength" aria-live="polite">
+                        Độ mạnh: <strong>Chưa nhập</strong>
+                        <span class="password-strength__bar"><span></span></span>
+                    </div>
+                    <ul id="password-requirements" class="password-requirements">
+                        <li data-rule="length">Dài hơn 8 ký tự</li>
+                        <li data-rule="uppercase">Có chữ in hoa</li>
+                        <li data-rule="number">Có chữ số</li>
+                        <li data-rule="special">Có ký tự đặc biệt</li>
+                    </ul>
+                </div>
+
+                <div class="login-field">
+                    <label for="confirm-password">Xác nhận mật khẩu mới</label>
+                    <div class="login-input">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                        <input type="password" id="confirm-password" name="verifypass"
+                               placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" minlength="9" required
+                               aria-describedby="password-match-message">
+                    </div>
+                    <div id="password-match-message" class="password-match-message" aria-live="polite"></div>
+                </div>
+
+                <input type="hidden" name="passwordChangeToken" value="<?= $escapeLogin($passwordChangeToken) ?>">
+                <button type="submit" class="login-submit">
+                    <span>Đổi mật khẩu</span>
+                    <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </form>
+            <?php endif; ?>
 
             <div class="login-support">
                 <span class="support-icon"><i class="fa fa-life-ring" aria-hidden="true"></i></span>

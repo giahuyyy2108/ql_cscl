@@ -8,6 +8,12 @@
 		<div class="clearfix"></div>
 	  </div>
 	  <div class="x_content">
+		<?php if ($msg != "") { ?>
+		<div class="alert alert-warning" role="alert"><?=$msg?></div>
+		<?php } ?>
+		<div class="alert alert-info" role="note">
+		  M&#7853;t kh&#7849;u m&#7899;i ph&#7843;i d&agrave;i h&#417;n 8 k&yacute; t&#7921;, bao g&#7891;m ch&#7919; in hoa, ch&#7919; s&#7889; v&agrave; k&yacute; t&#7921; &#273;&#7863;c bi&#7879;t.
+		</div>
 		<form action="<?=_DEFAULT_URL_?>login/savePass/" id="changepass" method="POST" data-parsley-validate class="form-horizontal form-label-left">
 
 		  <!-- <div class="form-group">
@@ -27,13 +33,30 @@
 		  <div class="form-group">
 			<label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Mật khẩu mới <span class="required">*</span></label>
 			<div class="col-md-12 col-sm-12 col-xs-12">
-			  <input type="password" id="newpass" name="newpass" required="required" class="form-control col-md-7 col-xs-12" type="text">
+			  <input type="password" id="newpass" name="newpass" required="required" minlength="9"
+				pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{9,}"
+				title="Mật khẩu phải dài hơn 8 ký tự, có chữ in hoa, chữ số và ký tự đặc biệt"
+				class="form-control col-md-7 col-xs-12" autocomplete="new-password"
+				aria-describedby="password-strength password-requirements">
+			  <div id="password-strength" class="password-strength" aria-live="polite">
+				<span class="password-strength__label">Độ mạnh: <strong>Chưa nhập</strong></span>
+				<span class="password-strength__bar"><span></span></span>
+			  </div>
+			  <ul id="password-requirements" class="password-requirements">
+				<li data-rule="length">Dài hơn 8 ký tự</li>
+				<li data-rule="uppercase">Có ít nhất một chữ in hoa</li>
+				<li data-rule="number">Có ít nhất một chữ số</li>
+				<li data-rule="special">Có ít nhất một ký tự đặc biệt</li>
+			  </ul>
 			</div>
 		 </div>
 		 <div class="form-group">
 			<label for="middle-name" class="control-label col-md-3 col-sm-3 col-xs-12">Xác nhận lại mật khẩu <span class="required">*</span></label>
 			<div class="col-md-12 col-sm-12 col-xs-12">
-			  <input type="password" id="verifypass" name="verifypass" required="required" class="form-control col-md-7 col-xs-12" type="text">
+			  <input type="password" id="verifypass" name="verifypass" required="required" minlength="9"
+				class="form-control col-md-7 col-xs-12" autocomplete="new-password"
+				aria-describedby="password-match-message">
+			  <div id="password-match-message" class="password-match-message" aria-live="polite"></div>
 			</div>
 		 </div>
 		 <!-- <div class="ln_solid"></div> -->
@@ -46,3 +69,66 @@
 		</form>
 	  </div>
 	</div>
+
+<style>
+.password-strength { clear: both; padding-top: 8px; font-size: 13px; }
+.password-strength__bar { display: block; width: 100%; height: 6px; margin-top: 6px; overflow: hidden; background: #e5e7eb; border-radius: 4px; }
+.password-strength__bar span { display: block; width: 0; height: 100%; background: #dc3545; transition: width .2s ease, background-color .2s ease; }
+.password-requirements { clear: both; margin: 8px 0 0; padding-left: 20px; color: #a94442; font-size: 13px; line-height: 1.7; }
+.password-requirements li::marker { content: "✕  "; }
+.password-requirements li.is-valid { color: #198754; }
+.password-requirements li.is-valid::marker { content: "✓  "; }
+.password-match-message { clear: both; padding-top: 7px; font-size: 13px; }
+.password-match-message.is-valid { color: #198754; }
+.password-match-message.is-invalid { color: #a94442; }
+</style>
+
+<script>
+(function () {
+	var password = document.getElementById('newpass');
+	var confirmation = document.getElementById('verifypass');
+	var strength = document.getElementById('password-strength');
+	var strengthText = strength.querySelector('strong');
+	var strengthBar = strength.querySelector('.password-strength__bar span');
+	var matchMessage = document.getElementById('password-match-message');
+
+	function evaluatePassword() {
+		var value = password.value;
+		var rules = {
+			length: value.length > 8,
+			uppercase: /[A-Z]/.test(value),
+			number: /[0-9]/.test(value),
+			special: /[^A-Za-z0-9]/.test(value)
+		};
+		var score = 0;
+
+		Object.keys(rules).forEach(function (rule) {
+			var item = document.querySelector('[data-rule="' + rule + '"]');
+			item.classList.toggle('is-valid', rules[rule]);
+			if (rules[rule]) score++;
+		});
+
+		var labels = ['Rất yếu', 'Rất yếu', 'Yếu', 'Trung bình', 'Mạnh'];
+		var colors = ['#dc3545', '#dc3545', '#fd7e14', '#ffc107', '#198754'];
+		strengthText.textContent = value === '' ? 'Chưa nhập' : labels[score];
+		strengthText.style.color = colors[score];
+		strengthBar.style.width = value === '' ? '0' : (score * 25) + '%';
+		strengthBar.style.backgroundColor = colors[score];
+		checkConfirmation();
+	}
+
+	function checkConfirmation() {
+		if (confirmation.value === '') {
+			matchMessage.textContent = '';
+			matchMessage.className = 'password-match-message';
+			return;
+		}
+		var matches = confirmation.value === password.value;
+		matchMessage.textContent = matches ? 'Mật khẩu xác nhận đã khớp.' : 'Mật khẩu xác nhận chưa khớp.';
+		matchMessage.className = 'password-match-message ' + (matches ? 'is-valid' : 'is-invalid');
+	}
+
+	password.addEventListener('input', evaluatePassword);
+	confirmation.addEventListener('input', checkConfirmation);
+}());
+</script>

@@ -2,14 +2,15 @@
 
 **Đơn vị:** Bệnh viện Thống Nhất  
 **Mã số:** Chưa cấp  
-**Lần ban hành / Phiên bản:** v1.2  
-**Ngày cập nhật:** 29/10/2026
+**Lần ban hành / Phiên bản:** v1.3
+**Ngày cập nhật:** 09/11/2026
 
 ## BẢNG THEO DÕI SỬA ĐỔI
 
 | Phiên bản số | Vị trí sửa đổi | Nội dung sửa đổi | Ngày xem xét/sửa đổi | Người xem xét/sửa đổi |
 | --- | --- | --- | --- | --- |
 | v1.2 | Toàn bộ tài liệu | Xây dựng/cập nhật theo source hệ thống QLCL hiện hành | 29/10/2026 | Điền khi ban hành |
+| v1.3 | Phần đăng nhập và đổi mật khẩu | Bổ sung yêu cầu mật khẩu mạnh, cảnh báo khi nhập và luồng bắt buộc đổi mật khẩu yếu tại trang đăng nhập | 09/11/2026 | Điền khi ban hành |
 
 ## DANH SÁCH PHÂN PHỐI TÀI LIỆU
 
@@ -61,9 +62,32 @@ Quyền hiển thị menu và quyền thực hiện từng thao tác phụ thu�
 1. Mở địa chỉ hệ thống do đơn vị quản trị cung cấp.
 2. Nhập **Tên đăng nhập** và **Mật khẩu**.
 3. Chọn **Đăng nhập**.
-4. Nếu thông tin hợp lệ và tài khoản không bị khóa, hệ thống chuyển đến trang Dashboard.
+4. Nếu thông tin hợp lệ, tài khoản không bị khóa và mật khẩu đáp ứng yêu cầu bảo mật, hệ thống chuyển đến trang Dashboard.
+5. Nếu mật khẩu hiện tại chưa đủ mạnh, hệ thống chưa mở giao diện làm việc mà hiển thị ngay biểu mẫu **Đổi mật khẩu** trên trang đăng nhập. Thực hiện theo mục **Đổi mật khẩu yếu khi đăng nhập** bên dưới.
 
 Tài khoản bị khóa (`nd_block = 1`) không thể đăng nhập. Cơ chế khóa tạm theo số lần nhập sai hiện không được kích hoạt trong mã nguồn hiện tại, vì vậy việc bảo vệ tài khoản phụ thuộc chủ yếu vào trạng thái khóa do quản trị viên thiết lập.
+
+#### Yêu cầu đối với mật khẩu
+
+Mật khẩu hợp lệ phải đáp ứng đồng thời các điều kiện sau:
+
+- dài hơn 8 ký tự, tức tối thiểu 9 ký tự;
+- có ít nhất một chữ in hoa từ `A` đến `Z`;
+- có ít nhất một chữ số từ `0` đến `9`;
+- có ít nhất một ký tự đặc biệt.
+
+Khi nhập mật khẩu mới, màn hình hiển thị mức **Rất yếu**, **Yếu**, **Trung bình** hoặc **Mạnh**. Từng điều kiện sẽ đổi trạng thái ngay khi đạt yêu cầu. Chỉ dùng mật khẩu khi cả bốn điều kiện đều đạt và mức hiển thị là **Mạnh**.
+
+#### Đổi mật khẩu yếu khi đăng nhập
+
+1. Nhập tài khoản và mật khẩu hiện tại, sau đó chọn **Đăng nhập**.
+2. Nếu hệ thống thông báo mật khẩu chưa đủ mạnh, nhập **Mật khẩu mới** ngay trên trang đăng nhập.
+3. Theo dõi thanh độ mạnh và danh sách bốn yêu cầu. Điều chỉnh mật khẩu cho đến khi tất cả điều kiện đều đạt.
+4. Nhập lại mật khẩu tại ô **Xác nhận mật khẩu mới**. Hệ thống thông báo mật khẩu xác nhận đã khớp hoặc chưa khớp.
+5. Chọn **Đổi mật khẩu**.
+6. Khi thấy thông báo đổi mật khẩu thành công, hệ thống quay lại biểu mẫu đăng nhập và điền sẵn tên tài khoản. Nhập mật khẩu mới rồi chọn **Đăng nhập**.
+
+Trong quá trình bắt buộc đổi mật khẩu, người dùng chưa được truy cập Dashboard hoặc các chức năng nghiệp vụ. Nếu phiên đổi mật khẩu hết hạn, quay lại màn hình đăng nhập và thực hiện lại từ bước 1.
 
 #### Đăng xuất
 
@@ -71,12 +95,13 @@ Chọn chức năng **Đăng xuất** trên giao diện. Hệ thống xóa thôn
 
 #### Đổi mật khẩu
 
-1. Mở chức năng **Đổi mật khẩu**.
-2. Nhập mật khẩu hiện tại.
-3. Nhập mật khẩu mới và xác nhận lại.
-4. Lưu thay đổi.
+1. Sau khi đã đăng nhập, mở menu tài khoản ở góc trên bên phải và chọn **Đổi mật khẩu**.
+2. Nhập **Mật khẩu cũ**.
+3. Nhập **Mật khẩu mới** đáp ứng đủ bốn yêu cầu bảo mật và theo dõi cảnh báo độ mạnh trên màn hình.
+4. Nhập lại tại ô **Xác nhận lại mật khẩu**.
+5. Chọn **Thay đổi mật khẩu**.
 
-Mật khẩu mới phải trùng với ô xác nhận và không được để trống. Hệ thống hiện lưu mật khẩu bằng MD5; quản trị hệ thống nên có kế hoạch nâng cấp cơ chế băm mật khẩu theo tài liệu bảo trì.
+Nếu mật khẩu cũ sai, hai ô mật khẩu mới không khớp hoặc mật khẩu mới chưa đủ mạnh, hệ thống không lưu và hiển thị nguyên nhân để người dùng sửa. Hệ thống hiện lưu mật khẩu bằng MD5; quản trị hệ thống nên có kế hoạch nâng cấp cơ chế băm mật khẩu theo tài liệu bảo trì.
 
 ### Menu và phân quyền
 
@@ -247,36 +272,86 @@ Màn hình **Log** dùng để tra cứu nhật ký thao tác của hệ thống
 - Nếu menu/chức năng không xuất hiện, kiểm tra nhóm quyền và chuỗi quyền của tài khoản trước khi kết luận lỗi giao diện.
 - Nếu chỉ số không xuất hiện ở màn hình Nhập liệu, kiểm tra trạng thái Đã duyệt, danh sách khoa/phòng được gán và cấu hình chu kỳ.
 
-### Quy trình sử dụng theo từng vai trò
+### Hướng dẫn theo từng quyền người dùng trên giao diện
+
+Các menu và nút thao tác chỉ xuất hiện khi tài khoản được cấp quyền tương ứng. Nếu không thấy đúng chức năng mô tả dưới đây, người dùng liên hệ quản trị viên để kiểm tra nhóm quyền; không sử dụng tài khoản của người khác.
+
+| Quyền người dùng | Menu chính trên giao diện | Công việc thực hiện |
+| --- | --- | --- |
+| Người tạo chỉ số | **Chỉ số chất lượng** | Tạo, sửa, gửi duyệt và theo dõi chỉ số |
+| Người duyệt chỉ số | **Chỉ số chất lượng** | Xem chỉ số chờ duyệt, duyệt hoặc từ chối |
+| Người nhập liệu khoa/phòng | **Nhập liệu** | Chọn chỉ số, kỳ báo cáo và nhập biểu mẫu |
+| Người xem báo cáo | **Chỉ số khoa**, **Chỉ số chất lượng** | Xem biểu đồ, thống kê và xuất Excel |
+| Quản trị viên | **Người dùng**, **Nhóm quyền**, **Danh mục** | Quản lý tài khoản, quyền và dữ liệu nền |
 
 #### Người tạo chỉ số
 
-Quy trình chuẩn của người tạo chỉ số gồm các bước sau:
+**Đường dẫn giao diện:** Menu trái → **Chỉ số chất lượng**.
 
-1. Mở phân hệ **Chỉ số chất lượng** và chọn tạo mới.
+Quy trình thao tác:
+
+1. Chọn **Thêm chỉ số** ở phía trên danh sách.
 2. Khai báo tên chỉ số, nhóm/phân loại, đơn vị tính, chu kỳ, mục tiêu, ngưỡng cảnh báo và phạm vi áp dụng.
-3. Chọn khoa/phòng áp dụng. Nếu phạm vi là toàn bệnh viện, hệ thống chuẩn hóa danh sách khoa/phòng trước khi lưu.
+3. Tại trường khoa/phòng áp dụng, mở cửa sổ **Chọn Khoa/Phòng**, đánh dấu các đơn vị cần sử dụng rồi chọn **Chọn**.
 4. Khai báo định nghĩa, cách thu thập dữ liệu, tử số/mẫu số hoặc công thức nếu chỉ số có sử dụng.
-5. Thiết kế biểu mẫu nhập liệu. Mỗi câu hỏi nên có ID ổn định để giữ khả năng đọc dữ liệu lịch sử.
-6. Lưu nháp và kiểm tra lại toàn bộ cấu hình.
-7. Gửi duyệt. Sau khi gửi, chỉ số chuyển sang trạng thái **Chờ duyệt**.
-8. Theo dõi kết quả duyệt. Nếu bị từ chối, xem lý do và sử dụng chức năng tạo lại để hình thành bản nháp mới.
+5. Tại phần **Thiết kế biểu mẫu khảo sát**, chọn **Thêm câu hỏi**, nhập nội dung và loại câu trả lời; lặp lại cho đến khi hoàn thành biểu mẫu.
+6. Chọn **Lưu**. Kiểm tra chỉ số mới xuất hiện trong danh sách với trạng thái **Nháp**.
+7. Ở cột **Thao tác**, chọn **Xem** để kiểm tra, **Sửa** nếu cần điều chỉnh, sau đó chọn **Gửi**.
+8. Xác nhận trạng thái đã chuyển sang **Chờ duyệt**.
+9. Nếu chỉ số bị từ chối, chọn **Xem** để đọc lý do, sau đó chọn **Tạo lại**, sửa bản nháp mới và gửi duyệt lại.
 
-Điểm cần lưu ý: chỉ số mới được lưu ở trạng thái nháp; người dùng khác không nên sử dụng chỉ số để nhập liệu trước khi chỉ số được duyệt.
+**Kết quả mong đợi:** chỉ số có trạng thái **Chờ duyệt** sau khi gửi. Không yêu cầu khoa/phòng nhập liệu khi chỉ số chưa được duyệt.
 
 #### Người duyệt chỉ số
 
-Người duyệt truy cập danh sách chỉ số chờ duyệt, kiểm tra nội dung chỉ số, phạm vi khoa/phòng, chu kỳ, biểu mẫu, mục tiêu và công thức. Khi chọn **Duyệt**, hệ thống cập nhật trạng thái sang `2`, lưu người duyệt và thời gian duyệt. Khi chọn **Từ chối**, người duyệt cần nhập lý do để người tạo biết nội dung cần điều chỉnh.
+**Đường dẫn giao diện:** Menu trái → **Chỉ số chất lượng**.
+
+1. Tìm dòng có trạng thái **Chờ duyệt**.
+2. Chọn **Xem** ở cột **Thao tác**.
+3. Kiểm tra tên, định nghĩa, chu kỳ, mục tiêu, ngưỡng cảnh báo, khoa/phòng áp dụng, phương pháp thu thập và toàn bộ câu hỏi trong biểu mẫu.
+4. Nếu đạt yêu cầu, chọn **Duyệt** và xác nhận. Danh sách hiển thị trạng thái **Đã duyệt**.
+5. Nếu cần chỉnh sửa, chọn **Từ chối**, nhập lý do cụ thể rồi xác nhận. Danh sách hiển thị trạng thái **Từ chối**.
+
+**Kết quả mong đợi:** quyết định duyệt được phản ánh đúng trong cột trạng thái; lý do từ chối đủ rõ để người tạo chỉ số điều chỉnh.
 
 #### Người nhập liệu khoa/phòng
 
-Người nhập liệu chỉ nhìn thấy các chỉ số thỏa đồng thời các điều kiện: đã duyệt, được gán cho khoa/phòng của tài khoản và có cấu hình chu kỳ hợp lệ. Khi mở một chỉ số, hệ thống trả về biểu mẫu, kỳ hiện tại và các phiếu đã nhập trong năm. Người dùng chọn kỳ hợp lệ, nhập đầy đủ các trường bắt buộc và lưu phiếu.
+**Đường dẫn giao diện:** Menu trái → **Nhập liệu**.
 
-Hệ thống chặn kỳ tương lai. Với kỳ hiện tại hoặc kỳ cũ còn hợp lệ, một lần lưu tạo một bản ghi mới trong `ct_chiso`; source hiện tại không áp đặt ràng buộc duy nhất cho một khoa/phòng trong cùng năm/kỳ.
+1. Xem ba ô tổng quan **Tổng chỉ tiêu**, **Đã nhập kỳ hiện tại** và **Chưa nhập kỳ hiện tại**.
+2. Tìm chỉ số có nhãn **Chưa nhập**; có thể dùng ô tìm kiếm của bảng.
+3. Chọn **Nhập biểu mẫu** ở cột **Thao tác**.
+4. Tại phần **Thông tin kỳ báo cáo**, chọn đúng kỳ cần nhập và đọc mốc tháng/năm bắt đầu được hiển thị.
+5. Hoàn thành lần lượt các trường trong **Nội dung biểu mẫu**. Các trường có dấu sao đỏ không được để trống.
+6. Kiểm tra số, phần trăm, điểm và các lựa chọn trước khi lưu.
+7. Chọn **Lưu biểu mẫu** và chờ thông báo thành công.
+8. Quay lại danh sách và kiểm tra nhãn kỳ hiện tại chuyển thành **Đã nhập**.
+
+**Kết quả mong đợi:** biểu mẫu được lưu thành công và chỉ số được tính vào số lượng đã nhập. Không chọn kỳ tương lai; không nhấn lưu nhiều lần nếu không có thêm một lượt thu thập dữ liệu mới.
+
+#### Người xem báo cáo
+
+**Đường dẫn giao diện:** Menu trái → **Chỉ số khoa** hoặc **Chỉ số chất lượng**.
+
+1. Tại **Chỉ số khoa**, chọn **Khối** và **Khoa/Phòng** để lọc danh sách nếu cần.
+2. Chọn **Xem** tại chỉ số cần theo dõi.
+3. Chuyển giữa các thẻ **Thông tin**, **Biểu đồ**, **Thống kê** và **Theo tháng** nếu thẻ được hiển thị.
+4. Chọn tháng, năm hoặc kiểu thống kê phù hợp; dùng **Xóa lọc** để trở về toàn bộ dữ liệu.
+5. Chọn **Xuất Excel** hoặc **Xuất thống kê** để tải báo cáo khi tài khoản có quyền.
+
+**Kết quả mong đợi:** biểu đồ và số liệu phản ánh đúng khoa/phòng, thời gian và chỉ số đã chọn.
 
 #### Quản trị viên
 
-Quản trị viên duy trì người dùng, khoa/phòng, nhóm quyền và các danh mục nền. Khi tạo tài khoản cần gán đúng khoa/phòng vì `MaKhoaPhong` được dùng để xác định phạm vi nhập liệu. Khi thay đổi nhóm quyền cần kiểm tra lại menu và các thao tác chi tiết như duyệt, xóa, khóa hoặc phân quyền.
+**Đường dẫn giao diện:** Menu trái → **Người dùng**, **Nhóm quyền** hoặc các mục **Danh mục**.
+
+1. Tại **Người dùng**, chọn **Thêm mới**, nhập họ tên, tên đăng nhập, mật khẩu, nhóm quyền và khoa/phòng rồi lưu.
+2. Dùng ô tìm kiếm để tìm tài khoản; sử dụng các nút ở cột thao tác để **Sửa**, **Khóa/Mở khóa** hoặc **Phân quyền**.
+3. Tại **Nhóm quyền**, tạo hoặc sửa nhóm và đánh dấu đúng chức năng mà nhóm được phép sử dụng.
+4. Tại các màn hình danh mục, cập nhật khoa/phòng, khối, chu kỳ, đơn vị tính, phạm vi và các dữ liệu nền khác theo phân công.
+5. Sau khi thay đổi quyền hoặc khoa/phòng, yêu cầu người dùng đăng nhập lại và kiểm tra menu, danh sách chỉ số hiển thị.
+
+**Kết quả mong đợi:** người dùng chỉ nhìn thấy đúng menu và thao tác được cấp; người nhập liệu được gắn đúng khoa/phòng.
 
 ### Thông báo và tình huống thường gặp
 
