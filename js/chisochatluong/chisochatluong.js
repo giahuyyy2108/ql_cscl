@@ -358,6 +358,7 @@ table = $('#datatable-chiso').DataTable({
 
                 // đánh dấu đang thêm
                 $('#action').val('add');
+                khoiPhucBanNhapBieuMau();
 
                 // cho nhập mã chỉ số
                 // $('#ma_chi_so').prop('readonly', false);
@@ -641,12 +642,30 @@ $('#datatable-chiso').on('click', '.btn-sua', function () {
 
     khoiTaoBieuMauKhaoSat();
     napDuLieuBieuMau(row.bieumau);
+    khoiPhucBanNhapBieuMau();
     $('#modalChiTieu').modal('show');
+});
+
+$('#formChiTieu').on('keydown', function (e) {
+    if ((e.key === 'Enter' || e.keyCode === 13) && !e.isComposing) {
+        var truongNhap = $(e.target);
+        if (!truongNhap.is('textarea, [contenteditable="true"]')) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }
 });
 
 $('#formChiTieu').on('submit', function (e) {
 
     e.preventDefault();
+    luuBanNhapBieuMau();
+
+    var ketQuaKiemTraCauHoi = kiemTraHopLeBieuMauCauHoi();
+    if (!ketQuaKiemTraCauHoi.hopLe) {
+        hienThiLoiBieuMauCauHoi(ketQuaKiemTraCauHoi);
+        return;
+    }
 
     var action = $('#action').val();
 
@@ -702,6 +721,8 @@ $('#formChiTieu').on('submit', function (e) {
 
             if (response.success || (response.message && response.message.flag)) {
 
+                boQuaLuuBanNhapKhiDong = true;
+                xoaBanNhapBieuMau();
                 $('#modalChiTieu').modal('hide');
 
                 // reload DataTable nhưng không về trang 1
@@ -710,20 +731,19 @@ $('#formChiTieu').on('submit', function (e) {
                 // alert(response.message || 'Lưu thành công');
 
             } else {
-
-                // alert(
-                //     (response.message && (response.message.errorMessage || response.message.message)) ||
-                //     response.errorMessage ||
-                //     'Không thể lưu dữ liệu'
-                // );
+                var thongBaoLoi = (typeof response.message === 'string' ? response.message :
+                    (response.message && (response.message.errorMessage || response.message.message))) ||
+                    response.errorMessage || 'Không thể lưu dữ liệu. Bản nháp vẫn được giữ lại.';
+                Swal.fire('Lưu biểu mẫu không thành công', thongBaoLoi, 'error');
             }
         },
 
         error: function (xhr) {
-
-            // console.log(xhr.responseText);
-
-            // alert('Có lỗi xảy ra khi lưu dữ liệu');
+            var thongBaoLoi = 'Có lỗi xảy ra khi lưu dữ liệu. Bản nháp vẫn được giữ lại.';
+            if (xhr.responseJSON) {
+                thongBaoLoi = xhr.responseJSON.errorMessage || xhr.responseJSON.message || thongBaoLoi;
+            }
+            Swal.fire('Lưu biểu mẫu không thành công', thongBaoLoi, 'error');
         },
 
         complete: function () {
@@ -1336,6 +1356,127 @@ $('#btnChonPopupCon').on('click', function () {
 });
 
 var soThuTuCauHoi = 0;
+var henGioLuuBanNhapBieuMau = null;
+var dangKhoiPhucBanNhapBieuMau = false;
+var boQuaLuuBanNhapKhiDong = false;
+
+function khoaBanNhapBieuMau() {
+    var action = $('#action').val() || 'add';
+    var maChiSo = action === 'edit' ? ($('#ma_chi_so').val() || 'khong_xac_dinh') : 'moi';
+    return 'ql_cscl:bieu_mau_nhap:' + action + ':' + maChiSo;
+}
+
+function layDuLieuThongTinChiTieu() {
+    var duLieu = [];
+    $('#formChiTieu :input')
+        .not(':button, [type="submit"], [type="file"], #action, #surveyBuilder :input')
+        .each(function (index) {
+        var input = $(this);
+        var type = String(input.attr('type') || this.tagName || '').toLowerCase();
+        duLieu.push({
+            id: this.id || '',
+            name: input.attr('name') || '',
+            index: index,
+            type: type,
+            value: input.val(),
+            checked: type === 'checkbox' || type === 'radio' ? input.prop('checked') : null
+        });
+        });
+    return duLieu;
+}
+
+function khoiPhucThongTinChiTieu(duLieu) {
+    if (!Array.isArray(duLieu)) return;
+    var tatCaInput = $('#formChiTieu :input')
+        .not(':button, [type="submit"], [type="file"], #action, #surveyBuilder :input');
+    duLieu.forEach(function (item) {
+        if (!item.id && !item.name) return;
+        var input = item.id ? $(document.getElementById(item.id)) : $();
+        if (!input.length && item.name) {
+            input = tatCaInput.filter('[name="' + String(item.name).replace(/"/g, '\\"') + '"]').first();
+        }
+        if (!input.length && item.index !== undefined) input = tatCaInput.eq(item.index);
+        if (!input.length) return;
+        if (item.type === 'checkbox' || item.type === 'radio') {
+            input.prop('checked', !!item.checked);
+        } else {
+            input.val(item.value);
+        }
+    });
+    capNhatKhoaPhongTheoPhamVi();
+}
+
+function luuBanNhapBieuMau() {
+    if (dangKhoiPhucBanNhapBieuMau || !window.localStorage) return;
+    try {
+        var thoiGianLuu = new Date();
+        window.localStorage.setItem(khoaBanNhapBieuMau(), JSON.stringify({
+            saved_at: thoiGianLuu.toISOString(),
+            thong_tin: layDuLieuThongTinChiTieu(),
+            bieumau: layDuLieuBieuMau()
+        }));
+        $('#trangThaiBanNhapBieuMau').html(
+            '<i class="fa fa-check-circle"></i> Đã lưu bản nháp lúc ' +
+            thoiGianLuu.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        );
+    } catch (error) {
+        $('#trangThaiBanNhapBieuMau').html(
+            '<i class="fa fa-exclamation-circle"></i> Không thể tự động lưu'
+        );
+    }
+}
+
+function lenLichLuuBanNhapBieuMau() {
+    window.clearTimeout(henGioLuuBanNhapBieuMau);
+    henGioLuuBanNhapBieuMau = window.setTimeout(luuBanNhapBieuMau, 300);
+}
+
+function khoiPhucBanNhapBieuMau() {
+    if (!window.localStorage) return false;
+    try {
+        var noiDung = window.localStorage.getItem(khoaBanNhapBieuMau());
+        if (!noiDung) return false;
+        var banNhap = JSON.parse(noiDung);
+        if (!banNhap || !banNhap.bieumau) return false;
+        dangKhoiPhucBanNhapBieuMau = true;
+        khoiPhucThongTinChiTieu(banNhap.thong_tin);
+        khoiTaoBieuMauKhaoSat();
+        napDuLieuBieuMau(banNhap.bieumau);
+        dangKhoiPhucBanNhapBieuMau = false;
+        $('#trangThaiBanNhapBieuMau').html('<i class="fa fa-history"></i> Đã khôi phục bản nháp');
+        return true;
+    } catch (error) {
+        dangKhoiPhucBanNhapBieuMau = false;
+        return false;
+    }
+}
+
+function xoaBanNhapBieuMau() {
+    window.clearTimeout(henGioLuuBanNhapBieuMau);
+    try {
+        if (window.localStorage) window.localStorage.removeItem(khoaBanNhapBieuMau());
+        $('#trangThaiBanNhapBieuMau').html('<i class="fa fa-cloud"></i> Tự động lưu bản nháp');
+    } catch (error) {
+        // Không cần chặn luồng lưu chính nếu trình duyệt không cho xóa bản nháp.
+    }
+}
+
+$('#modalChiTieu').on('hide.bs.modal.autosave', function () {
+    window.clearTimeout(henGioLuuBanNhapBieuMau);
+    if (boQuaLuuBanNhapKhiDong) {
+        boQuaLuuBanNhapKhiDong = false;
+        return;
+    }
+    luuBanNhapBieuMau();
+});
+
+window.addEventListener('beforeunload', function () {
+    if ($('#modalChiTieu').hasClass('in')) luuBanNhapBieuMau();
+});
+
+document.addEventListener('visibilitychange', function () {
+    if (document.hidden && $('#modalChiTieu').hasClass('in')) luuBanNhapBieuMau();
+});
 
 function loaiCauHoiCanLuaChon(loai) {
     return ['radio', 'checkbox', 'select', 'satisfaction'].indexOf(loai) !== -1;
@@ -1411,6 +1552,7 @@ function capNhatTrangThaiBieuMau() {
         var laDanhMucCon = loai === 'subcategory';
         item.toggleClass('survey-question--category', laDanhMuc);
         item.toggleClass('survey-question--subcategory', laDanhMucCon);
+        if (!laDanhMuc) item.removeClass('survey-question--questions-open');
         item.removeClass('survey-question--level-1 survey-question--level-2');
 
         if (loai === 'category') {
@@ -1457,6 +1599,11 @@ function capNhatTrangThaiBieuMau() {
             laDanhMuc ? ('Nhập tên danh mục ' + (laDanhMucCon ? 'con' : 'cha')) : 'Nhập nội dung câu hỏi'
         );
         item.find('.survey-question__footer').toggle(!laDanhMuc);
+        item.find('.btn-toggle-cau-hoi-danh-muc').toggle(laDanhMuc);
+        item.find('.survey-question__type-column').toggle(!laDanhMuc);
+        item.find('.survey-question__title-column')
+            .toggleClass('col-md-8', !laDanhMuc)
+            .toggleClass('col-md-12', laDanhMuc);
         var hienThiCauHinhSo = loai === 'number';
         item.find('.survey-question__number-settings')
             .toggle(hienThiCauHinhSo)
@@ -1465,23 +1612,28 @@ function capNhatTrangThaiBieuMau() {
 
         var hienThiPhuongAn = loaiCauHoiCanLuaChon(loai) && loai !== 'satisfaction';
         item.find('.survey-question__options :input').prop('disabled', !hienThiPhuongAn);
-        item.find('.survey-option__other-toggle').toggle(loai === 'radio');
-        item.find('.survey-option__allow-other').prop('disabled', loai !== 'radio');
+        var coPhuongAnKhac = item.find('.survey-option__allow-other').filter(function () {
+            return $(this).val() === '1';
+        }).length > 0;
+        item.find('.survey-option--other').appendTo(item.find('.survey-question__option-list'));
+        item.find('.survey-option__other-add').toggle(loai === 'radio' && !coPhuongAnKhac);
         if (laDanhMuc) item.find('.survey-question__required').prop('checked', false);
-        $(this).find('.btn-cau-hoi-len').prop('disabled', index === 0);
-        $(this).find('.btn-cau-hoi-xuong').prop('disabled', index === danhSach.length - 1);
+        capNhatTomTatCauHoi(item);
     });
+    capNhatCauHoiTheoDanhMuc();
 }
 
 function taoLuaChonCauHoi(noiDung, diem, choNhapThem) {
-    var luaChon = $('<div>', { 'class': 'survey-option' });
+    var luaChon = $('<div>', {
+        'class': 'survey-option' + (choNhapThem ? ' survey-option--other' : '')
+    });
     luaChon.append($('<i>', { 'class': 'fa fa-circle-o text-muted' }));
     luaChon.append($('<input>', {
         type: 'text',
         'class': 'form-control input-sm survey-option__text',
         placeholder: 'Nhập phương án trả lời',
-        value: noiDung || ''
-    }));
+        value: choNhapThem ? 'Khác' : (noiDung || '')
+    }).prop('readonly', !!choNhapThem));
     luaChon.append($('<input>', {
         type: 'number',
         min: 0,
@@ -1491,16 +1643,11 @@ function taoLuaChonCauHoi(noiDung, diem, choNhapThem) {
         title: 'Điểm của phương án này',
         value: diem === undefined || diem === null ? 0 : diem
     }));
-    luaChon.append($('<label>', {
-        'class': 'survey-option__other-toggle',
-        title: 'Khi chọn phương án này, người trả lời phải nhập nội dung bổ sung'
-    }).append(
-        $('<input>', {
-            type: 'checkbox',
-            'class': 'survey-option__allow-other'
-        }).prop('checked', !!choNhapThem),
-        document.createTextNode(' Có ô nhập')
-    ));
+    luaChon.append($('<input>', {
+        type: 'hidden',
+        'class': 'survey-option__allow-other',
+        value: choNhapThem ? '1' : '0'
+    }));
     luaChon.append(
         $('<button>', {
             type: 'button',
@@ -1547,20 +1694,26 @@ function taoCauHoi(idCauHoi) {
     });
 
     cauHoi.html(
+        '<div class="survey-question__drag-handle" title="Kéo để thay đổi thứ tự" aria-label="Kéo để thay đổi thứ tự">' +
+            '<i class="fa fa-ellipsis-h"></i>' +
+        '</div>' +
         '<div class="survey-question__header">' +
-            '<strong class="survey-question__number"></strong>' +
+            '<div class="survey-question__heading">' +
+                '<strong class="survey-question__number"></strong>' +
+                '<span class="survey-question__summary"></span>' +
+            '</div>' +
             '<div class="survey-question__actions">' +
-                '<button type="button" class="btn btn-default btn-xs btn-cau-hoi-len" title="Di chuyển lên"><i class="fa fa-arrow-up"></i></button>' +
-                '<button type="button" class="btn btn-default btn-xs btn-cau-hoi-xuong" title="Di chuyển xuống"><i class="fa fa-arrow-down"></i></button>' +
+                '<button type="button" class="btn btn-default btn-xs btn-toggle-cau-hoi-danh-muc" title="Hiện câu hỏi" aria-label="Hiện câu hỏi" aria-expanded="false" style="display:none"><i class="fa fa-chevron-down"></i></button>' +
+                '<button type="button" class="btn btn-default btn-xs btn-nhan-ban-cau-hoi" title="Nhân bản"><i class="fa fa-copy"></i></button>' +
                 '<button type="button" class="btn btn-danger btn-xs btn-xoa-cau-hoi" title="Xóa câu hỏi"><i class="fa fa-trash"></i></button>' +
             '</div>' +
         '</div>' +
         '<div class="row">' +
-            '<div class="col-md-8"><div class="form-group">' +
+            '<div class="col-md-8 survey-question__title-column"><div class="form-group">' +
                 '<label class="survey-question__title-label">Nội dung câu hỏi <span class="text-danger">*</span></label>' +
                 '<input type="text" class="form-control survey-question__title" placeholder="Nhập nội dung câu hỏi">' +
             '</div></div>' +
-            '<div class="col-md-4"><div class="form-group">' +
+            '<div class="col-md-4 survey-question__type-column"><div class="form-group">' +
                 '<label>Loại câu trả lời</label>' +
                 '<select class="form-control survey-question__type">' +
                     '<option value="short_text">Trả lời ngắn</option>' +
@@ -1569,8 +1722,8 @@ function taoCauHoi(idCauHoi) {
                     '<option value="percentage">Tỷ lệ (%)</option>' +
                     '<option value="score">Chọn điểm (1–10)</option>' +
                     '<option value="date">Ngày tháng</option>' +
-                    '<option value="category">Danh mục cha</option>' +
-                    '<option value="subcategory">Danh mục con</option>' +
+                    '<option value="category" hidden>Danh mục cha</option>' +
+                    '<option value="subcategory" hidden>Danh mục con</option>' +
                     '<option value="satisfaction">Độ hài lòng</option>' +
                     '<option value="radio">Một lựa chọn</option>' +
                     '<option value="checkbox">Nhiều lựa chọn</option>' +
@@ -1581,7 +1734,10 @@ function taoCauHoi(idCauHoi) {
         '<div class="survey-question__options" style="display:none">' +
             '<label>Phương án trả lời <span class="text-muted">(điểm ở ô bên phải)</span></label>' +
             '<div class="survey-question__option-list"></div>' +
-            '<button type="button" class="btn btn-default btn-sm btn-them-lua-chon"><i class="fa fa-plus"></i> Thêm phương án</button>' +
+            '<div class="survey-option__add-row">' +
+                '<button type="button" class="btn btn-link btn-them-lua-chon">Thêm phương án</button>' +
+                '<span class="survey-option__other-add"> hoặc <button type="button" class="btn btn-link btn-them-khac">thêm “Khác”</button></span>' +
+            '</div>' +
         '</div>' +
         '<div class="survey-question__number-settings" style="display:none">' +
             '<div class="row"><div class="col-md-4"><div class="form-group">' +
@@ -1600,8 +1756,33 @@ function taoCauHoi(idCauHoi) {
 
 function themCauHoi() {
     var cauHoiMoi = taoCauHoi();
-    $('#danhSachCauHoi').append(cauHoiMoi);
+    var itemDangChon = $('#danhSachCauHoi > .survey-question--active').first();
+    if (itemDangChon.length) {
+        var loaiDangChon = itemDangChon.find('.survey-question__type').val();
+        var viTriChen = itemDangChon;
+
+        if (laLoaiDanhMuc(loaiDangChon)) {
+            var itemKeTiep = itemDangChon.next('.survey-question');
+            while (itemKeTiep.length) {
+                var loaiKeTiep = itemKeTiep.find('.survey-question__type').val();
+                if (laLoaiDanhMuc(loaiKeTiep)) break;
+                viTriChen = itemKeTiep;
+                itemKeTiep = itemKeTiep.next('.survey-question');
+            }
+        }
+        viTriChen.after(cauHoiMoi);
+    } else {
+        $('#danhSachCauHoi').append(cauHoiMoi);
+    }
+
+    var danhMucChuaCauHoi = cauHoiMoi.prevAll('.survey-question').filter(function () {
+        return laLoaiDanhMuc($(this).find('.survey-question__type').val());
+    }).first();
+    if (danhMucChuaCauHoi.length) {
+        danhMucChuaCauHoi.addClass('survey-question--questions-open');
+    }
     capNhatTrangThaiBieuMau();
+    chonCauHoi(cauHoiMoi);
 
     if (cauHoiMoi[0] && typeof cauHoiMoi[0].scrollIntoView === 'function') {
         cauHoiMoi[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1617,10 +1798,186 @@ function focusNoiDungCauHoi(cauHoi) {
     }, 0);
 }
 
+function capNhatCauHoiTheoDanhMuc() {
+    var danhSach = $('#danhSachCauHoi > .survey-question')
+        .not('.survey-question__placeholder, .ui-sortable-placeholder');
+    var danhMucGanNhat = $();
+    var danhMucChaDangMo = true;
+
+    danhSach.each(function () {
+        var item = $(this);
+        var loai = item.find('.survey-question__type').val();
+        if (laLoaiDanhMuc(loai)) {
+            if (loai === 'category') {
+                danhMucChaDangMo = item.hasClass('survey-question--questions-open');
+                item.removeClass('survey-question--parent-hidden');
+            } else {
+                item.toggleClass('survey-question--parent-hidden', !danhMucChaDangMo);
+            }
+            danhMucGanNhat = item;
+            var dangMo = item.hasClass('survey-question--questions-open');
+            item.find('.btn-toggle-cau-hoi-danh-muc')
+                .attr('aria-expanded', dangMo ? 'true' : 'false')
+                .attr('title', dangMo ? 'Ẩn câu hỏi' : 'Hiện câu hỏi')
+                .attr('aria-label', dangMo ? 'Ẩn câu hỏi' : 'Hiện câu hỏi')
+                .find('i')
+                .toggleClass('fa-chevron-up', dangMo)
+                .toggleClass('fa-chevron-down', !dangMo);
+            return;
+        }
+
+        item.toggleClass(
+            'survey-question--group-hidden',
+            danhMucGanNhat.length && (
+                !danhMucChaDangMo || !danhMucGanNhat.hasClass('survey-question--questions-open')
+            )
+        );
+    });
+}
+
+function chonCauHoi(cauHoi) {
+    if (!cauHoi || !cauHoi.length) return;
+    var danhSachCauHoi = $('#danhSachCauHoi .survey-question');
+    danhSachCauHoi.each(function () {
+        var item = $(this);
+        var dangChon = item.is(cauHoi);
+        capNhatTomTatCauHoi(item);
+        item.toggleClass('survey-question--active', dangChon);
+        item.toggleClass('survey-question--collapsed', !dangChon);
+    });
+
+    var thanhCongCu = $('.survey-builder__toolbar');
+    var canvas = $('.survey-builder__canvas');
+    if (thanhCongCu.length && canvas.length) {
+        var viTriTren = cauHoi.offset().top - canvas.offset().top;
+        thanhCongCu.css('top', Math.max(0, viTriTren) + 'px');
+    }
+    $('#btnImportCauHoi').toggle(cauHoi.find('.survey-question__type').val() === 'category');
+}
+
+function capNhatTomTatCauHoi(cauHoi) {
+    var noiDung = $.trim(cauHoi.find('.survey-question__title').val()) || 'Câu hỏi chưa có nội dung';
+    cauHoi.find('.survey-question__summary').text(noiDung);
+}
+
 function khoiTaoBieuMauKhaoSat() {
     soThuTuCauHoi = 0;
     $('#danhSachCauHoi').empty();
     capNhatTrangThaiBieuMau();
+}
+
+function kiemTraHopLeBieuMauCauHoi() {
+    var danhSach = $('#danhSachCauHoi > .survey-question')
+        .not('.survey-question__placeholder, .ui-sortable-placeholder');
+    var soCauHoiThuong = 0;
+    var loi = null;
+
+    danhSach.each(function (index) {
+        if (loi) return false;
+        var item = $(this);
+        var loai = item.find('.survey-question__type').val();
+        var noiDung = $.trim(item.find('.survey-question__title').val());
+        var tenDoiTuong = loai === 'category'
+            ? 'danh mục cha'
+            : (loai === 'subcategory' ? 'danh mục con' : 'câu hỏi');
+
+        if (!noiDung) {
+            loi = {
+                hopLe: false,
+                item: item,
+                truong: item.find('.survey-question__title'),
+                thongBao: 'Vui lòng nhập nội dung ' + tenDoiTuong + ' số ' + (index + 1) + '.'
+            };
+            return false;
+        }
+
+        if (loai === 'subcategory') {
+            var coDanhMucCha = item.prevAll('.survey-question').filter(function () {
+                return $(this).find('.survey-question__type').val() === 'category';
+            }).length > 0;
+            if (!coDanhMucCha) {
+                loi = {
+                    hopLe: false,
+                    item: item,
+                    truong: item.find('.survey-question__title'),
+                    thongBao: 'Danh mục con “' + noiDung + '” chưa thuộc danh mục cha.'
+                };
+                return false;
+            }
+        }
+
+        if (laLoaiDanhMuc(loai)) return;
+        soCauHoiThuong += 1;
+
+        if (!loai) {
+            loi = {
+                hopLe: false,
+                item: item,
+                truong: item.find('.survey-question__type'),
+                thongBao: 'Vui lòng chọn loại câu trả lời cho câu hỏi “' + noiDung + '”.'
+            };
+            return false;
+        }
+
+        if (['radio', 'checkbox', 'select'].indexOf(loai) !== -1) {
+            var danhSachPhuongAn = item.find('.survey-option');
+            if (!danhSachPhuongAn.length) {
+                loi = {
+                    hopLe: false,
+                    item: item,
+                    truong: item.find('.btn-them-lua-chon'),
+                    thongBao: 'Câu hỏi “' + noiDung + '” cần ít nhất một phương án trả lời.'
+                };
+                return false;
+            }
+
+            var phuongAnTrong = danhSachPhuongAn.filter(function () {
+                return $.trim($(this).find('.survey-option__text').val()) === '';
+            }).first();
+            if (phuongAnTrong.length) {
+                loi = {
+                    hopLe: false,
+                    item: item,
+                    truong: phuongAnTrong.find('.survey-option__text'),
+                    thongBao: 'Câu hỏi “' + noiDung + '” có phương án trả lời chưa nhập nội dung.'
+                };
+                return false;
+            }
+        }
+    });
+
+    if (loi) return loi;
+    if (danhSach.length && !soCauHoiThuong) {
+        return {
+            hopLe: false,
+            item: danhSach.first(),
+            truong: danhSach.first().find('.survey-question__title'),
+            thongBao: 'Biểu mẫu khảo sát cần có ít nhất một câu hỏi.'
+        };
+    }
+    return { hopLe: true };
+}
+
+function hienThiLoiBieuMauCauHoi(ketQua) {
+    var item = ketQua.item;
+    if (item && item.length) {
+        var danhMucCha = item.prevAll('.survey-question').filter(function () {
+            return $(this).find('.survey-question__type').val() === 'category';
+        }).first();
+        var danhMucGanNhat = item.prevAll('.survey-question').filter(function () {
+            return laLoaiDanhMuc($(this).find('.survey-question__type').val());
+        }).first();
+        danhMucCha.add(danhMucGanNhat).addClass('survey-question--questions-open');
+        capNhatCauHoiTheoDanhMuc();
+        chonCauHoi(item);
+        if (item[0] && typeof item[0].scrollIntoView === 'function') {
+            item[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    Swal.fire('Câu hỏi chưa hợp lệ', ketQua.thongBao, 'warning').then(function () {
+        if (ketQua.truong && ketQua.truong.length) ketQua.truong.first().focus();
+    });
 }
 
 function layDuLieuBieuMau() {
@@ -1639,7 +1996,7 @@ function layDuLieuBieuMau() {
                     luaChon.push({
                         noi_dung: noiDung,
                         diem: parseFloat($(this).find('.survey-option__score').val()) || 0,
-                        cho_nhap_them: loai === 'radio' && $(this).find('.survey-option__allow-other').prop('checked')
+                        cho_nhap_them: loai === 'radio' && $(this).find('.survey-option__allow-other').val() === '1'
                     });
                 }
             });
@@ -1718,6 +2075,8 @@ function napDuLieuBieuMau(duLieu) {
     });
 
     capNhatTrangThaiBieuMau();
+    var cauHoiDauTien = $('#danhSachCauHoi .survey-question').first();
+    if (cauHoiDauTien.length) chonCauHoi(cauHoiDauTien);
 }
 
 $('#btnThemCauHoi').on('click', function (event) {
@@ -1725,10 +2084,571 @@ $('#btnThemCauHoi').on('click', function (event) {
     themCauHoi();
 });
 
+$('#btnThemDanhMuc').on('click', function (event) {
+    event.preventDefault();
+    var danhMucMoi = taoCauHoi();
+    danhMucMoi.find('.survey-question__type').val('category');
+    $('#danhSachCauHoi').append(danhMucMoi);
+    capNhatTrangThaiBieuMau();
+    chonCauHoi(danhMucMoi);
+    danhMucMoi.find('.survey-question__title').focus();
+});
+
+$('#btnThemDanhMucCon').on('click', function (event) {
+    event.preventDefault();
+    var dangChon = $('#danhSachCauHoi .survey-question--active');
+    var danhMucCha = dangChon.filter(function () {
+        return $(this).find('.survey-question__type').val() === 'category';
+    });
+    if (!danhMucCha.length && dangChon.length) {
+        danhMucCha = dangChon.prevAll('.survey-question').filter(function () {
+            return $(this).find('.survey-question__type').val() === 'category';
+        }).first();
+    }
+
+    if (!danhMucCha.length) {
+        Swal.fire('Chưa có danh mục cha', 'Hãy thêm hoặc chọn một danh mục cha trước.', 'info');
+        return;
+    }
+
+    var danhMucConMoi = taoCauHoi();
+    danhMucConMoi.find('.survey-question__type').val('subcategory');
+    if (dangChon.length && (dangChon.is(danhMucCha) || dangChon.prevAll().is(danhMucCha))) {
+        dangChon.after(danhMucConMoi);
+    } else {
+        danhMucCha.after(danhMucConMoi);
+    }
+    capNhatTrangThaiBieuMau();
+    chonCauHoi(danhMucConMoi);
+    danhMucConMoi.find('.survey-question__title').focus();
+});
+
+$('#btnImportCauHoi').on('click', function (event) {
+    event.preventDefault();
+    var danhMucCha = $('#danhSachCauHoi .survey-question--active');
+    if (!danhMucCha.length || danhMucCha.find('.survey-question__type').val() !== 'category') return;
+    $('#fileImportCauHoi').val('').trigger('click');
+});
+
+function chuanHoaTieuDeImport(value) {
+    return String(value || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function loaiCauHoiTuExcel(value, coLuaChon, macDinhHaiLong) {
+    var loai = chuanHoaTieuDeImport(value);
+    if (loai.indexOf('hop kiem') !== -1 || loai.indexOf('nhieu lua chon') !== -1) return 'checkbox';
+    if (loai.indexOf('doan van') !== -1) return 'long_text';
+    if (loai.indexOf('tra loi ngan') !== -1) return 'short_text';
+    if (loai.indexOf('danh sach') !== -1 || loai.indexOf('tha xuong') !== -1) return 'select';
+    if (loai.indexOf('hai long') !== -1 || loai.indexOf('danh gia') !== -1) return 'satisfaction';
+    if (loai.indexOf('trac nghiem') !== -1 || loai.indexOf('mot lua chon') !== -1 || coLuaChon) return 'radio';
+    return macDinhHaiLong ? 'satisfaction' : 'short_text';
+}
+
+function docFileXlsxCauHoi(arrayBuffer) {
+    if (!window.JSZip) return Promise.reject(new Error('Thiếu thư viện đọc XLSX.'));
+    var moFileZip;
+    if (typeof JSZip.loadAsync === 'function') {
+        moFileZip = JSZip.loadAsync(arrayBuffer);
+    } else {
+        try {
+            moFileZip = Promise.resolve(new JSZip(arrayBuffer));
+        } catch (error) {
+            moFileZip = Promise.reject(error);
+        }
+    }
+
+    return moFileZip.then(function (zip) {
+        function docXml(path) {
+            var entry = zip.file(path);
+            if (!entry) return Promise.reject(new Error('Tệp XLSX không hợp lệ: ' + path));
+            var noiDung = typeof entry.async === 'function'
+                ? entry.async('string')
+                : Promise.resolve(entry.asText());
+            return noiDung.then(function (xml) {
+                return new DOMParser().parseFromString(xml, 'application/xml');
+            });
+        }
+
+        return Promise.all([
+            docXml('xl/workbook.xml'),
+            docXml('xl/_rels/workbook.xml.rels'),
+            zip.file('xl/sharedStrings.xml') ? docXml('xl/sharedStrings.xml') : Promise.resolve(null)
+        ]).then(function (parts) {
+            var workbook = parts[0];
+            var relationships = parts[1];
+            var sharedXml = parts[2];
+            var shared = [];
+            var relMap = {};
+
+            if (sharedXml) {
+                Array.prototype.forEach.call(sharedXml.getElementsByTagName('si'), function (si) {
+                    shared.push(si.textContent || '');
+                });
+            }
+            Array.prototype.forEach.call(relationships.getElementsByTagName('Relationship'), function (rel) {
+                relMap[rel.getAttribute('Id')] = rel.getAttribute('Target');
+            });
+
+            var sheetPromises = Array.prototype.map.call(workbook.getElementsByTagName('sheet'), function (sheet) {
+                var target = relMap[sheet.getAttribute('r:id')];
+                target = String(target || '').replace(/^\//, '').replace(/^xl\//, '');
+                return docXml('xl/' + target).then(function (sheetXml) {
+                    var rows = [];
+                    Array.prototype.forEach.call(sheetXml.getElementsByTagName('row'), function (rowXml) {
+                        var row = [];
+                        Array.prototype.forEach.call(rowXml.getElementsByTagName('c'), function (cell) {
+                            var ref = cell.getAttribute('r') || 'A1';
+                            var letters = ref.replace(/[0-9]/g, '');
+                            var column = 0;
+                            for (var i = 0; i < letters.length; i++) column = column * 26 + letters.charCodeAt(i) - 64;
+                            var type = cell.getAttribute('t');
+                            var valueNode = cell.getElementsByTagName('v')[0];
+                            var value = type === 'inlineStr'
+                                ? ((cell.getElementsByTagName('is')[0] || {}).textContent || '')
+                                : (valueNode ? valueNode.textContent : '');
+                            if (type === 's') value = shared[parseInt(value, 10)] || '';
+                            row[column - 1] = value;
+                        });
+                        rows.push(row);
+                    });
+                    return { name: sheet.getAttribute('name') || 'Sheet', rows: rows };
+                });
+            });
+            return Promise.all(sheetPromises);
+        });
+    });
+}
+
+var importCauHoiDangCho = null;
+
+function taiFileMauImportCauHoi() {
+    var link = document.createElement('a');
+    link.href = '../template/Mau_import_cau_hoi_khao_sat.xlsx';
+    link.download = 'Mau_import_cau_hoi_khao_sat.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function thongBaoLoiDinhDangImport(thongBao) {
+    return Swal.fire({
+        title: 'Sai định dạng file',
+        text: thongBao,
+        icon: 'error',
+        showDenyButton: true,
+        confirmButtonText: 'Đóng',
+        denyButtonText: '<i class="fa fa-download"></i> Tải file mẫu'
+    }).then(function (result) {
+        if (result.isDenied) taiFileMauImportCauHoi();
+    });
+}
+
+function docBangCsvCauHoi(noiDung) {
+    var cacDong = String(noiDung || '').replace(/^\uFEFF/, '').split(/\r?\n/)
+        .filter(function (dong) { return $.trim(dong) !== ''; });
+    if (!cacDong.length) return [];
+    var kyTuPhanCach = cacDong[0].split(';').length >= cacDong[0].split(',').length ? ';' : ',';
+
+    return cacDong.map(function (dong) {
+        var ketQua = [];
+        var giaTri = '';
+        var trongNgoac = false;
+        for (var i = 0; i < dong.length; i++) {
+            var kyTu = dong.charAt(i);
+            if (kyTu === '"') {
+                if (trongNgoac && dong.charAt(i + 1) === '"') {
+                    giaTri += '"';
+                    i += 1;
+                } else {
+                    trongNgoac = !trongNgoac;
+                }
+            } else if (kyTu === kyTuPhanCach && !trongNgoac) {
+                ketQua.push(giaTri);
+                giaTri = '';
+            } else {
+                giaTri += kyTu;
+            }
+        }
+        ketQua.push(giaTri);
+        return ketQua;
+    });
+}
+
+function kiemTraDinhDangBangExcel(rows) {
+    if (!Array.isArray(rows) || !rows.length) {
+        return { hopLe: false, thongBao: 'Sheet không có dữ liệu.' };
+    }
+
+    var dongCoDuLieu = rows.map(function (row, index) {
+        return { row: Array.isArray(row) ? row : [], soDong: index + 1 };
+    }).filter(function (item) {
+        return item.row.some(function (cell) { return $.trim(String(cell || '')) !== ''; });
+    });
+    if (!dongCoDuLieu.length) return { hopLe: false, thongBao: 'Sheet không có dữ liệu.' };
+
+    var tieuDe = dongCoDuLieu[0].row.map(chuanHoaTieuDeImport);
+    var coTieuDe = tieuDe.indexOf('noi dung cau hoi') !== -1 || tieuDe.indexOf('ma cau hoi') !== -1;
+    var cotNoiDung = coTieuDe ? tieuDe.indexOf('noi dung cau hoi') : 3;
+    if (coTieuDe && cotNoiDung < 0) {
+        return {
+            hopLe: false,
+            thongBao: 'Thiếu cột bắt buộc “Nội dung câu hỏi” trong dòng tiêu đề.'
+        };
+    }
+
+    var duLieu = coTieuDe ? dongCoDuLieu.slice(1) : dongCoDuLieu;
+    if (!duLieu.length) return { hopLe: false, thongBao: 'File chỉ có tiêu đề, chưa có câu hỏi.' };
+    var dongLoi = duLieu.filter(function (item) {
+        return $.trim(String(item.row[cotNoiDung] || '')) === '';
+    }).map(function (item) { return item.soDong; });
+
+    if (dongLoi.length) {
+        return {
+            hopLe: false,
+            thongBao: 'Thiếu nội dung câu hỏi tại dòng ' + dongLoi.slice(0, 5).join(', ') +
+                (dongLoi.length > 5 ? '…' : '') + '.'
+        };
+    }
+    if (!coTieuDe && duLieu.some(function (item) { return item.row.length < 4; })) {
+        return {
+            hopLe: false,
+            thongBao: 'File không có tiêu đề phải đủ 4 cột theo thứ tự: STT, Mã, Nhóm, Nội dung câu hỏi.'
+        };
+    }
+    return { hopLe: true };
+}
+
+function phanTichCauHoiTuBangExcel(rows) {
+    if (!rows || !rows.length) return [];
+    var first = rows[0].map(chuanHoaTieuDeImport);
+    var coTieuDe = first.indexOf('noi dung cau hoi') !== -1 || first.indexOf('ma cau hoi') !== -1;
+    var cot = {
+        ma: coTieuDe ? first.indexOf('ma cau hoi') : 1,
+        nhom: coTieuDe ? first.indexOf('nhom cau hoi') : 2,
+        noiDung: coTieuDe ? first.indexOf('noi dung cau hoi') : 3,
+        loai: coTieuDe ? first.indexOf('loai cau hoi') : -1,
+        batBuoc: coTieuDe ? first.indexOf('bat buoc') : -1,
+        luaChon: coTieuDe ? first.indexOf('lua chon tra loi ngan cach boi') : -1
+    };
+    var duLieu = coTieuDe ? rows.slice(1) : rows;
+    var nhomHienTai = '';
+    var ketQua = [];
+
+    duLieu.forEach(function (row) {
+        var noiDung = $.trim(String(row[cot.noiDung] || ''));
+        if (!noiDung) return;
+        var nhom = $.trim(String(row[cot.nhom] || ''));
+        if (nhom && nhom !== nhomHienTai) {
+            ketQua.push({ loai: 'subcategory', noi_dung: nhom, ma: '', bat_buoc: false, lua_chon: [] });
+            nhomHienTai = nhom;
+        }
+
+        var luaChonText = cot.luaChon >= 0 ? String(row[cot.luaChon] || '') : '';
+        var luaChon = luaChonText.split('|').map(function (item) { return $.trim(item); })
+            .filter(function (item) { return item !== ''; });
+        var loai = loaiCauHoiTuExcel(cot.loai >= 0 ? row[cot.loai] : '', luaChon.length > 0, !coTieuDe);
+        ketQua.push({
+            loai: loai,
+            ma: cot.ma >= 0 ? $.trim(String(row[cot.ma] || '')) : '',
+            noi_dung: noiDung,
+            bat_buoc: cot.batBuoc >= 0 && chuanHoaTieuDeImport(row[cot.batBuoc]) === 'co',
+            lua_chon: luaChon
+        });
+    });
+    return ketQua;
+}
+
+function hienThiXemTruocImport(items, danhMucCha) {
+    var danhSach = $('#danhSachXemTruocImport').empty();
+    var tenLoai = {
+        short_text: 'Trả lời ngắn', long_text: 'Đoạn văn', radio: 'Một lựa chọn',
+        checkbox: 'Nhiều lựa chọn', select: 'Danh sách', satisfaction: 'Độ hài lòng'
+    };
+    var soCauHoi = 0;
+    items.forEach(function (item) {
+        var laDanhMuc = item.loai === 'subcategory';
+        if (!laDanhMuc) soCauHoi += 1;
+        var dong = $('<div>', {
+            'class': 'import-preview__item' + (laDanhMuc ? ' import-preview__item--category' : '')
+        }).data('import-item', item);
+        dong.append($('<span>', { 'class': 'import-preview__handle' }).append(
+            $('<i>', { 'class': 'fa fa-ellipsis-v' })
+        ));
+        var noiDung = $('<div>', { 'class': 'import-preview__content' });
+        if (!laDanhMuc && item.ma) noiDung.append($('<span>', { 'class': 'import-preview__code', text: item.ma }));
+        noiDung.append(document.createTextNode(item.noi_dung));
+        dong.append(noiDung);
+        dong.append($('<span>', {
+            'class': 'import-preview__type',
+            text: laDanhMuc ? 'Danh mục con' : (tenLoai[item.loai] || item.loai)
+        }));
+        danhSach.append(dong);
+    });
+
+    importCauHoiDangCho = { danhMucCha: danhMucCha };
+    $('#tongXemTruocImport').text(soCauHoi + ' câu hỏi • ' + (items.length - soCauHoi) + ' danh mục con');
+    if ($.fn.sortable) {
+        danhSach.sortable({
+            items: '> .import-preview__item:not(.import-preview__placeholder):not(.ui-sortable-placeholder)',
+            handle: '.import-preview__handle',
+            axis: 'y',
+            tolerance: 'pointer',
+            placeholder: 'import-preview__placeholder',
+            forcePlaceholderSize: true,
+            start: function (event, ui) {
+                if (!ui.item.hasClass('import-preview__item--category')) return;
+                var cauHoiTrongMuc = ui.item.nextUntil('.import-preview__item--category').detach();
+                ui.item.data('import-children', cauHoiTrongMuc);
+                var cauHoiTamAn = danhSach.children('.import-preview__item:not(.import-preview__item--category)')
+                    .not('.import-preview__placeholder, .ui-sortable-placeholder')
+                    .hide();
+                ui.item.data('import-hidden-questions', cauHoiTamAn);
+                danhSach.sortable('refreshPositions');
+            },
+            sort: function (event, ui) {
+                if (!ui.item.hasClass('import-preview__item--category')) return;
+                var danhMucKeTiep = ui.placeholder.nextAll('.import-preview__item--category').first();
+                if (danhMucKeTiep.length) ui.placeholder.insertBefore(danhMucKeTiep);
+                else danhSach.append(ui.placeholder);
+            },
+            stop: function (event, ui) {
+                var cauHoiTrongMuc = ui.item.data('import-children');
+                if (cauHoiTrongMuc && cauHoiTrongMuc.length) ui.item.after(cauHoiTrongMuc);
+                var cauHoiTamAn = ui.item.data('import-hidden-questions');
+                if (cauHoiTamAn && cauHoiTamAn.length) cauHoiTamAn.show();
+                ui.item.removeData('import-children');
+                ui.item.removeData('import-hidden-questions');
+                setTimeout(function () {
+                    danhSach.children('.import-preview__placeholder, .ui-sortable-placeholder').remove();
+                }, 0);
+            }
+        });
+    }
+
+    $('#modalChiTieu').one('hidden.bs.modal.importPreview', function () {
+        $('#modalXemTruocImport').modal('show');
+    }).modal('hide');
+}
+
+function themCauHoiXemTruocVaoBieuMau() {
+    if (!importCauHoiDangCho || !importCauHoiDangCho.danhMucCha.length) return 0;
+    var viTriChen = importCauHoiDangCho.danhMucCha;
+    var soCauHoi = 0;
+    $('#danhSachXemTruocImport .import-preview__item').each(function () {
+        var item = $(this).data('import-item');
+        if (!item) return;
+        var cauHoiMoi = taoCauHoi();
+        cauHoiMoi.find('.survey-question__title').val(
+            item.loai === 'category' ? String(item.noi_dung || '').toUpperCase() : vietHoaDauCau(item.noi_dung)
+        );
+        cauHoiMoi.find('.survey-question__type').val(item.loai);
+        cauHoiMoi.find('.survey-question__required').prop('checked', !!item.bat_buoc);
+        if (item.loai === 'satisfaction') {
+            themThangDiemHaiLong(cauHoiMoi.find('.survey-question__option-list'));
+            cauHoiMoi.find('.btn-them-lua-chon').hide();
+        } else if (loaiCauHoiCanLuaChon(item.loai)) {
+            var optionList = cauHoiMoi.find('.survey-question__option-list');
+            (item.lua_chon || []).forEach(function (option) {
+                optionList.append(taoLuaChonCauHoi(option, 0));
+            });
+            cauHoiMoi.find('.survey-question__options').show();
+        }
+        viTriChen.after(cauHoiMoi);
+        viTriChen = cauHoiMoi;
+        if (item.loai !== 'subcategory') soCauHoi += 1;
+    });
+
+    if (soCauHoi) {
+        capNhatTrangThaiBieuMau();
+        chonCauHoi(viTriChen);
+        lenLichLuuBanNhapBieuMau();
+    }
+    return soCauHoi;
+}
+
+$('#btnXacNhanImportCauHoi').on('click', function () {
+    var soLuong = themCauHoiXemTruocVaoBieuMau();
+    if (!soLuong) return;
+    $('#modalXemTruocImport').modal('hide');
+    Swal.fire('Đã thêm vào phiếu', 'Đã thêm ' + soLuong + ' câu hỏi theo thứ tự đã sắp xếp.', 'success');
+});
+
+$('#modalXemTruocImport').on('hidden.bs.modal', function () {
+    importCauHoiDangCho = null;
+    $('#modalChiTieu').modal('show');
+});
+
+$('#fileImportCauHoi').on('change', function () {
+    var file = this.files && this.files[0];
+    var danhMucCha = $('#danhSachCauHoi .survey-question--active');
+    if (!file || !danhMucCha.length || danhMucCha.find('.survey-question__type').val() !== 'category') return;
+
+    if (!/\.(xlsx|txt|csv)$/i.test(file.name || '')) {
+        thongBaoLoiDinhDangImport('Chỉ hỗ trợ file XLSX, TXT hoặc CSV.');
+        this.value = '';
+        return;
+    }
+
+    var reader = new FileReader();
+    var laXlsx = /\.xlsx$/i.test(file.name || '');
+    reader.onload = function (event) {
+        if (laXlsx) {
+            docFileXlsxCauHoi(event.target.result).then(function (sheets) {
+                var importSheet = function (sheet) {
+                    var kiemTra = kiemTraDinhDangBangExcel(sheet.rows);
+                    if (!kiemTra.hopLe) {
+                        thongBaoLoiDinhDangImport(
+                            kiemTra.thongBao + ' Dữ liệu hiện tại chưa được thêm vào phiếu khảo sát.'
+                        );
+                        return;
+                    }
+                    var items = phanTichCauHoiTuBangExcel(sheet.rows);
+                    var soLuong = items.filter(function (item) { return item.loai !== 'subcategory'; }).length;
+                    if (!soLuong) {
+                        Swal.fire('Không có dữ liệu', 'Sheet đã chọn không có câu hỏi hợp lệ.', 'info');
+                        return;
+                    }
+                    hienThiXemTruocImport(items, danhMucCha);
+                };
+
+                var sheetCoDuLieu = sheets.filter(function (sheet) {
+                    return sheet.rows && sheet.rows.some(function (row) {
+                        return row && row.some(function (cell) { return $.trim(String(cell || '')) !== ''; });
+                    });
+                });
+                if (!sheetCoDuLieu.length) {
+                    Swal.fire('Không có dữ liệu', 'File Excel không có sheet câu hỏi hợp lệ.', 'info');
+                    return;
+                }
+                if (sheetCoDuLieu.length === 1) {
+                    importSheet(sheetCoDuLieu[0]);
+                    return;
+                }
+
+                var options = {};
+                sheetCoDuLieu.forEach(function (sheet, index) { options[index] = sheet.name; });
+                return Swal.fire({
+                    title: 'Chọn sheet câu hỏi',
+                    input: 'select',
+                    inputOptions: options,
+                    inputPlaceholder: 'Chọn một sheet',
+                    showCancelButton: true,
+                    confirmButtonText: 'Import',
+                    cancelButtonText: 'Hủy',
+                    inputValidator: function (value) {
+                        return value === '' ? 'Vui lòng chọn sheet cần import.' : undefined;
+                    }
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    importSheet(sheetCoDuLieu[parseInt(result.value, 10)]);
+                });
+            }).catch(function (error) {
+                thongBaoLoiDinhDangImport(error.message || 'Tệp XLSX không hợp lệ.');
+            });
+            return;
+        }
+
+        if (/\.csv$/i.test(file.name || '')) {
+            var bangCsv = docBangCsvCauHoi(event.target.result);
+            var kiemTraCsv = kiemTraDinhDangBangExcel(bangCsv);
+            if (!kiemTraCsv.hopLe) {
+                thongBaoLoiDinhDangImport(
+                    kiemTraCsv.thongBao + ' Dữ liệu hiện tại chưa được thêm vào phiếu khảo sát.'
+                );
+                return;
+            }
+            hienThiXemTruocImport(phanTichCauHoiTuBangExcel(bangCsv), danhMucCha);
+            return;
+        }
+
+        var cacDong = String(event.target.result || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+        var cauHoi = cacDong.map(function (dong) {
+            return $.trim(dong.replace(/^\s*["']|["']\s*$/g, ''));
+        }).filter(function (dong) {
+            return dong !== '';
+        });
+
+        if (!cauHoi.length) {
+            Swal.fire('Không có dữ liệu', 'Tệp chưa có câu hỏi hợp lệ.', 'info');
+            return;
+        }
+
+        hienThiXemTruocImport(cauHoi.map(function (noiDung) {
+            return { loai: 'short_text', ma: '', noi_dung: noiDung, bat_buoc: false, lua_chon: [] };
+        }), danhMucCha);
+    };
+    reader.onerror = function () {
+        Swal.fire('Không thể đọc tệp', 'Vui lòng kiểm tra lại tệp XLSX, TXT hoặc CSV.', 'error');
+    };
+    if (laXlsx) reader.readAsArrayBuffer(file);
+    else reader.readAsText(file, 'UTF-8');
+});
+
+$('#btnXoaBanNhapBieuMau').on('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    Swal.fire({
+        title: 'Xóa bản nháp?',
+        text: 'Toàn bộ thông tin chỉ tiêu và câu hỏi chưa lưu sẽ bị xóa.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Xóa bản nháp',
+        cancelButtonText: 'Hủy'
+    }).then(function (result) {
+        if (!result.isConfirmed) return;
+        xoaBanNhapBieuMau();
+        window.location.reload();
+    });
+});
+
+$('#danhSachCauHoi').on('click', '.btn-toggle-cau-hoi-danh-muc', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var danhMuc = $(this).closest('.survey-question');
+    var loai = danhMuc.find('.survey-question__type').val();
+    var seMo = !danhMuc.hasClass('survey-question--questions-open');
+    var cacDanhMucCanDoi = danhMuc;
+
+    if (loai === 'category') {
+        var itemKeTiep = danhMuc.next('.survey-question');
+        while (itemKeTiep.length) {
+            var loaiKeTiep = itemKeTiep.find('.survey-question__type').val();
+            if (loaiKeTiep === 'category') break;
+            if (loaiKeTiep === 'subcategory') cacDanhMucCanDoi = cacDanhMucCanDoi.add(itemKeTiep);
+            itemKeTiep = itemKeTiep.next('.survey-question');
+        }
+    }
+
+    cacDanhMucCanDoi.toggleClass('survey-question--questions-open', seMo);
+    capNhatCauHoiTheoDanhMuc();
+    if ($.fn.sortable) $('#danhSachCauHoi').sortable('refreshPositions');
+});
+
+$('#danhSachCauHoi').on('click', '.survey-question', function (event) {
+    if ($(event.target).closest('.btn-toggle-cau-hoi-danh-muc').length) return;
+    chonCauHoi($(this));
+});
+
+$('#danhSachCauHoi').on('focusin', '.survey-question input, .survey-question textarea, .survey-question select', function () {
+    chonCauHoi($(this).closest('.survey-question'));
+});
+
+$('#danhSachCauHoi').on('click', '.survey-question--collapsed', function (event) {
+    if ($(event.target).closest('button').length) return;
+    chonCauHoi($(this));
+});
+
 $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
     var cauHoi = $(this).closest('.survey-question');
     var khuVucLuaChon = cauHoi.find('.survey-question__options');
     var loai = $(this).val();
+    if (loai !== 'radio') cauHoi.find('.survey-option--other').remove();
 
     if (!loaiCauHoiCanLuaChon(loai)) {
         khuVucLuaChon.hide();
@@ -1749,6 +2669,7 @@ $('#danhSachCauHoi').on('change', '.survey-question__type', function () {
 
     danhSachLuaChon.find('.survey-option').removeClass('survey-option--locked');
     danhSachLuaChon.find('.survey-option__text, .survey-option__score').prop('readonly', false);
+    danhSachLuaChon.find('.survey-option--other .survey-option__text').prop('readonly', true);
     danhSachLuaChon.find('.btn-xoa-lua-chon').show();
     cauHoi.find('.btn-them-lua-chon').show();
     if (!danhSachLuaChon.children().length) {
@@ -1764,6 +2685,7 @@ $('#danhSachCauHoi').on('input', '.survey-question__title', function () {
     var input = $(this);
     var loai = input.closest('.survey-question').find('.survey-question__type').val();
     input.val(loai === 'category' ? String(input.val()).toUpperCase() : vietHoaDauCau(input.val()));
+    capNhatTomTatCauHoi(input.closest('.survey-question'));
 });
 
 $('#danhSachCauHoi').on('input', '.survey-option__text', function () {
@@ -1771,12 +2693,24 @@ $('#danhSachCauHoi').on('input', '.survey-option__text', function () {
 });
 
 $('#danhSachCauHoi').on('click', '.btn-them-lua-chon', function () {
-    $(this).siblings('.survey-question__option-list').append(taoLuaChonCauHoi());
+    var danhSachLuaChon = $(this).closest('.survey-question__options').find('.survey-question__option-list');
+    var phuongAnKhac = danhSachLuaChon.children('.survey-option--other').first();
+    var phuongAnMoi = taoLuaChonCauHoi();
+    if (phuongAnKhac.length) phuongAnMoi.insertBefore(phuongAnKhac);
+    else danhSachLuaChon.append(phuongAnMoi);
+    capNhatTrangThaiBieuMau();
+});
+
+$('#danhSachCauHoi').on('click', '.btn-them-khac', function () {
+    var cauHoi = $(this).closest('.survey-question');
+    if (cauHoi.find('.survey-option__allow-other[value="1"]').length) return;
+    cauHoi.find('.survey-question__option-list').append(taoLuaChonCauHoi('Khác', 0, true));
     capNhatTrangThaiBieuMau();
 });
 
 $('#danhSachCauHoi').on('click', '.btn-xoa-lua-chon', function () {
     $(this).closest('.survey-option').remove();
+    capNhatTrangThaiBieuMau();
 });
 
 $('#modalChiTieu').on('wheel', 'input[type="number"]', function (event) {
@@ -1784,21 +2718,155 @@ $('#modalChiTieu').on('wheel', 'input[type="number"]', function (event) {
 });
 
 $('#danhSachCauHoi').on('click', '.btn-xoa-cau-hoi', function () {
-    $(this).closest('.survey-question').remove();
+    var cauHoi = $(this).closest('.survey-question');
+    var cauHoiKeTiep = cauHoi.next('.survey-question').length
+        ? cauHoi.next('.survey-question')
+        : cauHoi.prev('.survey-question');
+    cauHoi.remove();
     capNhatTrangThaiBieuMau();
+    if (cauHoiKeTiep.length) chonCauHoi(cauHoiKeTiep);
 });
 
-$('#danhSachCauHoi').on('click', '.btn-cau-hoi-len', function () {
-    var cauHoi = $(this).closest('.survey-question');
-    cauHoi.prev('.survey-question').before(cauHoi);
+$('#danhSachCauHoi').on('click', '.btn-nhan-ban-cau-hoi', function () {
+    var cauHoiGoc = $(this).closest('.survey-question');
+    var cauHoiMoi = cauHoiGoc.clone(false, false);
+    var idCauHoi;
+    do {
+        soThuTuCauHoi += 1;
+        idCauHoi = 'q' + soThuTuCauHoi;
+    } while ($('#danhSachCauHoi .survey-question[data-question-id="' + idCauHoi + '"]').length);
+    cauHoiMoi.attr('data-question-id', idCauHoi).removeAttr('data-tree-label');
+    cauHoiGoc.after(cauHoiMoi);
     capNhatTrangThaiBieuMau();
+    chonCauHoi(cauHoiMoi);
+    cauHoiMoi.find('.survey-question__title').focus();
 });
 
-$('#danhSachCauHoi').on('click', '.btn-cau-hoi-xuong', function () {
-    var cauHoi = $(this).closest('.survey-question');
-    cauHoi.next('.survey-question').after(cauHoi);
-    capNhatTrangThaiBieuMau();
+$('#formChiTieu').on('input change', ':input', function () {
+    lenLichLuuBanNhapBieuMau();
 });
+
+$('#surveyBuilder').on(
+    'click',
+    '#btnThemCauHoi, #btnThemDanhMuc, #btnThemDanhMucCon, .btn-them-lua-chon, .btn-them-khac, .btn-xoa-lua-chon, .btn-xoa-cau-hoi, .btn-nhan-ban-cau-hoi',
+    function () {
+        window.setTimeout(lenLichLuuBanNhapBieuMau, 0);
+    }
+);
+
+$('#danhSachCauHoi > .survey-question__placeholder, #danhSachCauHoi > .ui-sortable-placeholder').remove();
+
+if ($.fn.sortable) {
+    $('#danhSachCauHoi').sortable({
+        items: '> .survey-question:not(.survey-question__placeholder):not(.ui-sortable-placeholder)',
+        handle: '.survey-question__drag-handle',
+        cancel: 'input, textarea, select, button, label, a',
+        axis: 'y',
+        tolerance: 'pointer',
+        distance: 5,
+        placeholder: 'survey-question__placeholder',
+        forcePlaceholderSize: true,
+        start: function (event, ui) {
+            ui.item.addClass('survey-question--dragging');
+            var loai = ui.item.find('.survey-question__type').val();
+            ui.item.data('survey-original-prev', ui.item.prev()[0] || null);
+            if (loai === 'subcategory') {
+                var danhMucChaGoc = ui.item.prevAll('.survey-question').filter(function () {
+                    return $(this).find('.survey-question__type').val() === 'category';
+                }).first();
+                ui.item.data('survey-original-parent', danhMucChaGoc[0] || null);
+            }
+            var thanhPhanCon = $();
+            if (loai === 'category' || loai === 'subcategory') {
+                var itemKeTiep = ui.item.next();
+                while (itemKeTiep.length) {
+                    if (itemKeTiep.hasClass('survey-question__placeholder') || itemKeTiep.hasClass('ui-sortable-placeholder')) {
+                        itemKeTiep = itemKeTiep.next();
+                        continue;
+                    }
+                    var loaiKeTiep = itemKeTiep.find('.survey-question__type').val();
+                    if (loaiKeTiep === 'category' || (loai === 'subcategory' && loaiKeTiep === 'subcategory')) break;
+                    thanhPhanCon = thanhPhanCon.add(itemKeTiep);
+                    itemKeTiep = itemKeTiep.next();
+                }
+                thanhPhanCon.detach();
+                var cauHoiTamAn = $('#danhSachCauHoi > .survey-question')
+                    .not('.survey-question__placeholder, .ui-sortable-placeholder')
+                    .filter(function () {
+                    var loaiItem = $(this).find('.survey-question__type').val();
+                    return loaiItem !== 'category' && loaiItem !== 'subcategory';
+                    }).hide();
+                ui.item.data('survey-hidden-questions', cauHoiTamAn);
+            }
+            ui.item.data('survey-children', thanhPhanCon);
+            $('#danhSachCauHoi').sortable('refreshPositions');
+        },
+        sort: function (event, ui) {
+            var loai = ui.item.find('.survey-question__type').val();
+            if (loai !== 'category' && loai !== 'subcategory') return;
+
+            if (loai === 'subcategory') {
+                var danhMucChaGoc = ui.item.data('survey-original-parent');
+                var danhMucChaTaiViTriTha = ui.placeholder.prevAll('.survey-question').filter(function () {
+                    return $(this).find('.survey-question__type').val() === 'category';
+                }).first()[0] || null;
+                if (danhMucChaTaiViTriTha !== danhMucChaGoc) {
+                    var danhMucChaKeTiep = $(danhMucChaGoc).nextAll('.survey-question').filter(function () {
+                        return $(this).find('.survey-question__type').val() === 'category';
+                    }).first();
+                    if (danhMucChaKeTiep.length && ui.placeholder.index() > $(danhMucChaGoc).index()) {
+                        ui.placeholder.insertBefore(danhMucChaKeTiep);
+                    } else {
+                        ui.placeholder.insertAfter($(danhMucChaGoc));
+                    }
+                    return;
+                }
+            }
+
+            var diemDung = ui.placeholder.nextAll('.survey-question').filter(function () {
+                var loaiItem = $(this).find('.survey-question__type').val();
+                return loai === 'category'
+                    ? loaiItem === 'category'
+                    : (loaiItem === 'subcategory' || loaiItem === 'category');
+            }).first();
+
+            if (diemDung.length) {
+                if (!ui.placeholder.next().is(diemDung)) ui.placeholder.insertBefore(diemDung);
+            } else if (!ui.placeholder.is(':last-child')) {
+                $('#danhSachCauHoi').append(ui.placeholder);
+            }
+        },
+        stop: function (event, ui) {
+            var thanhPhanCon = ui.item.data('survey-children');
+            var loai = ui.item.find('.survey-question__type').val();
+            if (loai === 'subcategory') {
+                var danhMucChaMoi = ui.item.prevAll('.survey-question').filter(function () {
+                    return $(this).find('.survey-question__type').val() === 'category';
+                }).first()[0] || null;
+                var danhMucChaGoc = ui.item.data('survey-original-parent') || null;
+                if (danhMucChaMoi !== danhMucChaGoc) {
+                    var viTriCu = ui.item.data('survey-original-prev');
+                    if (viTriCu && $.contains(document, viTriCu)) $(viTriCu).after(ui.item);
+                    else $('#danhSachCauHoi').prepend(ui.item);
+                }
+            }
+            if (thanhPhanCon && thanhPhanCon.length) ui.item.after(thanhPhanCon);
+            var cauHoiTamAn = ui.item.data('survey-hidden-questions');
+            if (cauHoiTamAn && cauHoiTamAn.length) cauHoiTamAn.show();
+            ui.item.removeData('survey-children');
+            ui.item.removeData('survey-hidden-questions');
+            ui.item.removeData('survey-original-prev');
+            ui.item.removeData('survey-original-parent');
+            ui.item.removeClass('survey-question--dragging');
+            setTimeout(function () {
+                $('#danhSachCauHoi > .survey-question__placeholder, #danhSachCauHoi > .ui-sortable-placeholder').remove();
+            }, 0);
+            capNhatTrangThaiBieuMau();
+            chonCauHoi(ui.item);
+            lenLichLuuBanNhapBieuMau();
+        }
+    });
+}
 
 khoiTaoBieuMauKhaoSat();
 capNhatKhoaPhongTheoPhamVi();

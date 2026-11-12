@@ -70,7 +70,6 @@ function hienThiBieuMauNhap(duLieu) {
     var daNhap = giaTriCauTraLoiDaNhap(duLieu);
 
     if (!cauHoi.length) {
-        $('#nhap_ket_qua_diem').hide().empty();
         khuVuc.append($('<div>', {
             'class': 'alert alert-warning',
             text: 'Chỉ tiêu chưa được thiết kế biểu mẫu nhập liệu.'
@@ -234,7 +233,6 @@ function hienThiBieuMauNhap(duLieu) {
         khuVuc.append(khoi);
     });
 
-    tinhPhanTramTamTinh();
 }
 
 function doiSoLaMaNhapLieu(so) {
@@ -419,56 +417,6 @@ $('#nhap_bieu_mau').on(
         }
     }
 );
-
-function tinhPhanTramTamTinh() {
-    var cauTraLoi = layCauTraLoiBieuMau();
-    var cauHoi = bieuMauNhap && Array.isArray(bieuMauNhap.cau_hoi) ? bieuMauNhap.cau_hoi : [];
-    var tongDiem = 0;
-    var diemToiDa = 0;
-
-    cauHoi.forEach(function (item, index) {
-        if (item.loai === 'category' || item.loai === 'subcategory') return;
-        var id = String(item.id || ('q' + (index + 1)));
-        var loai = item.loai || 'short_text';
-        var giaTri = cauTraLoi[id];
-        var bangDiem = {};
-
-        (item.lua_chon || []).forEach(function (luaChon) {
-            var noiDung = typeof luaChon === 'object' ? luaChon.noi_dung : luaChon;
-            bangDiem[noiDung] = typeof luaChon === 'object' ? (parseFloat(luaChon.diem) || 0) : 0;
-        });
-
-        var cacMucDiem = Object.keys(bangDiem).map(function (key) { return bangDiem[key]; });
-        if (loai === 'radio' || loai === 'select' || loai === 'satisfaction') {
-            var giaTriLuaChon = loai === 'radio' && giaTri && typeof giaTri === 'object'
-                ? giaTri.lua_chon : giaTri;
-            tongDiem += bangDiem[giaTriLuaChon] || 0;
-            diemToiDa += cacMucDiem.length ? Math.max(0, Math.max.apply(Math, cacMucDiem)) : 0;
-        } else if (loai === 'checkbox') {
-            (Array.isArray(giaTri) ? giaTri : []).forEach(function (daChon) {
-                tongDiem += bangDiem[daChon] || 0;
-            });
-            cacMucDiem.forEach(function (diem) {
-                if (diem > 0) diemToiDa += diem;
-            });
-        } else if (loai === 'score') {
-            tongDiem += parseFloat(giaTri) || 0;
-            diemToiDa += 10;
-        }
-    });
-
-    if (diemToiDa <= 0) {
-        $('#nhap_ket_qua_diem').hide().empty();
-        return;
-    }
-
-    var phanTram = Math.round((tongDiem / diemToiDa * 100) * 100) / 100;
-    $('#nhap_ket_qua_diem')
-        .text('Tổng điểm: ' + tongDiem + '/' + diemToiDa + ' — Tỷ lệ: ' + phanTram + '%')
-        .show();
-}
-
-$('#nhap_bieu_mau').on('change input', '.survey-entry-answer', tinhPhanTramTamTinh);
 
 $('#nhap_bieu_mau').on('input', 'input[type="number"][data-max-digits]', function () {
     var gioiHan = parseInt($(this).attr('data-max-digits'), 10);

@@ -272,20 +272,9 @@ $listKhoaPhong = $request->getAttribute('listKhoaPhong');
                             <small><span class="text-danger">*</span> Nội dung bắt buộc</small>
                         </div>
                         <div id="nhap_bieu_mau"></div>
-                        <div id="nhap_ket_qua_diem" class="alert alert-success" style="display: none;"></div>
                     </div>
 
-                    <div class="survey-form-signature" aria-hidden="true">
-                        <div>
-                            <strong>Người lập phiếu</strong>
-                            <span>(Ký và ghi rõ họ tên)</span>
-                        </div>
-                        <div>
-                            <strong>Ngày <?= (int) date('d') ?> tháng <?= (int) date('m') ?> năm <?= (int) date('Y') ?></strong>
-                            <span>Xác nhận sau khi hoàn thành biểu mẫu</span>
-                        </div>
                     </div>
-                </div>
 
                 <div class="modal-footer survey-entry-modal__footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>

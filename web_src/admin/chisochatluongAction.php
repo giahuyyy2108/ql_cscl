@@ -8,6 +8,7 @@ require_once ("web_src/bean/ChuKyPeer.php");
 require_once ("web_src/bean/DonviTinhPeer.php");
 require_once ("web_src/bean/TinhTrangPeer.php");
 require_once ("web_src/bean/CtChiSoPeer.php");
+require_once ("web_src/common/SimpleXLSXGen/SimpleXLSXGen.php");
 
 class chisochatluongAction
 {
@@ -174,63 +175,226 @@ class chisochatluongAction
 			exit;
 		}
 
-		$escape = function ($value) {
-			return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-		};
-		$thongKe = $this->CtChiSoPeer->getTrungBinhTheoCauHoi($maChiSo);
-		$thongKeNhapThem = $this->CtChiSoPeer->getThongKeNhapThem($maChiSo);
-		$tenFile = trim((string) $chiSo->get('ten_chi_so'));
-		$tenFile = preg_replace('/[\\\\\/:*?"<>|\x00-\x1F]+/u', '_', $tenFile);
-		$tenFile = trim($tenFile, " ._\t\n\r\0\x0B");
-		if ($tenFile === '') $tenFile = 'chi-so-' . $maChiSo;
-		$tenFileDayDu = $tenFile . '.xls';
+		try {
+			$thongKe = $this->CtChiSoPeer->getTrungBinhTheoCauHoi($maChiSo);
+			$nhapThem = $this->CtChiSoPeer->getThongKeNhapThem($maChiSo);
+			$danhSachPhieu = $this->CtChiSoPeer->getDanhSachPhieu($maChiSo);
+			$noiDung = $this->taoNoiDungExcel($chiSo, $thongKe, $nhapThem, $danhSachPhieu);
+			if ($noiDung === '') throw new Exception('Không tạo được XLSX');
 
-		if (ob_get_length()) ob_end_clean();
-		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
-		header('Content-Disposition: attachment; filename="chi-so-' . $maChiSo . '.xls"; filename*=UTF-8\'\'' . rawurlencode($tenFileDayDu));
-		header('Cache-Control: max-age=0');
-		echo "\xEF\xBB\xBF";
-		echo '<html><head><meta charset="UTF-8"><style>'
-			. 'body,table,th,td{font-family:"Times New Roman",Times,serif;font-size:14pt}'
-			. 'table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #777;padding:3px 6px;height:18.75pt;vertical-align:top;white-space:normal}'
-			. 'th{background:#fff;color:#000;font-weight:bold;text-align:center}.label{font-weight:bold;background:#eee}.spacer{border:0;height:10.8pt}'
-			. '</style></head><body>';
-		echo '<table><colgroup><col style="width:19%"><col style="width:19%"><col style="width:24%"><col style="width:23%"><col style="width:15%"></colgroup>';
-		echo '<tr><th colspan="5">THÔNG TIN CHỈ SỐ CHẤT LƯỢNG</th></tr>';
-		$thongTin = array(
-			'Mã chỉ số' => $chiSo->get('ma_chi_so'), 'Tên chỉ số' => $chiSo->get('ten_chi_so'),
-			'Mục tiêu' => $chiSo->get('muc_tieu'), 'Ngưỡng cảnh báo' => $chiSo->get('nguong_canh_bao'),
-			'Định nghĩa' => $chiSo->get('dinh_nghia'), 'Phương pháp thu thập' => $chiSo->get('thu_thap'),
-			'Tên tử số' => $chiSo->get('ten_tu_so'), 'Tên mẫu số' => $chiSo->get('ten_mau_so')
-		);
-		foreach ($thongTin as $nhan => $giaTri) echo '<tr><td class="label">' . $escape($nhan) . '</td><td colspan="4">' . $escape($giaTri) . '</td></tr>';
-		echo '<tr><td colspan="5" class="spacer"></td></tr>';
-		echo '<tr><th colspan="5">THỐNG KÊ CÂU HỎI</th></tr>';
-		echo '<tr><th>Ký hiệu</th><th>Nội dung câu hỏi</th><th>Khoa/Phòng</th><th>Tỷ lệ trung bình (%)</th><th>Số phiếu</th></tr>';
-		foreach ($thongKe as $item) {
-			echo '<tr><td>' . $escape($item['ky_hieu']) . '</td><td>' . $escape($item['noi_dung']) . '</td><td>Tổng số phiếu</td><td>' . $escape($item['trung_binh']) . '</td><td>' . $escape($item['so_phieu']) . '</td></tr>';
-			foreach ($item['theo_khoa_phong'] as $khoaPhong) echo '<tr><td>' . $escape($item['ky_hieu']) . '</td><td>' . $escape($item['noi_dung']) . '</td><td>' . $escape($khoaPhong['ten_khoaphong']) . '</td><td>' . $escape($khoaPhong['trung_binh']) . '</td><td>' . $escape($khoaPhong['so_phieu']) . '</td></tr>';
-		}
-		echo '</table>';
-		if (!empty($thongKeNhapThem)) {
-			echo '<br><table><tr><th colspan="5">THỐNG KÊ PHƯƠNG ÁN CÓ Ô NHẬP (KHÁC)</th></tr>';
-			echo '<tr><th>Câu hỏi</th><th>Phương án</th><th>Tổng lượt chọn</th><th>Nội dung nhập thêm</th><th>Số lượt cùng nội dung</th></tr>';
-			foreach ($thongKeNhapThem as $item) {
-				$cauHoi = $item['ky_hieu'] . ' - ' . $item['cau_hoi'];
-				if (empty($item['noi_dung_nhap'])) {
-					echo '<tr><td>' . $escape($cauHoi) . '</td><td>' . $escape($item['phuong_an']) . '</td><td>0</td><td>-</td><td>0</td></tr>';
-					continue;
-				}
-				foreach ($item['noi_dung_nhap'] as $noiDung) {
-					echo '<tr><td>' . $escape($cauHoi) . '</td><td>' . $escape($item['phuong_an']) . '</td><td>' . $escape($item['so_luot']) . '</td><td>' . $escape($noiDung['noi_dung']) . '</td><td>' . $escape($noiDung['so_luot']) . '</td></tr>';
-				}
+			$tenFile = str_replace(array('\\', '/', ':', '*', '?', '"', '<', '>', '|'), '_', trim((string) $chiSo->get('ten_chi_so')));
+			$tenFile = trim(preg_replace('/[\x00-\x1F]+/', '', $tenFile), " ._\t\n\r\0\x0B");
+			if ($tenFile === '') $tenFile = 'chi-so-' . $maChiSo;
+			while (ob_get_level() > 0) ob_end_clean();
+			header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+			header('Content-Disposition: attachment; filename="chi-so-' . $maChiSo . '.xlsx"; filename*=UTF-8\'\'' . rawurlencode($tenFile . '.xlsx'));
+			header('Content-Length: ' . strlen($noiDung));
+			header('Cache-Control: no-store, max-age=0');
+			echo $noiDung;
+		} catch (Throwable $e) {
+			error_log('chisochatluong.xuatExcel: ' . $e->getMessage());
+			while (ob_get_level() > 0) ob_end_clean();
+			if (!headers_sent()) {
+				header('HTTP/1.1 500 Internal Server Error');
+				header('Content-Type: text/plain; charset=UTF-8');
 			}
-			echo '</table>';
+			echo 'Không thể tạo file Excel. Vui lòng thử lại.';
 		}
-		echo '</body></html>';
 		exit;
 	}
 
+	private function taoNoiDungExcel($chiSo, $thongKe, $nhapThem, $danhSachPhieu = array())
+	{
+		$cell = function ($value, $style = '') {
+			return $style . '<raw>' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8') . '</raw>';
+		};
+		$number = function ($value, $style = '') use ($cell) {
+			return is_numeric($value) ? $style . (string) (float) $value : $cell('', $style);
+		};
+		$title = '<b><center><middle><wraptext><style height="30" border="thin">';
+		$header = '<b><center><middle><wraptext><style height="50" border="thin">';
+		$label = '<b><middle><wraptext><style border="thin">';
+		$data = '<top><wraptext><style border="thin">';
+		$rows = array(array($cell('THÔNG TIN CHỈ SỐ CHẤT LƯỢNG', $title)));
+		$merges = array('A1:E1');
+		$info = array(
+			'Mã chỉ số' => $chiSo->get('ma_chi_so'),
+			'Tên chỉ số' => $chiSo->get('ten_chi_so'),
+			'Mục tiêu' => $chiSo->get('muc_tieu'),
+			'Ngưỡng cảnh báo' => $chiSo->get('nguong_canh_bao'),
+			'Định nghĩa' => $chiSo->get('dinh_nghia'),
+			'Phương pháp thu thập' => $chiSo->get('thu_thap'),
+			'Tên tử số' => $chiSo->get('ten_tu_so'),
+			'Tên mẫu số' => $chiSo->get('ten_mau_so')
+		);
+		foreach ($info as $key => $value) {
+			$rows[] = array($cell($key, $label), $cell($value, $data));
+		}
+		$rows[] = array();
+		$rows[] = array($cell('THỐNG KÊ CÂU HỎI', $title));
+		$merges[] = 'A' . count($rows) . ':E' . count($rows);
+		$rows[] = array_map(function ($text) use ($cell, $header) {
+			return $cell($text, $header);
+		}, array('Ký hiệu', 'Nội dung câu hỏi', 'Khoa/Phòng', 'Tỷ lệ trung bình (%)', 'Số phiếu'));
+		foreach ($thongKe as $item) {
+			$rows[] = array($cell($item['ky_hieu'], $data), $cell($item['noi_dung'], $data),
+				$cell('Tổng số phiếu', $data), $number($item['trung_binh'], $data),
+				$number($item['so_phieu'], $data));
+			foreach ($item['theo_khoa_phong'] as $khoa) {
+				$rows[] = array($cell($item['ky_hieu'], $data), $cell($item['noi_dung'], $data),
+					$cell($khoa['ten_khoaphong'], $data), $number($khoa['trung_binh'], $data),
+					$number($khoa['so_phieu'], $data));
+			}
+		}
+		if (empty($thongKe)) {
+			$rows[] = array($cell('Chưa có dữ liệu thống kê.', $data));
+			$merges[] = 'A' . count($rows) . ':E' . count($rows);
+		}
+
+		if (!empty($nhapThem)) {
+			$rows[] = array();
+			$rows[] = array($cell('THỐNG KÊ PHƯƠNG ÁN CÓ Ô NHẬP (KHÁC)', $title));
+			$merges[] = 'A' . count($rows) . ':E' . count($rows);
+			$rows[] = array_map(function ($text) use ($cell, $header) {
+				return $cell($text, $header);
+			}, array('Câu hỏi', 'Phương án', 'Tổng lượt chọn', 'Nội dung nhập thêm', 'Số lượt cùng nội dung'));
+			foreach ($nhapThem as $item) {
+				$cauHoi = $item['ky_hieu'] . ' - ' . $item['cau_hoi'];
+				if (empty($item['noi_dung_nhap'])) {
+					$rows[] = array($cell($cauHoi, $data), $cell($item['phuong_an'], $data),
+						$number(0, $data), $cell('-', $data), $number(0, $data));
+					continue;
+				}
+				foreach ($item['noi_dung_nhap'] as $noiDung) {
+					$rows[] = array($cell($cauHoi, $data), $cell($item['phuong_an'], $data),
+						$number($item['so_luot'], $data), $cell($noiDung['noi_dung'], $data),
+						$number($noiDung['so_luot'], $data));
+				}
+			}
+		}
+
+		$xlsx = new \Shuchkin\SimpleXLSXGen();
+		$xlsx->setDefaultFont('Arial')->setDefaultFontSize(11)->setTitle('Thống kê chỉ số chất lượng');
+		$xlsx->addSheet($rows, 'Thống kê chỉ số');
+		foreach ($merges as $range) $xlsx->mergeCells($range);
+		$xlsx->setColWidth(1, 22)->setColWidth(2, 56)->setColWidth(3, 32)
+			->setColWidth(4, 33)->setColWidth(5, 24);
+		$this->themSheetTatCaPhieu($xlsx, $chiSo, $danhSachPhieu);
+		return (string) $xlsx;
+	}
+
+	/** Sheet dữ liệu từng phiếu, cùng bố cục với mẫu xuất "Tất cả phiếu". */
+	private function themSheetTatCaPhieu($xlsx, $chiSo, $danhSachPhieu)
+	{
+		$bieuMau = json_decode((string) $chiSo->get('bieumau'), true);
+		$cauHoiGoc = isset($bieuMau['cau_hoi']) && is_array($bieuMau['cau_hoi'])
+			? $bieuMau['cau_hoi']
+			: (is_array($bieuMau) && array_values($bieuMau) === $bieuMau ? $bieuMau : array());
+		$cauHoi = array();
+		foreach ($cauHoiGoc as $index => $item) {
+			if (!is_array($item)) continue;
+			$loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
+			if (in_array($loai, array('category', 'subcategory'), true)) continue;
+			$id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+			$diemLuaChon = array();
+			$coNhapKhac = false;
+			foreach (isset($item['lua_chon']) && is_array($item['lua_chon']) ? $item['lua_chon'] : array() as $luaChon) {
+				if (in_array($loai, array('radio', 'select'), true)
+					&& is_array($luaChon) && !empty($luaChon['cho_nhap_them'])) {
+					$coNhapKhac = true;
+				}
+				if ($loai === 'satisfaction' && is_array($luaChon)
+					&& isset($luaChon['noi_dung'], $luaChon['diem']) && is_numeric($luaChon['diem'])) {
+					$diemLuaChon[trim((string) $luaChon['noi_dung'])] = (float) $luaChon['diem'];
+				}
+			}
+			$cauHoi[$id] = array(
+				'noi_dung' => isset($item['noi_dung']) ? trim((string) $item['noi_dung']) : 'Câu hỏi ' . ($index + 1),
+				'loai' => $loai,
+				'diem_lua_chon' => $diemLuaChon,
+				'co_nhap_khac' => $coNhapKhac
+			);
+		}
+
+		// Phiếu cũ có thể chứa nội dung Khác dù biểu mẫu hiện tại đã thay đổi.
+		foreach ($danhSachPhieu as $phieu) {
+			foreach ($cauHoi as $id => $item) {
+				if (in_array($item['loai'], array('radio', 'select'), true)
+					&& isset($phieu['cau_tra_loi'][$id]) && is_array($phieu['cau_tra_loi'][$id])
+					&& array_key_exists('noi_dung_khac', $phieu['cau_tra_loi'][$id])) {
+					$cauHoi[$id]['co_nhap_khac'] = true;
+				}
+			}
+		}
+
+		$cell = function ($value, $style) {
+			return $style . '<raw>' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8') . '</raw>';
+		};
+		$headerStyle = '<b><center><bottom><wraptext><style height="72" border="thin">';
+		$dataStyle = '<top><wraptext><style border="thin">';
+		$tieuDe = array('STT', 'Mã phiếu', 'Khoa/Phòng', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
+		foreach ($cauHoi as $item) {
+			$tieuDe[] = $item['noi_dung'];
+			if ($item['co_nhap_khac']) $tieuDe[] = $item['noi_dung'] . ' - Nội dung khác';
+		}
+		$rows = array(array_map(function ($value) use ($cell, $headerStyle) {
+			return $cell($value, $headerStyle);
+		}, $tieuDe));
+		$hienThiTraLoi = function ($value) {
+			if (!is_array($value)) return (string) $value;
+			$items = array();
+			array_walk_recursive($value, function ($part) use (&$items) {
+				if (is_scalar($part) && trim((string) $part) !== '') $items[] = trim((string) $part);
+			});
+			return implode('; ', $items);
+		};
+
+		foreach ($danhSachPhieu as $index => $phieu) {
+			$tenKhoa = trim((string) $phieu['ten_khoaphong']);
+			if ($tenKhoa === '') $tenKhoa = 'Chưa xác định';
+			$row = array(
+				$cell($index + 1, $dataStyle),
+				$cell($phieu['id'], $dataStyle),
+				$cell($tenKhoa, $dataStyle),
+				$cell($phieu['nam'], $dataStyle),
+				$cell($phieu['ky'], $dataStyle),
+				$cell($phieu['nguoi_nhap'], $dataStyle),
+				$cell($phieu['created_at'], $dataStyle)
+			);
+			$traLoi = isset($phieu['cau_tra_loi']) && is_array($phieu['cau_tra_loi']) ? $phieu['cau_tra_loi'] : array();
+			foreach ($cauHoi as $id => $item) {
+				$value = isset($traLoi[$id]) ? $traLoi[$id] : '';
+				if ($item['loai'] === 'satisfaction') {
+					$luaChon = is_scalar($value) ? trim((string) $value) : '';
+					$diem = $luaChon !== '' && array_key_exists($luaChon, $item['diem_lua_chon'])
+						? $item['diem_lua_chon'][$luaChon] : null;
+					$row[] = $diem === null ? $cell('', $dataStyle) : $dataStyle . (string) $diem;
+				} elseif ($item['co_nhap_khac']) {
+					$laKhac = is_array($value) && array_key_exists('noi_dung_khac', $value);
+					$row[] = $cell($laKhac ? 'Khác' : $hienThiTraLoi($value), $dataStyle);
+					$row[] = $cell($laKhac ? $value['noi_dung_khac'] : '', $dataStyle);
+				} else {
+					$row[] = $cell($hienThiTraLoi($value), $dataStyle);
+				}
+			}
+			$rows[] = $row;
+		}
+
+		$soCot = count($tieuDe);
+		$so = $soCot;
+		$cotCuoi = '';
+		while ($so > 0) {
+			$so--;
+			$cotCuoi = chr(65 + ($so % 26)) . $cotCuoi;
+			$so = (int) floor($so / 26);
+		}
+		$xlsx->addSheet($rows, 'Tất cả phiếu')
+			->freezePanes('A2')
+			->autoFilter('A1:' . $cotCuoi . count($rows));
+		$xlsx->setColWidth(1, 10)->setColWidth(2, 12)->setColWidth(3, 32)
+			->setColWidth(4, 10)->setColWidth(5, 10)->setColWidth(6, 22)->setColWidth(7, 20);
+		for ($cot = 8; $cot <= $soCot; $cot++) $xlsx->setColWidth($cot, 32);
+	}
 	function save()
 	{
 		$chiso = $this->getChiSoFromRequest();

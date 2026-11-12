@@ -366,24 +366,42 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
                     </div>
 
 					<div class="survey-builder" id="surveyBuilder">
-						<div class="survey-builder__header">
-							<div>
-								<h4>Thiết kế biểu mẫu khảo sát</h4>
-								<p class="text-muted">Tạo các câu hỏi dùng để thu thập dữ liệu cho chỉ tiêu.</p>
+						<div class="survey-builder__canvas">
+							<div class="survey-builder__cover">
+								<span class="survey-builder__eyebrow">PHIẾU KHẢO SÁT</span>
+								<h3>Biểu mẫu thu thập dữ liệu</h3>
+								<p>Nội dung biểu mẫu được sử dụng khi nhập liệu cho chỉ số chất lượng.</p>
 							</div>
-							<button type="button" class="btn btn-success btn-sm" id="btnThemCauHoi">
-								<i class="fa fa-plus"></i> Thêm câu hỏi
-							</button>
+							<div id="danhSachCauHoi"></div>
+							<div id="surveyBuilderEmpty" class="survey-builder__empty">
+								<i class="fa fa-list-alt"></i>
+								<strong>Biểu mẫu chưa có câu hỏi</strong>
+								<span>Nhấn nút dấu cộng để bắt đầu thiết kế biểu mẫu.</span>
+							</div>
+							<div class="survey-builder__toolbar" aria-label="Công cụ biểu mẫu">
+								<button type="button" id="btnThemCauHoi" title="Thêm câu hỏi"><i class="fa fa-plus"></i></button>
+								<button type="button" id="btnThemDanhMuc" title="Thêm danh mục cha"><i class="fa fa-header"></i></button>
+								<button type="button" id="btnThemDanhMucCon" title="Thêm danh mục con"><i class="fa fa-indent"></i></button>
+								<button type="button" id="btnImportCauHoi" title="Import câu hỏi" style="display:none"><i class="fa fa-upload"></i></button>
+								<input type="file" id="fileImportCauHoi" accept=".xlsx,.txt,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/csv" style="display:none">
+							</div>
 						</div>
-						<div id="danhSachCauHoi"></div>
-						<div id="surveyBuilderEmpty" class="survey-builder__empty">
-							Chưa có câu hỏi. Chọn “Thêm câu hỏi” để bắt đầu tạo biểu mẫu.
 						</div>
-					</div>
 
                 </div>
 
                 <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-link text-danger pull-left"
+                            id="btnXoaBanNhapBieuMau">
+                        <i class="fa fa-eraser"></i>
+                        Xóa bản nháp
+                    </button>
+
+                    <span id="trangThaiBanNhapBieuMau" class="text-muted pull-left">
+                        <i class="fa fa-cloud"></i> Tự động lưu bản nháp
+                    </span>
 
                     <button type="button"
                             class="btn btn-default"
@@ -404,6 +422,31 @@ $currentKhoaPhongId = (int) $request->getAttribute("currentKhoaPhongId");
 
             </form>
 
+        </div>
+    </div>
+</div>
+
+<!-- Xem trước cấu trúc câu hỏi trước khi import -->
+<div class="modal fade" id="modalXemTruocImport" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title"><i class="fa fa-eye"></i> Xem trước câu hỏi import</h4>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted import-preview__help">
+                    Kéo biểu tượng <i class="fa fa-ellipsis-v"></i> để sắp xếp danh mục và câu hỏi trước khi thêm vào phiếu khảo sát.
+                </p>
+                <div id="danhSachXemTruocImport" class="import-preview__list"></div>
+            </div>
+            <div class="modal-footer">
+                <span id="tongXemTruocImport" class="pull-left text-muted"></span>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btnXacNhanImportCauHoi">
+                    <i class="fa fa-plus"></i> Thêm vào phiếu khảo sát
+                </button>
+            </div>
         </div>
     </div>
 </div>

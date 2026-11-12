@@ -115,13 +115,40 @@ class chisokhoaAction
 			$loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
 			if (in_array($loai, array('category', 'subcategory'), true)) continue;
 			$id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+			$diemLuaChon = array();
+			$coNhapKhac = false;
+			if (isset($item['lua_chon']) && is_array($item['lua_chon'])) {
+				foreach ($item['lua_chon'] as $luaChon) {
+					if (in_array($loai, array('radio', 'select'), true)
+						&& is_array($luaChon) && !empty($luaChon['cho_nhap_them'])) {
+						$coNhapKhac = true;
+					}
+					if ($loai === 'satisfaction' && is_array($luaChon)
+						&& isset($luaChon['noi_dung'], $luaChon['diem']) && is_numeric($luaChon['diem'])) {
+						$diemLuaChon[trim((string) $luaChon['noi_dung'])] = (float) $luaChon['diem'];
+					}
+				}
+			}
 			$cauHoi[$id] = array(
 				'id' => $id,
-				'noi_dung' => trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : 'Câu hỏi ' . ($index + 1))
+				'noi_dung' => trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : 'Câu hỏi ' . ($index + 1)),
+				'loai' => $loai,
+				'diem_lua_chon' => $diemLuaChon,
+				'co_nhap_khac' => $coNhapKhac
 			);
 		}
 
 		$danhSachPhieu = $this->CtChiSoPeer->getDanhSachPhieu($maChiSo);
+		// Giữ cột nội dung khác cho cả những phiếu cũ khi biểu mẫu đã được chỉnh sửa.
+		foreach ($danhSachPhieu as $phieu) {
+			foreach ($cauHoi as $id => $item) {
+				if (in_array($item['loai'], array('radio', 'select'), true)
+					&& isset($phieu['cau_tra_loi'][$id]) && is_array($phieu['cau_tra_loi'][$id])
+					&& array_key_exists('noi_dung_khac', $phieu['cau_tra_loi'][$id])) {
+					$cauHoi[$id]['co_nhap_khac'] = true;
+				}
+			}
+		}
 		$tenKhoaTheoId = array();
 		foreach ($this->ChiSoPeer->getListKhoaPhongByKhoi() as $khoaPhong) {
 			$tenKhoaTheoId[(int) $khoaPhong['id']] = trim((string) $khoaPhong['ten']);
@@ -182,16 +209,80 @@ class chisokhoaAction
 
 		$nhanThongTin = '<b><middle><style border="thin">';
 		$giaTriThongTin = '<right><middle><style border="thin">';
-		$tieuDeBang = '<b><center><bottom><wraptext><style height="72" color="#FFFFFF" bgcolor="#1F4E78" border="thin">';
+		$tieuDeBang = '<b><center><bottom><wraptext><style height="72" border="thin">';
 		$duLieuBang = '<top><wraptext><style border="thin">';
 		$oTrongThongTin = $giaTriExcel('', $giaTriThongTin);
+		$tieuDeCauHoi = function ($tieuDe) use ($cauHoi, $giaTriExcel, $tieuDeBang) {
+			foreach ($cauHoi as $item) {
+				$tieuDe[] = $item['noi_dung'];
+				if ($item['co_nhap_khac']) $tieuDe[] = $item['noi_dung'] . ' - Nội dung khác';
+			}
+			foreach ($tieuDe as &$noiDung) $noiDung = $giaTriExcel($noiDung, $tieuDeBang);
+			unset($noiDung);
+			return $tieuDe;
+		};
+		$themCauTraLoi = function ($dongExcel, $phieu) use ($cauHoi, $giaTriExcel, $duLieuBang, $hienThiTraLoi) {
+			foreach ($cauHoi as $id => $item) {
+				$giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
+				if ($item['loai'] === 'satisfaction') {
+					$luaChon = is_scalar($giaTri) ? trim((string) $giaTri) : '';
+					$diem = $luaChon !== '' && array_key_exists($luaChon, $item['diem_lua_chon'])
+						? $item['diem_lua_chon'][$luaChon] : null;
+					$dongExcel[] = $diem === null ? $giaTriExcel('', $duLieuBang) : $duLieuBang . (string) $diem;
+				} elseif ($item['co_nhap_khac']) {
+					$laLuaChonKhac = is_array($giaTri) && array_key_exists('noi_dung_khac', $giaTri);
+					$dongExcel[] = $giaTriExcel($laLuaChonKhac ? 'Khác' : $hienThiTraLoi($giaTri), $duLieuBang);
+					$dongExcel[] = $giaTriExcel($laLuaChonKhac ? $giaTri['noi_dung_khac'] : '', $duLieuBang);
+				} else {
+					$dongExcel[] = $giaTriExcel($hienThiTraLoi($giaTri), $duLieuBang);
+				}
+			}
+			return $dongExcel;
+		};
 
-		$soCot = 6 + count($cauHoi);
+		$soCotCauHoi = 0;
+		foreach ($cauHoi as $item) $soCotCauHoi += $item['co_nhap_khac'] ? 2 : 1;
+		$soCot = 6 + $soCotCauHoi;
 		$cotCuoi = $tenCot($soCot);
 		$tenChiSo = trim((string) $chiSo->get('ten_chi_so'));
 		$xlsx = new \Shuchkin\SimpleXLSXGen();
 		$xlsx->setDefaultFont('Arial')->setDefaultFontSize(10)->setTitle('Thống kê chỉ số theo khoa');
-		$tenSheetDaDung = array();
+
+		// Sheet đầu tiên tổng hợp tất cả phiếu, chỉ có bảng dữ liệu (không có khối thông tin chỉ số).
+		$tieuDeTongHop = $tieuDeCauHoi(array('STT', 'Mã phiếu', 'Khoa/Phòng', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập'));
+		$duLieuTongHop = array($tieuDeTongHop);
+		foreach ($danhSachPhieu as $index => $phieu) {
+			$idKhoaPhong = (int) $phieu['id_khoaphong'];
+			$tenKhoaPhong = isset($tenKhoaTheoId[$idKhoaPhong]) && $tenKhoaTheoId[$idKhoaPhong] !== ''
+				? $tenKhoaTheoId[$idKhoaPhong]
+				: (trim((string) $phieu['ten_khoaphong']) !== '' ? $phieu['ten_khoaphong'] : 'Chưa xác định');
+			$dongExcel = array(
+				$giaTriExcel($index + 1, $duLieuBang),
+				$giaTriExcel($phieu['id'], $duLieuBang),
+				$giaTriExcel($tenKhoaPhong, $duLieuBang),
+				$giaTriExcel($phieu['nam'], $duLieuBang),
+				$giaTriExcel($phieu['ky'], $duLieuBang),
+				$giaTriExcel($phieu['nguoi_nhap'], $duLieuBang),
+				$giaTriExcel($phieu['created_at'], $duLieuBang)
+			);
+			$duLieuTongHop[] = $themCauTraLoi($dongExcel, $phieu);
+		}
+		$soCotTongHop = 7 + $soCotCauHoi;
+		$tenSheetTongHop = 'Tất cả phiếu';
+		$xlsx->addSheet($duLieuTongHop, $tenSheetTongHop)
+			->freezePanes('A2')
+			->autoFilter('A1:' . $tenCot($soCotTongHop) . count($duLieuTongHop));
+		$xlsx->setColWidth(1, 10)
+			->setColWidth(2, 12)
+			->setColWidth(3, 32)
+			->setColWidth(4, 10)
+			->setColWidth(5, 10)
+			->setColWidth(6, 22)
+			->setColWidth(7, 20);
+		for ($cot = 8; $cot <= $soCotTongHop; $cot++) {
+			$xlsx->setColWidth($cot, 32);
+		}
+		$tenSheetDaDung = array(strtolower($tenSheetTongHop) => true);
 
 		foreach ($phieuTheoKhoa as $idKhoaPhong => $cacPhieu) {
 			$tenKhoaPhong = isset($tenKhoaTheoId[$idKhoaPhong]) && $tenKhoaTheoId[$idKhoaPhong] !== ''
@@ -219,13 +310,7 @@ class chisokhoaAction
 				array()
 			);
 
-			$tieuDeExcel = array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
-			foreach ($cauHoi as $item) $tieuDeExcel[] = $item['noi_dung'];
-			foreach ($tieuDeExcel as &$tieuDeCot) {
-				$tieuDeCot = $giaTriExcel($tieuDeCot, $tieuDeBang);
-			}
-			unset($tieuDeCot);
-			$duLieuSheet[] = $tieuDeExcel;
+			$duLieuSheet[] = $tieuDeCauHoi(array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập'));
 
 			foreach ($cacPhieu as $index => $phieu) {
 				$dongExcel = array(
@@ -236,11 +321,7 @@ class chisokhoaAction
 					$giaTriExcel($phieu['nguoi_nhap'], $duLieuBang),
 					$giaTriExcel($phieu['created_at'], $duLieuBang)
 				);
-				foreach ($cauHoi as $id => $item) {
-					$giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
-					$dongExcel[] = $giaTriExcel($hienThiTraLoi($giaTri), $duLieuBang);
-				}
-				$duLieuSheet[] = $dongExcel;
+				$duLieuSheet[] = $themCauTraLoi($dongExcel, $phieu);
 			}
 
 			$xlsx->addSheet($duLieuSheet, $tenSheet)
@@ -269,13 +350,13 @@ class chisokhoaAction
 		$tenFile = trim($tenFile, " ._\t\n\r\0\x0B");
 		if ($tenFile === '') $tenFile = 'chi-so-' . $maChiSo;
 
-		$tenFileDayDu = 'Thong ke theo khoa - ' . $tenFile . '.xlsx';
+		$tenFileDayDu = 'Thong ke phieu chi so ' . $maChiSo . ' - ' . $tenFile . '.xlsx';
 		try {
 			$noiDungExcel = (string) $xlsx;
 			if ($noiDungExcel === '') throw new Exception('Không tạo được nội dung XLSX');
 			if (ob_get_length()) ob_end_clean();
 			header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-			header('Content-Disposition: attachment; filename="thong-ke-chi-so-' . $maChiSo . '-theo-khoa.xlsx"; filename*=UTF-8\'\'' . rawurlencode($tenFileDayDu));
+			header('Content-Disposition: attachment; filename="Thong ke phieu chi so ' . $maChiSo . '.xlsx"; filename*=UTF-8\'\'' . rawurlencode($tenFileDayDu));
 			header('Content-Length: ' . strlen($noiDungExcel));
 			header('Cache-Control: max-age=0');
 			echo $noiDungExcel;

@@ -116,14 +116,6 @@ class NhapLieuAction
             exit;
         }
 
-        $tenChiSo = 'Chỉ số ' . $maChiSo;
-        foreach ($this->ChiSoPeer->getListDaDuyetByKhoa($idKhoaPhong) as $chiSo) {
-            if ((int) $chiSo->get('ma_chi_so') === $maChiSo) {
-                $tenChiSo = trim((string) $chiSo->get('ten_chi_so'));
-                break;
-            }
-        }
-
         $tenKhoaPhong = 'Khoa/Phòng ' . $idKhoaPhong;
         foreach ($this->ChiSoPeer->getListKhoaPhongByKhoi() as $khoaPhong) {
             if ((int) $khoaPhong['id'] === $idKhoaPhong) {
@@ -138,14 +130,43 @@ class NhapLieuAction
             $loai = isset($item['loai']) ? (string) $item['loai'] : 'short_text';
             if (in_array($loai, array('category', 'subcategory'), true)) continue;
             $id = isset($item['id']) && $item['id'] !== '' ? (string) $item['id'] : 'q' . ($index + 1);
+            $diemLuaChon = array();
+            $coNhapKhac = false;
+            if ($loai === 'radio' && isset($item['lua_chon']) && is_array($item['lua_chon'])) {
+                foreach ($item['lua_chon'] as $luaChon) {
+                    if (is_array($luaChon) && !empty($luaChon['cho_nhap_them'])) {
+                        $coNhapKhac = true;
+                        break;
+                    }
+                }
+            }
+            if ($loai === 'satisfaction' && isset($item['lua_chon']) && is_array($item['lua_chon'])) {
+                foreach ($item['lua_chon'] as $luaChon) {
+                    if (is_array($luaChon) && isset($luaChon['noi_dung'], $luaChon['diem'])
+                        && is_numeric($luaChon['diem'])) {
+                        $diemLuaChon[trim((string) $luaChon['noi_dung'])] = (float) $luaChon['diem'];
+                    }
+                }
+            }
             $cauHoi[$id] = array(
                 'id' => $id,
                 'noi_dung' => trim(isset($item['noi_dung']) ? (string) $item['noi_dung'] : 'Câu hỏi ' . ($index + 1)),
-                'loai' => $loai
+                'loai' => $loai,
+                'diem_lua_chon' => $diemLuaChon,
+                'co_nhap_khac' => $coNhapKhac
             );
         }
 
         $danhSachPhieu = $this->CtChiSoPeer->getDanhSachPhieu($maChiSo, $idKhoaPhong);
+        foreach ($danhSachPhieu as $phieu) {
+            foreach ($cauHoi as $id => $item) {
+                if ($item['loai'] === 'radio'
+                    && isset($phieu['cau_tra_loi'][$id]) && is_array($phieu['cau_tra_loi'][$id])
+                    && array_key_exists('noi_dung_khac', $phieu['cau_tra_loi'][$id])) {
+                    $cauHoi[$id]['co_nhap_khac'] = true;
+                }
+            }
+        }
 
         $hienThiTraLoi = function ($value) {
             if (!is_array($value)) return (string) $value;
@@ -166,7 +187,6 @@ class NhapLieuAction
                 . '</raw>';
         };
 
-        $soPhieu = count($danhSachPhieu);
         $tenKhoaTrongFile = str_replace(
             array('\\', '/', ':', '*', '?', '"', '<', '>', '|'),
             '_',
@@ -191,23 +211,15 @@ class NhapLieuAction
             ? mb_substr($tenSheet, 0, 31, 'UTF-8')
             : substr($tenSheet, 0, 31);
 
-        $nhanThongTin = '<b><middle><style border="thin">';
-        $giaTriThongTin = '<right><middle><style border="thin">';
-        $tieuDeBang = '<b><center><bottom><wraptext><style height="72" color="#FFFFFF" bgcolor="#1F4E78" border="thin">';
+        $tieuDeBang = '<b><center><bottom><wraptext><style height="72" border="thin">';
         $duLieuBang = '<top><wraptext><style border="thin">';
-        $oTrongThongTin = $giaTriExcel('', $giaTriThongTin);
-
-        $duLieuSheet = array(
-            array($giaTriExcel('Mã chỉ số', $nhanThongTin), $giaTriExcel($maChiSo, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
-            array($giaTriExcel('Tên chỉ số', $nhanThongTin), $giaTriExcel($tenChiSo, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
-            array($giaTriExcel('Khoa/Phòng', $nhanThongTin), $giaTriExcel($tenKhoaPhong, $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
-            array($giaTriExcel('Tổng số phiếu', $nhanThongTin), $giaTriExcel($soPhieu > 0 ? $soPhieu : '', $giaTriThongTin), $oTrongThongTin, $oTrongThongTin, $oTrongThongTin),
-            array(),
-            array()
-        );
+        $duLieuSheet = array();
 
         $tieuDe = array('STT', 'Mã phiếu', 'Năm', 'Kỳ', 'Người nhập', 'Ngày nhập');
-        foreach ($cauHoi as $item) $tieuDe[] = $item['noi_dung'];
+        foreach ($cauHoi as $item) {
+            $tieuDe[] = $item['noi_dung'];
+            if ($item['co_nhap_khac']) $tieuDe[] = $item['noi_dung'] . ' - Nội dung khác';
+        }
         foreach ($tieuDe as &$noiDungTieuDe) {
             $noiDungTieuDe = $giaTriExcel($noiDungTieuDe, $tieuDeBang);
         }
@@ -225,12 +237,25 @@ class NhapLieuAction
             );
             foreach ($cauHoi as $id => $item) {
                 $giaTri = isset($phieu['cau_tra_loi'][$id]) ? $phieu['cau_tra_loi'][$id] : '';
-                $dongExcel[] = $giaTriExcel($hienThiTraLoi($giaTri), $duLieuBang);
+                if ($item['loai'] === 'satisfaction') {
+                    $luaChon = is_scalar($giaTri) ? trim((string) $giaTri) : '';
+                    $diem = $luaChon !== '' && array_key_exists($luaChon, $item['diem_lua_chon'])
+                        ? $item['diem_lua_chon'][$luaChon] : null;
+                    $dongExcel[] = $diem === null
+                        ? $giaTriExcel('', $duLieuBang)
+                        : $duLieuBang . (string) $diem;
+                } elseif ($item['loai'] === 'radio' && $item['co_nhap_khac']) {
+                    $laLuaChonKhac = is_array($giaTri) && array_key_exists('noi_dung_khac', $giaTri);
+                    $dongExcel[] = $giaTriExcel($laLuaChonKhac ? 'Khác' : $hienThiTraLoi($giaTri), $duLieuBang);
+                    $dongExcel[] = $giaTriExcel($laLuaChonKhac ? $giaTri['noi_dung_khac'] : '', $duLieuBang);
+                } else {
+                    $dongExcel[] = $giaTriExcel($hienThiTraLoi($giaTri), $duLieuBang);
+                }
             }
             $duLieuSheet[] = $dongExcel;
         }
 
-        $soCot = 6 + count($cauHoi);
+        $soCot = count($tieuDe);
         $tenCot = function ($soCot) {
             $ketQua = '';
             while ($soCot > 0) {
@@ -247,12 +272,8 @@ class NhapLieuAction
             ->setDefaultFontSize(10)
             ->setTitle('Thống kê phiếu theo chỉ số')
             ->addSheet($duLieuSheet, $tenSheet)
-            ->mergeCells('B1:E1')
-            ->mergeCells('B2:E2')
-            ->mergeCells('B3:E3')
-            ->mergeCells('B4:E4')
-            ->freezePanes('A8')
-            ->autoFilter('A7:' . $cotCuoi . max(7, count($duLieuSheet)));
+            ->freezePanes('A2')
+            ->autoFilter('A1:' . $cotCuoi . max(1, count($duLieuSheet)));
 
         $xlsx->setColWidth(1, 14)
             ->setColWidth(2, 12)
