@@ -348,6 +348,29 @@ class CtChiSoPeer
         return $ketQua;
     }
 
+    /** Lay day du cac cot cua ct_chiso de dong bo qua API. */
+    public function getToanBoTheoMaChiSo($maChiSo)
+    {
+        $maChiSo = (int) $maChiSo;
+        if ($maChiSo <= 0) return array();
+
+        $result = $this->dbsql->query("SELECT * FROM ct_chiso WHERE ma_chi_so = $maChiSo ORDER BY id ASC");
+        $items = array();
+        while ($row = $this->dbsql->fetch_array($result)) {
+            $item = array();
+            foreach ($row as $column => $value) {
+                if (!is_int($column)) $item[$column] = $value;
+            }
+            // du_lieu la cot JSON; tra ve cau truc JSON de client su dung truc tiep.
+            if (isset($item['du_lieu'])) {
+                $decoded = json_decode($item['du_lieu'], true);
+                if (json_last_error() === JSON_ERROR_NONE) $item['du_lieu'] = $decoded;
+            }
+            $items[] = $item;
+        }
+        return $items;
+    }
+
     public function getDanhSachPhieu($maChiSo, $idKhoaPhong = 0)
     {
         $maChiSo = (int) $maChiSo;

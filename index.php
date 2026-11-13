@@ -61,6 +61,12 @@ if($handle_url == ""){
 
 $listHandle = explode("/",$handle_url);
 
+// Chi cho phep API doc ct_chiso vuot qua chuyen huong login.
+// Endpoint nay tu xac thuc bang API key truoc khi truy van du lieu.
+$isCtChiSoApi = $listHandle[0] === 'api'
+	&& isset($listHandle[1]) && $listHandle[1] === 'getCtChiSo'
+	&& (count($listHandle) === 2 || (count($listHandle) === 3 && $listHandle[2] === ''));
+
 if($listHandle[0] == "refreshSession"){
 	//echo("refreshSession");
 	ob_end_clean();
@@ -71,7 +77,7 @@ if($listHandle[0] == "refreshSession"){
 }
 
 // kiem tra login
-if(!$_SESSION["sUserLogin"]){
+if(!$_SESSION["sUserLogin"] && !$isCtChiSoApi){
 	if($listHandle[0]!=_DEFAULT_LOGIN_ || $listHandle[1]==""){
 		//echo 5;	
 		$listHandle[0] = _DEFAULT_LOGIN_;

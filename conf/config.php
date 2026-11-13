@@ -38,7 +38,7 @@ $domain = $_SERVER['HTTP_HOST'];
 // Cấu hình URL mặc định động
 define('_DEFAULT_URL_', $protocol . $domain . '/ql_cscl/');
 
-define('_DEFAULT_VERSION_','v1.3');
+define('_DEFAULT_VERSION_','v1.3.1');
 
 // define('_DEFAULT_URL_', 'http://192.168.31.8:80/ql_cscl/');
 // define('_DEFAULT_URL_', 'http://localhost/vpdt/');
